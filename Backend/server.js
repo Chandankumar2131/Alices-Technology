@@ -4,6 +4,8 @@ const authRoutes = require("./routes/authRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const breakRoutes = require("./routes/breakRoutes");
 const leaveRoutes = require("./routes/leaveRoutes");
+const salaryRoutes = require("./routes/salaryRoutes");
+const payrollRoutes = require("./routes/payrollRoutes");
 require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
@@ -39,9 +41,11 @@ dbConnection();
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/attendance", attendanceRoutes);
 app.use("/api/v1/break", breakRoutes);
+app.use("/api/v1/leave",leaveRoutes);
+app.use("/api/v1/salary", salaryRoutes);
 app.use(
-  "/api/v1/leave",
-  leaveRoutes
+  "/api/v1/payroll",
+  payrollRoutes
 );
 // ================================
 // Default Route

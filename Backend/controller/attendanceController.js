@@ -1,5 +1,5 @@
 const Attendance = require("../model/Attendance");
-const moment = require("moment");
+const moment = require("moment-timezone");
 
 // ==========================================
 // CHECK IN
@@ -8,22 +8,15 @@ exports.checkIn = async (req, res) => {
   try {
     const employeeId = req.user.id;
 
-    const todayStart = moment()
-      .startOf("day")
-      .toDate();
-
-    const todayEnd = moment()
-      .endOf("day")
-      .toDate();
+    const attendanceDate = moment()
+      .tz("Asia/Kolkata")
+      .format("YYYY-MM-DD");
 
     // Check existing attendance
     const existingAttendance =
       await Attendance.findOne({
         employee: employeeId,
-        date: {
-          $gte: todayStart,
-          $lte: todayEnd,
-        },
+        attendanceDate,
       });
 
     // Prevent check-in if leave approved
@@ -52,25 +45,34 @@ exports.checkIn = async (req, res) => {
 
     const now = new Date();
 
-    const dayName =
-      moment(now).format("dddd");
+    const dayName = moment(now)
+      .tz("Asia/Kolkata")
+      .format("dddd");
 
     const isWeekend =
       dayName === "Saturday" ||
       dayName === "Sunday";
 
+    const currentHour = moment(now)
+      .tz("Asia/Kolkata")
+      .hour();
+
+    const currentMinute = moment(now)
+      .tz("Asia/Kolkata")
+      .minute();
+
     const lateArrival =
-      now.getHours() > 9 ||
+      currentHour > 9 ||
       (
-        now.getHours() === 9 &&
-        now.getMinutes() > 0
+        currentHour === 9 &&
+        currentMinute > 0
       );
 
     let attendance;
 
-    // If attendance record already exists
-    // (created by approved leave process)
+    // Existing attendance record
     if (existingAttendance) {
+
       existingAttendance.checkIn =
         now;
 
@@ -95,6 +97,9 @@ exports.checkIn = async (req, res) => {
       attendance =
         await Attendance.create({
           employee: employeeId,
+
+          attendanceDate,
+
           date: now,
 
           checkIn: now,
@@ -114,7 +119,15 @@ exports.checkIn = async (req, res) => {
       success: true,
       message:
         "Check In successful",
-      data: attendance,
+
+      data: {
+        ...attendance.toObject(),
+
+        checkInTime:
+          moment(attendance.checkIn)
+            .tz("Asia/Kolkata")
+            .format("hh:mm A"),
+      },
     });
 
   } catch (error) {

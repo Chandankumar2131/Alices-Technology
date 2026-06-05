@@ -87,6 +87,10 @@ const attendanceSchema = new mongoose.Schema(
       enum: ["Web", "Mobile", "System"],
       default: "Web",
     },
+    attendanceDate: {
+  type: String,
+  required: true,
+},
 
     remarks: {
       type: String,
@@ -102,7 +106,7 @@ const attendanceSchema = new mongoose.Schema(
 attendanceSchema.index(
   {
     employee: 1,
-    date: 1,
+    attendanceDate: 1,
   },
   {
     unique: true,
