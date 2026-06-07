@@ -1,6 +1,7 @@
 const Payroll = require("../model/Payroll");
 const Attendance = require("../model/Attendance");
 const SalaryStructure = require("../model/SalaryStructure");
+const PDFDocument = require("pdfkit");
 const User = require("../model/User");
 
 // ==========================================
@@ -234,8 +235,7 @@ exports.generatePayroll = async (req, res) => {
 // GET MY PAYROLL
 // EMPLOYEE
 // ==========================================
-exports.getMyPayroll =
-  async (req, res) => {
+exports.getMyPayroll = async (req, res) => {
     try {
 
       const payroll =
@@ -272,8 +272,7 @@ exports.getMyPayroll =
 // GET EMPLOYEE PAYROLL
 // ADMIN
 // ==========================================
-exports.getEmployeePayroll =
-  async (req, res) => {
+exports.getEmployeePayroll = async (req, res) => {
     try {
 
       const {
@@ -318,8 +317,7 @@ exports.getEmployeePayroll =
 // GET ALL PAYROLLS
 // ADMIN
 // ==========================================
-exports.getAllPayrolls =
-  async (req, res) => {
+exports.getAllPayrolls =async (req, res) => {
     try {
 
       const payrolls =
@@ -353,8 +351,7 @@ exports.getAllPayrolls =
 // MARK AS PAID
 // ADMIN
 // ==========================================
-exports.markPayrollPaid =
-  async (req, res) => {
+exports.markPayrollPaid =async (req, res) => {
     try {
 
       const {
@@ -390,6 +387,222 @@ exports.markPayrollPaid =
       });
 
     } catch (error) {
+
+      return res.status(500).json({
+        success: false,
+        message:
+          error.message,
+      });
+    }
+  };
+
+// ==========================================
+// DOWNLOAD PAYSLIP
+// EMPLOYEE
+// ==========================================
+
+
+  exports.downloadPayslip = async (req, res) => {
+  try {
+
+    const { payrollId } = req.params;
+
+    const payroll = await Payroll.findById(payrollId)
+      .populate("employee")
+      .populate("salaryStructure");
+
+    if (!payroll) {
+      return res.status(404).json({
+        success: false,
+        message: "Payroll not found",
+      });
+    }
+
+    // ==========================================
+    // ACCESS CONTROL
+    // ==========================================
+
+    const loggedInUserId = req.user.id;
+    const accountType = req.user.accountType;
+
+    if (
+      accountType === "Employee" &&
+      payroll.employee._id.toString() !== loggedInUserId
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "You are not authorized to access this payslip",
+      });
+    }
+
+    // Admin & SuperAdmin automatically pass
+
+    const employee = payroll.employee;
+
+    const salary = payroll.salaryStructure;
+
+    const doc = new PDFDocument({
+      margin: 50,
+    });
+
+    res.setHeader(
+      "Content-Type",
+      "application/pdf"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=payslip-${payroll.month}-${payroll.year}.pdf`
+    );
+
+    doc.pipe(res);
+
+    // ---------- Your Existing PDF Code ----------
+
+      doc
+        .fontSize(20)
+        .text(
+          "ALICE TECH SOLUTIONS",
+          {
+            align:
+              "center",
+          }
+        );
+
+      doc.moveDown();
+
+      doc
+        .fontSize(16)
+        .text(
+          `PAYSLIP - ${payroll.month}/${payroll.year}`,
+          {
+            align:
+              "center",
+          }
+        );
+
+      doc.moveDown(2);
+
+      doc.fontSize(12);
+
+      doc.text(
+        `Employee Name: ${employee.firstName} ${employee.lastName}`
+      );
+
+      doc.text(
+        `Employee ID: ${employee.employeeId}`
+      );
+
+      doc.text(
+        `Department: ${employee.department}`
+      );
+
+      doc.text(
+        `Designation: ${employee.designation}`
+      );
+
+      doc.moveDown();
+
+      doc.text(
+        "===================================="
+      );
+
+      doc.moveDown();
+
+      doc.text(
+        "EARNINGS"
+      );
+
+      doc.moveDown();
+
+      doc.text(
+        `Basic Salary: ₹${salary.basicSalary}`
+      );
+
+      doc.text(
+        `HRA: ₹${salary.hra}`
+      );
+
+      doc.text(
+        `Special Allowance: ₹${salary.specialAllowance}`
+      );
+
+      doc.text(
+        `Bonus: ₹${salary.bonus}`
+      );
+
+      doc.moveDown();
+
+      doc.text(
+        `Gross Salary: ₹${salary.grossSalary}`
+      );
+
+      doc.moveDown();
+
+      doc.text(
+        "===================================="
+      );
+
+      doc.moveDown();
+
+      doc.text(
+        "DEDUCTIONS"
+      );
+
+      doc.moveDown();
+
+      doc.text(
+        `PF: ₹${salary.pf}`
+      );
+
+      doc.text(
+        `Professional Tax: ₹${salary.professionalTax}`
+      );
+
+      doc.text(
+        `Other Deductions: ₹${salary.otherDeductions}`
+      );
+
+      doc.moveDown();
+
+      doc.text(
+        `Total Deductions: ₹${payroll.deductions}`
+      );
+
+      doc.moveDown();
+
+      doc.text(
+        "===================================="
+      );
+
+      doc.moveDown();
+
+      doc.fontSize(16);
+
+      doc.text(
+        `Net Salary: ₹${payroll.netSalary}`
+      );
+
+      doc.moveDown();
+
+      doc.fontSize(12);
+
+      doc.text(
+        `Payment Status: ${payroll.paymentStatus}`
+      );
+
+      doc.text(
+        `Generated At: ${new Date(
+          payroll.generatedAt
+        ).toLocaleDateString()}`
+      );
+
+      doc.end();
+
+    } catch (error) {
+
+      console.log(error);
 
       return res.status(500).json({
         success: false,

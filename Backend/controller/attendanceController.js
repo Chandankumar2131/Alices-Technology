@@ -67,53 +67,46 @@ exports.checkIn = async (req, res) => {
         currentHour === 9 &&
         currentMinute > 0
       );
+let attendance;
 
-    let attendance;
+if (existingAttendance) {
 
-    // Existing attendance record
-    if (existingAttendance) {
+  existingAttendance.checkIn = now;
 
-      existingAttendance.checkIn =
-        now;
+  existingAttendance.lateArrival =
+    lateArrival;
 
-      existingAttendance.lateArrival =
-        lateArrival;
+  existingAttendance.attendanceSource =
+    "Web";
 
-      existingAttendance.attendanceSource =
-        "Web";
+  await existingAttendance.save();
 
-      existingAttendance.status =
-        isWeekend
-          ? "Weekend"
-          : "Present";
+  attendance =
+    existingAttendance;
 
-      await existingAttendance.save();
+} else {
 
-      attendance =
-        existingAttendance;
+  attendance =
+    await Attendance.create({
+      employee: employeeId,
 
-    } else {
+      attendanceDate,
 
-      attendance =
-        await Attendance.create({
-          employee: employeeId,
+      date: now,
 
-          attendanceDate,
+      isWeekend,
 
-          date: now,
+      checkIn: now,
 
-          checkIn: now,
+      lateArrival,
 
-          lateArrival,
+      attendanceSource: "Web",
 
-          attendanceSource:
-            "Web",
-
-          status: isWeekend
-            ? "Weekend"
-            : "Present",
-        });
-    }
+      status: isWeekend
+        ? "Weekend"
+        : "Present",
+    });
+}
 
     return res.status(201).json({
       success: true,

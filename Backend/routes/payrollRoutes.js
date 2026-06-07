@@ -9,6 +9,7 @@ const {
   getEmployeePayroll,
   getAllPayrolls,
   markPayrollPaid,
+  downloadPayslip,
 } = require("../controller/payrollController");
 
 // Middleware
@@ -20,46 +21,25 @@ const isAdmin = require("../middleware/isAdmin");
 // ==========================================
 
 // Get My Payroll History
-router.get(
-  "/my-payroll",
-  auth,
-  getMyPayroll
-);
+router.get("/my-payroll",auth,getMyPayroll);
 
 // ==========================================
 // ADMIN ROUTES
 // ==========================================
 
 // Generate Payroll
-router.post(
-  "/generate",
-  auth,
-  isAdmin,
-  generatePayroll
-);
+router.post( "/generate",auth,isAdmin, generatePayroll);
 
 // Get All Payrolls
-router.get(
-  "/all",
-  auth,
-  isAdmin,
-  getAllPayrolls
-);
+router.get("/all",auth,isAdmin,getAllPayrolls);
 
 // Get Employee Payroll
-router.get(
-  "/employee/:employeeId",
-  auth,
-  isAdmin,
-  getEmployeePayroll
-);
+router.get("/employee/:employeeId",auth,isAdmin,getEmployeePayroll);
 
 // Mark Payroll As Paid
-router.patch(
-  "/pay/:payrollId",
-  auth,
-  isAdmin,
-  markPayrollPaid
-);
+router.patch("/pay/:payrollId",auth,isAdmin,markPayrollPaid);
+  
+// Download Payslip
+router.get("/payslip/:payrollId",auth,downloadPayslip);
 
 module.exports = router;
