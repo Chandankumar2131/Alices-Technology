@@ -42,11 +42,11 @@ router.patch("/deactivate/:id",auth,isAdmin,deactivateEmployee);
 // Create Admin
 router.post("/create-admin", auth, isSuperAdmin, createAdmin);
 
-module.exports = router;
-
 // ==========================================
 // PROFILE ROUTES
 // ==========================================
-router.get("/profile",auth,getProfile);
-router.put("/profile/update",auth,updateProfile);
-router.put("/profile/details",auth,updateProfileDetails);
+router.get("/profile", auth, getProfile);
+router.put("/profile/update", auth, updateProfile);
+router.put("/profile/details", auth, updateProfileDetails);
+
+module.exports = router;

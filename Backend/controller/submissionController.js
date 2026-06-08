@@ -47,11 +47,9 @@ exports.createSubmission = async (req, res) => {
     });
   }
 };
-
 // ==========================================
 // GET MY SUBMISSIONS
 // ==========================================
-
 exports.getMySubmissions = async (req, res) => {
   try {
     const submissions = await Submission.find({
@@ -75,11 +73,9 @@ exports.getMySubmissions = async (req, res) => {
     });
   }
 };
-
 // ==========================================
 // UPDATE SUBMISSION STATUS
 // ==========================================
-
 exports.updateSubmission = async (req, res) => {
   try {
     const { submissionId } = req.params;
@@ -112,11 +108,9 @@ exports.updateSubmission = async (req, res) => {
     });
   }
 };
-
 // ==========================================
 // ADMIN - GET ALL SUBMISSIONS
 // ==========================================
-
 exports.getAllSubmissions = async (req, res) => {
   try {
     const submissions = await Submission.find()
@@ -138,11 +132,9 @@ exports.getAllSubmissions = async (req, res) => {
     });
   }
 };
-
 // ==========================================
 // ADMIN - GET SINGLE SUBMISSION
 // ==========================================
-
 exports.getSubmissionById = async (req, res) => {
   try {
     const { submissionId } = req.params;
@@ -153,14 +145,12 @@ exports.getSubmissionById = async (req, res) => {
           "recruiter",
           "firstName lastName employeeId department designation"
         );
-
     if (!submission) {
       return res.status(404).json({
         success: false,
         message: "Submission not found",
       });
     }
-
     return res.status(200).json({
       success: true,
       data: submission,
@@ -172,11 +162,9 @@ exports.getSubmissionById = async (req, res) => {
     });
   }
 };
-
 // ==========================================
 // DELETE SUBMISSION
 // ==========================================
-
 exports.deleteSubmission = async (req, res) => {
   try {
     const { submissionId } = req.params;
@@ -192,7 +180,6 @@ exports.deleteSubmission = async (req, res) => {
         message: "Submission not found",
       });
     }
-
     return res.status(200).json({
       success: true,
       message: "Submission deleted successfully",

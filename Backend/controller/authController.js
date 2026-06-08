@@ -455,17 +455,26 @@ exports.updateProfileDetails = async (req, res) => {
           user.additionalDetails
         );
 
-      profile.gender =
-        req.body.gender ||
-        profile.gender;
+      const fields = [
+        "gender",
+        "dateOfBirth",
+        "contactNumber",
+        "address",
+        "city",
+        "state",
+        "country",
+        "pincode",
+        "bloodGroup",
+        "maritalStatus",
+        "emergencyContactName",
+        "emergencyContactNumber",
+      ];
 
-      profile.contactNumber =
-        req.body.contactNumber ||
-        profile.contactNumber;
-
-      profile.address =
-        req.body.address ||
-        profile.address;
+      fields.forEach((field) => {
+        if (req.body[field] !== undefined && req.body[field] !== "") {
+          profile[field] = req.body[field];
+        }
+      });
 
       await profile.save();
 
