@@ -1,73 +1,72 @@
 const Attendance = require("../model/Attendance");
 const BreakLog = require("../model/BreakLog");
-const moment = require("moment");
+const moment = require("moment-timezone");
 
+// ==========================================
+// START BREAK
+// ==========================================
 exports.startBreak = async (req, res) => {
   try {
     const employeeId = req.user.id;
+
     const { reason } = req.body;
 
-    const todayStart = moment()
-      .startOf("day")
-      .toDate();
+    const attendanceDate = moment()
+      .tz("Asia/Kolkata")
+      .format("YYYY-MM-DD");
 
-    const todayEnd = moment()
-      .endOf("day")
-      .toDate();
+    // Find today's attendance
+    const attendance = await Attendance.findOne({
+      employee: employeeId,
+      attendanceDate,
+    });
 
-    const attendance =
-      await Attendance.findOne({
-        employee: employeeId,
-        date: {
-          $gte: todayStart,
-          $lte: todayEnd,
-        },
-      });
-
-    if (!attendance) {
-      return res.status(404).json({
+    if (!attendance || !attendance.checkIn) {
+      return res.status(400).json({
         success: false,
-        message:
-          "Please check in first",
+        message: "Please check in first",
       });
     }
 
-    const activeBreak =
-      await BreakLog.findOne({
-        employee: employeeId,
-        status: "Active",
+    // Prevent break after checkout
+    if (attendance.checkOut) {
+      return res.status(400).json({
+        success: false,
+        message: "You have already checked out",
       });
+    }
+
+    // Check active break
+    const activeBreak = await BreakLog.findOne({
+      employee: employeeId,
+      status: "Active",
+    });
 
     if (activeBreak) {
       return res.status(400).json({
         success: false,
-        message:
-          "You already have an active break",
+        message: "You already have an active break",
       });
     }
 
-    const breakLog =
-      await BreakLog.create({
-        attendance: attendance._id,
-        employee: employeeId,
-        breakStart: new Date(),
-        reason,
-      });
+    const breakLog = await BreakLog.create({
+      attendance: attendance._id,
+      employee: employeeId,
+      breakStart: new Date(),
+      reason,
+    });
 
-    attendance.breakLogs.push(
-      breakLog._id
-    );
+    attendance.breakLogs.push(breakLog._id);
 
     await attendance.save();
 
     return res.status(201).json({
       success: true,
-      message:
-        "Break started successfully",
+      message: "Break started successfully",
       data: breakLog,
     });
-
   } catch (error) {
+    console.log(error);
 
     return res.status(500).json({
       success: false,
@@ -76,69 +75,70 @@ exports.startBreak = async (req, res) => {
   }
 };
 
+// ==========================================
+// END BREAK
+// ==========================================
 exports.endBreak = async (req, res) => {
   try {
+    const employeeId = req.user.id;
 
-    const employeeId =
-      req.user.id;
-
-    const activeBreak =
-      await BreakLog.findOne({
-        employee: employeeId,
-        status: "Active",
-      });
+    const activeBreak = await BreakLog.findOne({
+      employee: employeeId,
+      status: "Active",
+    });
 
     if (!activeBreak) {
       return res.status(404).json({
         success: false,
-        message:
-          "No active break found",
+        message: "No active break found",
       });
     }
 
-    activeBreak.breakEnd =
-      new Date();
+    activeBreak.breakEnd = new Date();
 
     const duration =
-      (
-        activeBreak.breakEnd -
-        activeBreak.breakStart
-      ) /
+      (activeBreak.breakEnd - activeBreak.breakStart) /
       (1000 * 60);
 
-    activeBreak.duration =
-      Number(
-        duration.toFixed(2)
-      );
+    activeBreak.duration = Number(
+      duration.toFixed(2)
+    );
 
-    activeBreak.status =
-      "Completed";
+    activeBreak.status = "Completed";
 
     await activeBreak.save();
 
-    const attendance =
-      await Attendance.findById(
-        activeBreak.attendance
-      );
+    const attendance = await Attendance.findById(
+      activeBreak.attendance
+    );
 
-    attendance.breakHours =
-      Number(
-        (
-          attendance.breakHours +
-          duration / 60
-        ).toFixed(2)
-      );
+    attendance.breakHours = Number(
+      (
+        attendance.breakHours +
+        duration / 60
+      ).toFixed(2)
+    );
+
+    attendance.productiveHours = Number(
+      (
+        attendance.totalHours -
+        attendance.breakHours
+      ).toFixed(2)
+    );
+
+    if (attendance.productiveHours < 0) {
+      attendance.productiveHours = 0;
+    }
 
     await attendance.save();
 
     return res.status(200).json({
       success: true,
-      message:
-        "Break ended successfully",
+      message: "Break ended successfully",
       data: activeBreak,
     });
-
   } catch (error) {
+    console.log(error);
 
     return res.status(500).json({
       success: false,
@@ -147,74 +147,73 @@ exports.endBreak = async (req, res) => {
   }
 };
 
+// ==========================================
+// GET MY BREAKS
+// ==========================================
 exports.getMyBreaks = async (req, res) => {
-    try {
+  try {
+    const breaks = await BreakLog.find({
+      employee: req.user.id,
+    })
+      .populate("attendance")
+      .sort({
+        breakStart: -1,
+      });
 
-      const breaks =
-        await BreakLog.find({
-          employee:
-            req.user.id,
-        })
-          .populate(
-            "attendance"
-          )
-          .sort({
-            createdAt: -1,
-          });
+    return res.status(200).json({
+      success: true,
+      count: breaks.length,
+      data: breaks,
+    });
+  } catch (error) {
+    console.log(error);
 
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// GET TODAY'S BREAKS
+// ==========================================
+exports.getTodayBreaks = async (req, res) => {
+  try {
+    const attendanceDate = moment()
+      .tz("Asia/Kolkata")
+      .format("YYYY-MM-DD");
+
+    const attendance = await Attendance.findOne({
+      employee: req.user.id,
+      attendanceDate,
+    });
+
+    if (!attendance) {
       return res.status(200).json({
         success: true,
-        count: breaks.length,
-        data: breaks,
-      });
-
-    } catch (error) {
-
-      return res.status(500).json({
-        success: false,
-        message:
-          error.message,
+        count: 0,
+        data: [],
       });
     }
-  };
 
-  exports.getTodayBreaks =  async (req, res) => {
-    try {
+    const breaks = await BreakLog.find({
+      attendance: attendance._id,
+    }).sort({
+      breakStart: -1,
+    });
 
-      const todayStart =
-        moment()
-          .startOf("day")
-          .toDate();
+    return res.status(200).json({
+      success: true,
+      count: breaks.length,
+      data: breaks,
+    });
+  } catch (error) {
+    console.log(error);
 
-      const todayEnd =
-        moment()
-          .endOf("day")
-          .toDate();
-
-      const breaks =
-        await BreakLog.find({
-          employee:
-            req.user.id,
-          createdAt: {
-            $gte:
-              todayStart,
-            $lte:
-              todayEnd,
-          },
-        });
-
-      return res.status(200).json({
-        success: true,
-        count: breaks.length,
-        data: breaks,
-      });
-
-    } catch (error) {
-
-      return res.status(500).json({
-        success: false,
-        message:
-          error.message,
-      });
-    }
-  };
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

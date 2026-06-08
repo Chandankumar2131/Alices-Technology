@@ -7,7 +7,11 @@ const {
   getLiveEmployees,
   getEmployeeDashboard,
   getDepartmentAnalytics,
-} = require("../controller/dashboardController");
+  getTodayAttendance,
+  getEmployeesOnBreak,
+  getLateEmployees,
+  getEmployeeTimeline,
+} = require("../controller/dashboardController"); 
 
 const { auth } = require("../middleware/auth");
 const isAdmin = require("../middleware/isAdmin");
@@ -38,6 +42,34 @@ router.get(
   auth,
   isAdmin,
   getDepartmentAnalytics
+);
+
+router.get(
+  "/today-attendance",
+  auth,
+  isAdmin,
+  getTodayAttendance
+);
+
+router.get(
+  "/on-break",
+  auth,
+  isAdmin,
+  getEmployeesOnBreak
+);
+
+router.get(
+  "/late-employees",
+  auth,
+  isAdmin,
+  getLateEmployees
+);
+
+router.get(
+  "/employee/:employeeId/timeline",
+  auth,
+  isAdmin,
+  getEmployeeTimeline
 );
 
 module.exports = router;

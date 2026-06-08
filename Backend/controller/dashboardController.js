@@ -153,23 +153,17 @@ exports.getLiveEmployees = async (req, res) => {
                   "Active",
               });
 
-            let status =
-              "Working";
+           let status = "Working";
 
-            if (
-              record.checkOut
-            ) {
-              status =
-                "Checked Out";
-            }
-
-            if (
-              activeBreak
-            ) {
-              status =
-                "On Break";
-            }
-
+if (record.status === "Leave") {
+  status = "On Leave";
+} else if (record.status === "Weekend") {
+  status = "Weekend";
+} else if (record.checkOut) {
+  status = "Checked Out";
+} else if (activeBreak) {
+  status = "On Break";
+}
             return {
               employee:
                 record.employee,
@@ -333,3 +327,130 @@ exports.getDepartmentAnalytics =
       });
     }
   };
+
+  // ==========================================
+// TODAY ATTENDANCE
+// ==========================================
+exports.getTodayAttendance = async (req, res) => {
+  try {
+    const today = moment().format("YYYY-MM-DD");
+
+    const attendance = await Attendance.find({
+      attendanceDate: today,
+    })
+      .populate(
+        "employee",
+        "firstName lastName employeeId department designation"
+      )
+      .sort({
+        checkIn: 1,
+      });
+
+    return res.status(200).json({
+      success: true,
+      count: attendance.length,
+      data: attendance,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// EMPLOYEES ON BREAK
+// ==========================================
+exports.getEmployeesOnBreak = async (req, res) => {
+  try {
+
+    const breaks = await BreakLog.find({
+      status: "Active",
+    })
+      .populate(
+        "employee",
+        "firstName lastName employeeId department designation"
+      )
+      .sort({
+        breakStart: -1,
+      });
+
+    return res.status(200).json({
+      success: true,
+      count: breaks.length,
+      data: breaks,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// LATE EMPLOYEES
+// ==========================================
+exports.getLateEmployees = async (req, res) => {
+  try {
+
+    const today = moment().format("YYYY-MM-DD");
+
+    const employees = await Attendance.find({
+      attendanceDate: today,
+      lateArrival: true,
+    }).populate(
+      "employee",
+      "firstName lastName employeeId department designation"
+    );
+
+    return res.status(200).json({
+      success: true,
+      count: employees.length,
+      data: employees,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// EMPLOYEE TIMELINE
+// ==========================================
+exports.getEmployeeTimeline = async (req, res) => {
+  try {
+
+    const { employeeId } = req.params;
+
+    const attendance = await Attendance.find({
+      employee: employeeId,
+    })
+      .populate("breakLogs")
+      .sort({
+        attendanceDate: -1,
+      });
+
+    return res.status(200).json({
+      success: true,
+      count: attendance.length,
+      data: attendance,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
