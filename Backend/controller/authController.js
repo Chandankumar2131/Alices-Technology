@@ -1,11 +1,9 @@
+
 const User = require("../model/User");
 const Profile = require("../model/Profile");
-
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
 require("dotenv").config();
-
 // ==========================================
 // CREATE ADMIN (SUPER ADMIN ONLY)
 // ==========================================
@@ -57,19 +55,13 @@ exports.createAdmin = async (req, res) => {
       firstName,
       lastName,
       email,
-
       password: hashedPassword,
-
       accountType: "Admin",
-
       department,
       designation,
-
       employeeId: adminId,
-
       additionalDetails:
         profileDetails._id,
-
       image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName}%20${lastName}`,
     });
 
@@ -145,20 +137,14 @@ exports.createEmployee = async (req, res) => {
       lastName,
       email,
       password: hashedPassword,
-
       accountType: "Employee",
-
       department,
       designation,
-
       employeeId,
-
       additionalDetails: profileDetails._id,
-
       image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName}%20${lastName}`,
     });
 
-   
 
    const userResponse = user.toObject();
 
@@ -230,7 +216,7 @@ exports.login = async (req, res) => {
     }
 
     // JWT Payload
-    const payload = {
+    const payload = {  
       id: user._id,
       email: user.email,
       accountType: user.accountType,
@@ -285,7 +271,7 @@ exports.login = async (req, res) => {
   }
 };
 // ==========================================
-// GET ALL EMPLOYEES
+// GET ALL EMPLOYEES 
 // ==========================================
 exports.getAllEmployees =
   async (req, res) => {
@@ -398,9 +384,7 @@ exports.deactivateEmployee =
 // ==========================================//
 exports.updateProfile = async (req, res) => {
   try {
-
     const userId = req.user.id;
-
     const {
       firstName,
       lastName,
@@ -493,4 +477,49 @@ exports.updateProfileDetails = async (req, res) => {
     }
   };
 
-  
+// ==========================================//
+// CHANGE PASSWORD
+// ==========================================//
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current and new passwords are required",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Incorrect current password",
+      });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

@@ -12,24 +12,21 @@ const {
   getProfile,
   updateProfile,
   updateProfileDetails,
+  changePassword,
 } = require("../controller/authController");
 
 // Middleware
 const { auth } = require("../middleware/auth");
 const isAdmin = require("../middleware/isAdmin");
 const isSuperAdmin = require("../middleware/isSuperAdmin");
-
 // ==========================================
 // PUBLIC ROUTES
 // ==========================================
-
 // Employee/Admin Login
 router.post("/login", login);
-
 // ==========================================
 // ADMIN ROUTES
 // ==========================================
-
 // Create Employee
 router.post("/create-employee", auth, isAdmin, createEmployee);
 
@@ -48,5 +45,6 @@ router.post("/create-admin", auth, isSuperAdmin, createAdmin);
 router.get("/profile", auth, getProfile);
 router.put("/profile/update", auth, updateProfile);
 router.put("/profile/details", auth, updateProfileDetails);
+router.post("/change-password", auth, changePassword);
 
 module.exports = router;
