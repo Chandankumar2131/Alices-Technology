@@ -10,8 +10,13 @@ const attendanceSchema = new mongoose.Schema(
 
     date: {
       type: Date,
-      required: true,
       default: Date.now,
+    },
+
+    // Date in YYYY-MM-DD format
+    attendanceDate: {
+      type: String,
+      required: true,
     },
 
     // Day Information
@@ -25,14 +30,18 @@ const attendanceSchema = new mongoose.Schema(
       default: false,
     },
 
+    // Check In / Check Out
     checkIn: {
       type: Date,
+      default: null,
     },
 
     checkOut: {
       type: Date,
+      default: null,
     },
 
+    // Break Logs
     breakLogs: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -40,6 +49,7 @@ const attendanceSchema = new mongoose.Schema(
       },
     ],
 
+    // Working Hours
     totalHours: {
       type: Number,
       default: 0,
@@ -60,6 +70,7 @@ const attendanceSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Flags
     lateArrival: {
       type: Boolean,
       default: false,
@@ -70,6 +81,7 @@ const attendanceSchema = new mongoose.Schema(
       default: false,
     },
 
+    // Attendance Status
     status: {
       type: String,
       enum: [
@@ -87,14 +99,11 @@ const attendanceSchema = new mongoose.Schema(
       enum: ["Web", "Mobile", "System"],
       default: "Web",
     },
-    attendanceDate: {
-  type: String,
-  required: true,
-},
 
     remarks: {
       type: String,
       trim: true,
+      default: "",
     },
   },
   {
@@ -102,7 +111,7 @@ const attendanceSchema = new mongoose.Schema(
   }
 );
 
-// One Attendance Per Employee Per Day
+// Prevent duplicate attendance for same employee on same day
 attendanceSchema.index(
   {
     employee: 1,

@@ -1,5 +1,27 @@
 const Attendance = require("../model/Attendance");
+const BreakLog = require("../model/BreakLog");
 const moment = require("moment-timezone");
+
+const TZ = "Asia/Kolkata";
+const CHECK_IN_START = { hour: 19, minute: 0 };
+const CHECK_IN_END = { hour: 19, minute: 30 };
+const CHECK_OUT_TIME = { hour: 4, minute: 0 };
+
+const getShiftDate = (time = moment().tz(TZ)) => {
+  const localTime = moment(time).tz(TZ);
+  return localTime.hour() < 12
+    ? localTime.clone().subtract(1, "day").format("YYYY-MM-DD")
+    : localTime.format("YYYY-MM-DD");
+};
+
+const getShiftBoundary = (shiftDate, boundary) =>
+  moment.tz(
+    `${shiftDate} ${String(boundary.hour).padStart(2, "0")}:${String(
+      boundary.minute
+    ).padStart(2, "0")}`,
+    "YYYY-MM-DD HH:mm",
+    TZ
+  );
 
 // ==========================================
 // CHECK IN
@@ -7,133 +29,92 @@ const moment = require("moment-timezone");
 exports.checkIn = async (req, res) => {
   try {
     const employeeId = req.user.id;
+    const nowMoment = moment().tz(TZ);
+    const now = nowMoment.toDate();
+    const attendanceDate = getShiftDate(nowMoment);
 
-    const attendanceDate = moment()
-      .tz("Asia/Kolkata")
-      .format("YYYY-MM-DD");
-
-    // Check existing attendance
-    const existingAttendance =
-      await Attendance.findOne({
-        employee: employeeId,
-        attendanceDate,
-      });
+    const existingAttendance = await Attendance.findOne({
+      employee: employeeId,
+      attendanceDate,
+    });
 
     // Prevent check-in if leave approved
-    if (
-      existingAttendance &&
-      existingAttendance.status === "Leave"
-    ) {
+    if (existingAttendance && existingAttendance.status === "Leave") {
       return res.status(400).json({
         success: false,
-        message:
-          "You are on approved leave today",
+        message: "You are on approved leave today",
       });
     }
 
     // Prevent duplicate check-in
-    if (
-      existingAttendance &&
-      existingAttendance.checkIn
-    ) {
+    if (existingAttendance && existingAttendance.checkIn) {
       return res.status(400).json({
         success: false,
-        message:
-          "You have already checked in today",
+        message: "You have already checked in today",
       });
     }
 
-    const now = new Date();
+    const dayName = nowMoment.format("dddd");
+    const isWeekend = dayName === "Saturday" || dayName === "Sunday";
 
-    const dayName = moment(now)
-      .tz("Asia/Kolkata")
-      .format("dddd");
+    // Block weekend check-in
+    if (isWeekend) {
+      return res.status(400).json({
+        success: false,
+        message: "Check-in is not allowed on weekends",
+      });
+    }
 
-    const isWeekend =
-      dayName === "Saturday" ||
-      dayName === "Sunday";
+    const checkInStart = getShiftBoundary(attendanceDate, CHECK_IN_START);
+    const checkInEnd = getShiftBoundary(attendanceDate, CHECK_IN_END);
 
-    const currentHour = moment(now)
-      .tz("Asia/Kolkata")
-      .hour();
+    if (nowMoment.isBefore(checkInStart)) {
+      return res.status(400).json({
+        success: false,
+        message: "Check-in is allowed from 07:00 PM",
+      });
+    }
 
-    const currentMinute = moment(now)
-      .tz("Asia/Kolkata")
-      .minute();
+    const lateArrival = nowMoment.isAfter(checkInEnd);
 
-    const lateArrival =
-      currentHour > 9 ||
-      (
-        currentHour === 9 &&
-        currentMinute > 0
-      );
-let attendance;
-
-if (existingAttendance) {
-
-  existingAttendance.checkIn = now;
-
-  existingAttendance.lateArrival =
-    lateArrival;
-
-  existingAttendance.attendanceSource =
-    "Web";
-
-  await existingAttendance.save();
-
-  attendance =
-    existingAttendance;
-
-} else {
-
-  attendance =
-    await Attendance.create({
-      employee: employeeId,
-
-      attendanceDate,
-
-      date: now,
-
-      isWeekend,
-
-      checkIn: now,
-
-      lateArrival,
-
-      attendanceSource: "Web",
-
-      status: isWeekend
-        ? "Weekend"
-        : "Present",
-    });
-}
+    let attendance;
+    if (existingAttendance) {
+      existingAttendance.checkIn = now;
+      existingAttendance.lateArrival = lateArrival;
+      existingAttendance.attendanceSource = "Web";
+      await existingAttendance.save();
+      attendance = existingAttendance;
+    } else {
+      attendance = await Attendance.create({
+        employee: employeeId,
+        attendanceDate,
+        date: now,
+        dayName,
+        isWeekend,
+        checkIn: now,
+        lateArrival,
+        attendanceSource: "Web",
+        status: "Present",
+      });
+    }
 
     return res.status(201).json({
       success: true,
-      message:
-        "Check In successful",
-
+      message: "Check In successful",
       data: {
         ...attendance.toObject(),
-
-        checkInTime:
-          moment(attendance.checkIn)
-            .tz("Asia/Kolkata")
-            .format("hh:mm A"),
+        checkInTime: moment(attendance.checkIn).tz(TZ).format("hh:mm A"),
       },
     });
-
   } catch (error) {
-
     console.log(error);
-
     return res.status(500).json({
       success: false,
-      message:
-        error.message,
+      message: error.message,
     });
   }
 };
+
 
 // ==========================================
 // CHECK OUT
@@ -141,22 +122,19 @@ if (existingAttendance) {
 exports.checkOut = async (req, res) => {
   try {
     const employeeId = req.user.id;
-
-    const todayStart = moment().startOf("day").toDate();
-    const todayEnd = moment().endOf("day").toDate();
+    const nowMoment = moment().tz(TZ);
+    const now = nowMoment.toDate();
+    const attendanceDate = getShiftDate(nowMoment);
 
     const attendance = await Attendance.findOne({
       employee: employeeId,
-      date: {
-        $gte: todayStart,
-        $lte: todayEnd,
-      },
+      attendanceDate,
     });
 
     if (!attendance) {
       return res.status(404).json({
         success: false,
-        message: "No attendance found for today",
+        message: "No attendance found for this shift",
       });
     }
 
@@ -167,7 +145,25 @@ exports.checkOut = async (req, res) => {
       });
     }
 
-    const now = new Date();
+    const activeBreaks = await BreakLog.find({
+      employee: employeeId,
+      attendance: attendance._id,
+      status: "Active",
+    });
+
+    for (const activeBreak of activeBreaks) {
+      activeBreak.breakEnd = now;
+      activeBreak.duration = Number(
+        ((activeBreak.breakEnd - activeBreak.breakStart) / (1000 * 60)).toFixed(2)
+      );
+      activeBreak.status = "Completed";
+      await activeBreak.save();
+
+      attendance.breakHours = Number(
+        (attendance.breakHours + activeBreak.duration / 60).toFixed(2)
+      );
+    }
+
     attendance.checkOut = now;
 
     const totalHours = (attendance.checkOut - attendance.checkIn) / (1000 * 60 * 60);
@@ -176,13 +172,17 @@ exports.checkOut = async (req, res) => {
     attendance.productiveHours = Number(
       (attendance.totalHours - attendance.breakHours).toFixed(2)
     );
+    if (attendance.productiveHours < 0) {
+      attendance.productiveHours = 0;
+    }
 
     attendance.overtimeHours =
       attendance.productiveHours > 8
         ? Number((attendance.productiveHours - 8).toFixed(2))
         : 0;
 
-    attendance.earlyLogout = now.getHours() < 18;
+    const checkoutTime = getShiftBoundary(attendanceDate, CHECK_OUT_TIME).add(1, "day");
+    attendance.earlyLogout = nowMoment.isBefore(checkoutTime);
 
     await attendance.save();
 

@@ -3,6 +3,7 @@ const Attendance = require("../model/Attendance");
 const SalaryStructure = require("../model/SalaryStructure");
 const PDFDocument = require("pdfkit");
 const User = require("../model/User");
+const path = require("path")
 
 // ==========================================
 // GENERATE PAYROLL
@@ -410,23 +411,13 @@ exports.downloadPayslip = async (req, res) => {
       .populate("salaryStructure");
 
     if (!payroll) {
-      return res.status(404).json({
-        success: false,
-        message: "Payroll not found",
-      });
+      return res.status(404).json({ success: false, message: "Payroll not found" });
     }
 
-    // ==========================================
     // ACCESS CONTROL
-    // ==========================================
-
     const loggedInUserId = req.user.id;
     const accountType = req.user.accountType;
-
-    if (
-      accountType === "Employee" &&
-      payroll.employee._id.toString() !== loggedInUserId
-    ) {
+    if (accountType === "Employee" && payroll.employee._id.toString() !== loggedInUserId) {
       return res.status(403).json({
         success: false,
         message: "You are not authorized to access this payslip",
@@ -437,13 +428,12 @@ exports.downloadPayslip = async (req, res) => {
     const salary = payroll.salaryStructure;
 
     const monthNames = [
-      "January","February","March","April","May","June",
-      "July","August","September","October","November","December",
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
     ];
-    const monthLabel = monthNames[(payroll.month - 1)] || payroll.month;
+    const monthLabel = monthNames[payroll.month - 1] || payroll.month;
 
     const doc = new PDFDocument({ margin: 0, size: "A4" });
-
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
@@ -451,217 +441,251 @@ exports.downloadPayslip = async (req, res) => {
     );
     doc.pipe(res);
 
+    // ── Geometry ──────────────────────────────────────────────
     const PAGE_W = 595;
     const PAGE_H = 842;
     const MARGIN = 40;
-    const COL_W = (PAGE_W - MARGIN * 2) / 2;
+    const CONTENT_W = PAGE_W - MARGIN * 2;
+    const GAP = 16;
+    const COL_W = (CONTENT_W - GAP) / 2;
+    const leftX = MARGIN;
+    const rightX = MARGIN + COL_W + GAP;
 
     // ── Colours ──────────────────────────────────────────────
-    const NAVY   = "#0C3B6E";
-    const BLUE   = "#1A6DB5";
-    const LGRAY  = "#F4F6FA";
-    const MGRAY  = "#D1D9E6";
-    const DGRAY  = "#4A5568";
-    const BLACK  = "#1A202C";
-    const WHITE  = "#FFFFFF";
-    const GREEN  = "#276749";
-    const GBG    = "#EBF8F1";
+    const NAVY = "#0C3B6E";
+    const BLUE = "#1A6DB5";
+    const LGRAY = "#F4F6FA";
+    const MGRAY = "#D1D9E6";
+    const DGRAY = "#4A5568";
+    const BLACK = "#1A202C";
+    const WHITE = "#FFFFFF";
+    const GREEN = "#276749";
+    const ACCENT = "#1A6DB5";
+    const SOFT = "#6B7280";
+    const LINE = "#E5E8EF";
 
-    // ── Helper: currency ─────────────────────────────────────
     const fmt = (n) =>
-      "Rs. " + Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      "Rs. " +
+      Number(n || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
 
-    // ── HEADER BAND ──────────────────────────────────────────
-    doc.rect(0, 0, PAGE_W, 110).fill(NAVY);
+    // ============================================================
+    // HEADER: logo left + company name beside it
+    // ============================================================
+    doc.rect(0, 0, PAGE_W, 100).fill(NAVY);
 
-    // Company name
+    let nameX = MARGIN;
+    try {
+      const logoPath = path.join(__dirname, "../assets/1ch.png"); // adjust if needed
+      doc.image(logoPath, MARGIN, 26, { fit: [48, 48] });
+      nameX = MARGIN + 60;
+    } catch (e) {
+      nameX = MARGIN;
+    }
+
     doc
       .fillColor(WHITE)
-      .fontSize(22)
+      .fontSize(19)
       .font("Helvetica-Bold")
-      .text("ALICE TECH SOLUTIONS", MARGIN, 28, { width: PAGE_W - MARGIN * 2, align: "left" });
+      .text("ALICE TECH SOLUTIONS", nameX, 30);
 
-    // Payslip label (right-aligned in header)
     doc
-      .fontSize(11)
-      .font("Helvetica")
       .fillColor("#A8C4E0")
-      .text(`PAYSLIP  •  ${monthLabel.toUpperCase()} ${payroll.year}`, MARGIN, 34, {
-        width: PAGE_W - MARGIN * 2,
+      .fontSize(8.5)
+      .font("Helvetica")
+      .text("123 Business Park, Tech City, India  •  hr@alicetech.com", nameX, 54);
+
+    // Payslip title (right)
+    doc
+      .fillColor(WHITE)
+      .fontSize(13)
+      .font("Helvetica-Bold")
+      .text("PAYSLIP", MARGIN, 30, { width: CONTENT_W, align: "right" });
+    doc
+      .fillColor("#A8C4E0")
+      .fontSize(9)
+      .font("Helvetica")
+      .text(`${monthLabel.toUpperCase()} ${payroll.year}`, MARGIN, 50, {
+        width: CONTENT_W,
         align: "right",
       });
 
-    // Thin accent line
-    doc.rect(0, 110, PAGE_W, 3).fill(BLUE);
+    doc.rect(0, 100, PAGE_W, 3).fill(BLUE);
 
-    // ── EMPLOYEE INFO BAND ───────────────────────────────────
-    doc.rect(0, 113, PAGE_W, 72).fill(LGRAY);
+    // ============================================================
+    // EMPLOYEE INFO STRIP
+    // ============================================================
+    let y = 103;
+    doc.rect(0, y, PAGE_W, 80).fill(LGRAY);
 
-    const infoY = 124;
-    const fields = [
+    const payDate = payroll.paidAt
+      ? new Date(payroll.paidAt)
+      : new Date(payroll.generatedAt);
+
+    const infoFields = [
       ["Employee Name", `${employee.firstName} ${employee.lastName}`],
-      ["Employee ID",   employee.employeeId],
-      ["Department",    employee.department],
-      ["Designation",   employee.designation],
+      ["Employee ID", employee.employeeId || "—"],
+      ["Department", employee.department || "—"],
+      ["Designation", employee.designation || "—"],
+      ["Pay Period", `${monthLabel} ${payroll.year}`],
+      ["Pay Date", payDate.toLocaleDateString("en-IN", {
+        day: "2-digit", month: "short", year: "numeric",
+      })],
     ];
 
-    fields.forEach(([label, value], i) => {
-      const col = i % 2;
-      const row = Math.floor(i / 2);
-      const x = MARGIN + col * COL_W;
-      const y = infoY + row * 28;
-
-      doc.fontSize(8).font("Helvetica").fillColor(DGRAY).text(label.toUpperCase(), x, y);
-      doc.fontSize(11).font("Helvetica-Bold").fillColor(BLACK).text(value || "—", x, y + 10);
+    const infoColW = CONTENT_W / 3;
+    infoFields.forEach(([label, value], i) => {
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      const x = MARGIN + col * infoColW;
+      const fy = y + 16 + row * 34;
+      doc.fontSize(7.5).font("Helvetica").fillColor(DGRAY).text(label.toUpperCase(), x, fy);
+      doc.fontSize(10.5).font("Helvetica-Bold").fillColor(BLACK).text(String(value), x, fy + 11, {
+        width: infoColW - 6,
+      });
     });
 
-    // ── SECTION HELPER ────────────────────────────────────────
-    let cursorY = 200;
+    // ============================================================
+    // BODY (Zoho/Amazon-style)
+    // ============================================================
+    const totalDeductions =
+      (salary.pf || 0) +
+      (salary.professionalTax || 0) +
+      (salary.otherDeductions || 0) +
+      (payroll.deductions || 0);
 
-    const sectionTitle = (title, color = BLUE) => {
-      doc.rect(MARGIN, cursorY, PAGE_W - MARGIN * 2, 24).fill(color);
-      doc
-        .fontSize(10)
-        .font("Helvetica-Bold")
-        .fillColor(WHITE)
-        .text(title, MARGIN + 10, cursorY + 7);
-      cursorY += 24;
-    };
+    // ── NET PAY HERO ──────────────────────────────────────────
+    let y2 = 205;
+    doc.roundedRect(MARGIN, y2, CONTENT_W, 78, 8).fill("#F0F7FF");
+    doc.roundedRect(MARGIN, y2, 6, 78, 8).fill(ACCENT);
 
-    const tableRow = (left, right, shade = false) => {
-      if (shade) doc.rect(MARGIN, cursorY, PAGE_W - MARGIN * 2, 22).fill(LGRAY);
-      doc
-        .fontSize(10)
-        .font("Helvetica")
-        .fillColor(DGRAY)
-        .text(left, MARGIN + 10, cursorY + 6);
-      doc
-        .fontSize(10)
-        .font("Helvetica-Bold")
-        .fillColor(BLACK)
-        .text(right, MARGIN, cursorY + 6, { width: PAGE_W - MARGIN * 2 - 10, align: "right" });
-      doc.rect(MARGIN, cursorY + 22, PAGE_W - MARGIN * 2, 0.5).fill(MGRAY);
-      cursorY += 22;
-    };
+    doc.fillColor(SOFT).fontSize(9).font("Helvetica")
+      .text("EMPLOYEE NET PAY", MARGIN + 22, y2 + 16);
+    doc.fillColor(NAVY).fontSize(28).font("Helvetica-Bold")
+      .text(fmt(payroll.netSalary), MARGIN + 22, y2 + 30);
 
-    const totalRow = (left, right, bgColor = NAVY, textColor = WHITE) => {
-      doc.rect(MARGIN, cursorY, PAGE_W - MARGIN * 2, 26).fill(bgColor);
-      doc.fontSize(10).font("Helvetica-Bold").fillColor(textColor).text(left, MARGIN + 10, cursorY + 8);
-      doc
-        .fontSize(10)
-        .font("Helvetica-Bold")
-        .fillColor(textColor)
-        .text(right, MARGIN, cursorY + 8, { width: PAGE_W - MARGIN * 2 - 10, align: "right" });
-      cursorY += 26;
-    };
+    doc.fillColor(SOFT).fontSize(9).font("Helvetica")
+      .text("Pay Period", MARGIN, y2 + 16, { width: CONTENT_W - 22, align: "right" });
+    doc.fillColor(BLACK).fontSize(11).font("Helvetica-Bold")
+      .text(`${monthLabel} ${payroll.year}`, MARGIN, y2 + 29, { width: CONTENT_W - 22, align: "right" });
 
-    // ── ATTENDANCE SUMMARY ────────────────────────────────────
-    sectionTitle("ATTENDANCE SUMMARY");
-
-    const attFields = [
-      ["Working Days",  payroll.workingDays],
-      ["Present Days",  payroll.presentDays],
-      ["Leave Days",    payroll.leaveDays],
-      ["Absent Days",   payroll.absentDays],
-      ["Overtime Hours",payroll.overtimeHours || 0],
-    ];
-    attFields.forEach(([l, v], i) => tableRow(l, String(v), i % 2 === 0));
-
-    cursorY += 14;
-
-    // ── EARNINGS ──────────────────────────────────────────────
-    sectionTitle("EARNINGS");
-
-    const earningRows = [
-      ["Basic Salary",       fmt(salary.basicSalary)],
-      ["House Rent Allowance (HRA)", fmt(salary.hra)],
-      ["Special Allowance",  fmt(salary.specialAllowance)],
-      ["Bonus",              fmt(salary.bonus)],
-    ];
-    earningRows.forEach(([l, v], i) => tableRow(l, v, i % 2 === 0));
-    totalRow("Gross Salary", fmt(salary.grossSalary));
-
-    cursorY += 14;
-
-    // ── DEDUCTIONS ────────────────────────────────────────────
-    sectionTitle("DEDUCTIONS", "#8B1A1A");
-
-    const deductionRows = [
-      ["Provident Fund (PF)",  fmt(salary.pf)],
-      ["Professional Tax",     fmt(salary.professionalTax)],
-      ["Other Deductions",     fmt(salary.otherDeductions)],
-      ["Absent Deduction",     fmt(payroll.deductions)],
-    ];
-    deductionRows.forEach(([l, v], i) => tableRow(l, v, i % 2 === 0));
-    totalRow(
-      "Total Deductions",
-      fmt(
-        (salary.pf || 0) +
-        (salary.professionalTax || 0) +
-        (salary.otherDeductions || 0) +
-        (payroll.deductions || 0)
-      ),
-      "#8B1A1A"
-    );
-
-    cursorY += 20;
-
-    // ── NET SALARY BOX ────────────────────────────────────────
-    doc.rect(MARGIN, cursorY, PAGE_W - MARGIN * 2, 56).fill(GBG);
-    doc.rect(MARGIN, cursorY, 5, 56).fill(GREEN);
-
-    doc
-      .fontSize(11)
-      .font("Helvetica")
-      .fillColor(GREEN)
-      .text("NET SALARY PAYABLE", MARGIN + 18, cursorY + 10);
-
-    doc
-      .fontSize(22)
-      .font("Helvetica-Bold")
-      .fillColor(GREEN)
-      .text(fmt(payroll.netSalary), MARGIN + 18, cursorY + 24);
-
-    // Payment status badge (right side of net box)
     const statusLabel = payroll.paymentStatus || "Pending";
     const statusColor = statusLabel === "Paid" ? GREEN : "#B7791F";
-    const statusBg    = statusLabel === "Paid" ? "#C6F6D5" : "#FEFCBF";
+    const statusBg = statusLabel === "Paid" ? "#D8F3E3" : "#FEF3C7";
+    doc.roundedRect(PAGE_W - MARGIN - 70, y2 + 48, 70, 18, 9).fill(statusBg);
+    doc.fillColor(statusColor).fontSize(8.5).font("Helvetica-Bold")
+      .text(statusLabel.toUpperCase(), PAGE_W - MARGIN - 70, y2 + 52, { width: 70, align: "center" });
 
-    doc.roundedRect(PAGE_W - MARGIN - 90, cursorY + 14, 86, 26, 4).fill(statusBg);
-    doc
-      .fontSize(11)
-      .font("Helvetica-Bold")
-      .fillColor(statusColor)
-      .text(statusLabel.toUpperCase(), PAGE_W - MARGIN - 90, cursorY + 21, { width: 86, align: "center" });
+    // ── SALARY DETAILS TABLE ──────────────────────────────────
+    let ty = y2 + 104;
 
-    cursorY += 76;
+    doc.fillColor(BLACK).fontSize(11).font("Helvetica-Bold")
+      .text("Salary Details", MARGIN, ty);
+    ty += 22;
 
-    // ── FOOTER ────────────────────────────────────────────────
-    doc.rect(0, PAGE_H - 48, PAGE_W, 48).fill(LGRAY);
-    doc.rect(0, PAGE_H - 48, PAGE_W, 1).fill(MGRAY);
+    const colL = MARGIN;
+    const colR = rightX;
+
+    doc.fillColor(SOFT).fontSize(8.5).font("Helvetica-Bold");
+    doc.text("EARNINGS", colL, ty);
+    doc.text("AMOUNT", colL, ty, { width: COL_W, align: "right" });
+    doc.text("DEDUCTIONS", colR, ty);
+    doc.text("AMOUNT", colR, ty, { width: COL_W, align: "right" });
+    ty += 14;
+    doc.rect(MARGIN, ty, CONTENT_W, 1).fill(LINE);
+    ty += 8;
+
+    const earnings = [
+      ["Basic Salary", salary.basicSalary],
+      ["House Rent Allowance", salary.hra],
+      ["Special Allowance", salary.specialAllowance],
+      ["Bonus", salary.bonus],
+    ];
+    const deductions = [
+      ["Provident Fund", salary.pf],
+      ["Professional Tax", salary.professionalTax],
+      ["Other Deductions", salary.otherDeductions],
+      ["Absent Deduction", payroll.deductions],
+    ];
+
+    const rowH = 22;
+    const rowsCount = Math.max(earnings.length, deductions.length);
+
+    for (let i = 0; i < rowsCount; i++) {
+      const rowY = ty + i * rowH;
+
+      if (earnings[i]) {
+        doc.fillColor(DGRAY).fontSize(9.5).font("Helvetica")
+          .text(earnings[i][0], colL, rowY);
+        doc.fillColor(BLACK).fontSize(9.5).font("Helvetica")
+          .text(fmt(earnings[i][1]), colL, rowY, { width: COL_W, align: "right" });
+      }
+      if (deductions[i]) {
+        doc.fillColor(DGRAY).fontSize(9.5).font("Helvetica")
+          .text(deductions[i][0], colR, rowY);
+        doc.fillColor(BLACK).fontSize(9.5).font("Helvetica")
+          .text(fmt(deductions[i][1]), colR, rowY, { width: COL_W, align: "right" });
+      }
+      doc.rect(MARGIN, rowY + rowH - 6, CONTENT_W, 0.5).fill(LINE);
+    }
+
+    // Vertical divider between columns
+    doc.rect(MARGIN + COL_W + GAP / 2, ty - 22, 0.5, rowsCount * rowH + 26).fill(LINE);
+
+    // Totals row
+    let totY = ty + rowsCount * rowH + 4;
+    doc.rect(MARGIN, totY, CONTENT_W, 26).fill("#F7F9FC");
+
+    doc.fillColor(BLACK).fontSize(9.5).font("Helvetica-Bold")
+      .text("Gross Earnings", colL + 4, totY + 8);
+    doc.text(fmt(salary.grossSalary), colL, totY + 8, { width: COL_W - 4, align: "right" });
+
+    doc.text("Total Deductions", colR + 4, totY + 8);
+    doc.text(fmt(totalDeductions), colR, totY + 8, { width: COL_W - 4, align: "right" });
+
+    // ── ATTENDANCE ────────────────────────────────────────────
+    let ay = totY + 48;
+    doc.fillColor(BLACK).fontSize(11).font("Helvetica-Bold").text("Attendance", MARGIN, ay);
+    ay += 20;
+
+    const stats = [
+      ["Working Days", payroll.workingDays],
+      ["Present", payroll.presentDays],
+      ["Leave", payroll.leaveDays],
+      ["Absent", payroll.absentDays],
+      ["Overtime", `${payroll.overtimeHours || 0}h`],
+    ];
+    const sW = CONTENT_W / stats.length;
+    doc.roundedRect(MARGIN, ay - 8, CONTENT_W, 48, 8).strokeColor(LINE).lineWidth(1).stroke();
+    stats.forEach(([label, value], i) => {
+      const x = MARGIN + i * sW;
+      doc.fillColor(NAVY).fontSize(15).font("Helvetica-Bold")
+        .text(String(value), x, ay, { width: sW, align: "center" });
+      doc.fillColor(SOFT).fontSize(7.5).font("Helvetica")
+        .text(label.toUpperCase(), x, ay + 19, { width: sW, align: "center" });
+    });
+
+    // ============================================================
+    // FOOTER
+    // ============================================================
+    doc.rect(0, PAGE_H - 44, PAGE_W, 44).fill(LGRAY);
+    doc.rect(0, PAGE_H - 44, PAGE_W, 1).fill(MGRAY);
 
     const generatedDate = new Date(payroll.generatedAt).toLocaleDateString("en-IN", {
       day: "2-digit", month: "long", year: "numeric",
     });
-
-    doc
-      .fontSize(8)
-      .font("Helvetica")
-      .fillColor(DGRAY)
-      .text(
-        `Generated on ${generatedDate}   •   This is a system-generated payslip and does not require a signature.`,
-        MARGIN,
-        PAGE_H - 30,
-        { width: PAGE_W - MARGIN * 2, align: "center" }
-      );
+    doc.fillColor(DGRAY).fontSize(8).font("Helvetica").text(
+      `Generated on ${generatedDate}   •   This is a system-generated payslip and does not require a signature.`,
+      MARGIN,
+      PAGE_H - 28,
+      { width: CONTENT_W, align: "center" }
+    );
 
     doc.end();
-
   } catch (error) {
     console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };

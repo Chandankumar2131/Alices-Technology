@@ -11,6 +11,7 @@ const {
   getEmployeesOnBreak,
   getLateEmployees,
   getEmployeeTimeline,
+  getEmployeeDetailForAdmin
 } = require("../controller/dashboardController"); 
 
 const { auth } = require("../middleware/auth");
@@ -71,5 +72,17 @@ router.get(
   isAdmin,
   getEmployeeTimeline
 );
+router.get(
+  "/employee-dashboard",
+  auth,
+  getEmployeeDashboard
+);
+router.get(
+  "/employee/:employeeId/detail",
+  auth,
+  isAdmin,
+  getEmployeeDetailForAdmin
+);
+
 
 module.exports = router;
