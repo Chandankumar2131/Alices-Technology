@@ -5,14 +5,7 @@ const Payroll = require("../model/Payroll");
 const BreakLog = require("../model/BreakLog");
 const moment = require("moment-timezone");
 const Submission = require("../model/Submission");
-
-const TZ = "Asia/Kolkata";
-const getShiftDate = (time = moment().tz(TZ)) => {
-  const localTime = moment(time).tz(TZ);
-  return localTime.hour() < 12
-    ? localTime.clone().subtract(1, "day").format("YYYY-MM-DD")
-    : localTime.format("YYYY-MM-DD");
-};
+const { TZ, getShiftDate } = require("../utils/attendanceShift");
 
 const getLiveProductiveHours = (attendance, totalBreakMinutes) => {
   if (!attendance?.checkIn) {

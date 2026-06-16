@@ -1,6 +1,6 @@
 const Attendance = require("../model/Attendance");
 const BreakLog = require("../model/BreakLog");
-const moment = require("moment-timezone");
+const { getShiftDate } = require("../utils/attendanceShift");
 
 // ==========================================
 // START BREAK
@@ -11,9 +11,7 @@ exports.startBreak = async (req, res) => {
 
     const { reason } = req.body;
 
-    const attendanceDate = moment()
-      .tz("Asia/Kolkata")
-      .format("YYYY-MM-DD");
+    const attendanceDate = getShiftDate();
 
     // Find today's attendance
     const attendance = await Attendance.findOne({
@@ -180,9 +178,7 @@ exports.getMyBreaks = async (req, res) => {
 // ==========================================
 exports.getTodayBreaks = async (req, res) => {
   try {
-    const attendanceDate = moment()
-      .tz("Asia/Kolkata")
-      .format("YYYY-MM-DD");
+    const attendanceDate = getShiftDate();
 
     const attendance = await Attendance.findOne({
       employee: req.user.id,

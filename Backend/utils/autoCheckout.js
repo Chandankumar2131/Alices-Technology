@@ -1,7 +1,7 @@
 const Attendance = require("../model/Attendance");
 const BreakLog = require("../model/BreakLog");
 const moment = require("moment-timezone");
-const { TZ, CHECK_OUT_TIME, getShiftBoundary } = require("./attendanceShift");
+const { TZ, AUTO_CHECKOUT_TIME, getShiftBoundary } = require("./attendanceShift");
 
 const calculateAttendanceTotals = (attendance) => {
   const totalHours =
@@ -67,7 +67,7 @@ const autoCheckoutOpenAttendances = async (now = moment().tz(TZ)) => {
   for (const attendance of openAttendances) {
     const autoCheckoutMoment = getShiftBoundary(
       attendance.attendanceDate,
-      CHECK_OUT_TIME
+      AUTO_CHECKOUT_TIME
     ).add(1, "day");
 
     if (nowMoment.isBefore(autoCheckoutMoment)) {

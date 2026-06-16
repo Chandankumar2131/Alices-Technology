@@ -21,7 +21,7 @@ import Badge from "../../components/common/Badge";
 import StatCard from "../../components/ui/StatCard";
 import AttendanceCalendar from "./AttendanceCalendar";
 import { BREAK_REASONS } from "../../constants/enums";
-import { fmtTime } from "../../utils/helpers";
+import { fmtHours, fmtTime } from "../../utils/helpers";
 import notify from "../../utils/toast";
 
 export default function MyAttendance() {
@@ -102,6 +102,10 @@ export default function MyAttendance() {
           <div className="text-sm">
             <p className="text-gray-500">Check Out</p>
             <p className="font-semibold">{fmtTime(todayAtt?.checkOut)}</p>
+          </div>
+          <div className="text-sm">
+            <p className="text-gray-500">Working Hours</p>
+            <p className="font-semibold">{fmtHours(myDashboard?.liveProductiveHours)}</p>
           </div>
           {todayAtt?.status && <Badge status={todayAtt.status} />}
 

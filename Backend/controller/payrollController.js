@@ -4,6 +4,7 @@ const SalaryStructure = require("../model/SalaryStructure");
 const PDFDocument = require("pdfkit");
 const User = require("../model/User");
 const path = require("path")
+const { TZ } = require("../utils/attendanceShift");
 
 // ==========================================
 // GENERATE PAYROLL
@@ -533,8 +534,8 @@ exports.downloadPayslip = async (req, res) => {
       ["Department", employee.department || "—"],
       ["Designation", employee.designation || "—"],
       ["Pay Period", `${monthLabel} ${payroll.year}`],
-      ["Pay Date", payDate.toLocaleDateString("en-IN", {
-        day: "2-digit", month: "short", year: "numeric",
+      ["Pay Date", payDate.toLocaleDateString("en-US", {
+        day: "2-digit", month: "short", year: "numeric", timeZone: TZ,
       })],
     ];
 
@@ -676,8 +677,8 @@ exports.downloadPayslip = async (req, res) => {
     doc.rect(0, PAGE_H - 44, PAGE_W, 44).fill(LGRAY);
     doc.rect(0, PAGE_H - 44, PAGE_W, 1).fill(MGRAY);
 
-    const generatedDate = new Date(payroll.generatedAt).toLocaleDateString("en-IN", {
-      day: "2-digit", month: "long", year: "numeric",
+    const generatedDate = new Date(payroll.generatedAt).toLocaleDateString("en-US", {
+      day: "2-digit", month: "long", year: "numeric", timeZone: TZ,
     });
     doc.fillColor(DGRAY).fontSize(8).font("Helvetica").text(
       `Generated on ${generatedDate}   •   This is a system-generated payslip and does not require a signature.`,
