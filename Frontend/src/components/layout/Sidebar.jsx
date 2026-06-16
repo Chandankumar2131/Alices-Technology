@@ -28,7 +28,7 @@ export default function Sidebar() {
   return (
     <aside className="hidden w-64 shrink-0 border-r border-slate-800 bg-slate-900/80 p-4 backdrop-blur-sm md:flex md:flex-col">
       <div className="mb-6 px-2 text-xl font-bold bg-gradient-to-r from-cyan-300 to-indigo-300 bg-clip-text text-transparent">
-        HRM Portal
+        Alice's HRM Portal
       </div>
 
       <nav className="flex-1 space-y-1">

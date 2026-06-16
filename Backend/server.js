@@ -8,6 +8,7 @@ const salaryRoutes = require("./routes/salaryRoutes");
 const payrollRoutes = require("./routes/payrollRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const submissionRoutes = require("./routes/submissionRoutes");
+const { startAutoCheckoutJob } = require("./utils/autoCheckout");
 
 
 require("dotenv").config();
@@ -65,6 +66,8 @@ app.get("/", (req, res) => {
 // ================================
 
 const PORT = process.env.PORT || 4000;
+
+startAutoCheckoutJob();
 
 app.listen(PORT, () => {
   console.log(

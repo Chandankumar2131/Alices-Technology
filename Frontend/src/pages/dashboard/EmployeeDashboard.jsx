@@ -14,6 +14,8 @@ export default function EmployeeDashboard() {
 
   useEffect(() => {
     dispatch(fetchMyDashboard());
+    const id = setInterval(() => dispatch(fetchMyDashboard()), 30000);
+    return () => clearInterval(id);
   }, [dispatch]);
 
   if (loading && !myDashboard) return <Spinner full />;
@@ -60,6 +62,10 @@ export default function EmployeeDashboard() {
           <div className="text-sm">
             <p className="text-gray-500">Today's Breaks</p>
             <p className="font-semibold">{Math.round(s.totalBreakMinutes ?? 0)} min</p>
+          </div>
+          <div className="text-sm">
+            <p className="text-gray-500">Working Hours</p>
+            <p className="font-semibold">{fmtHours(s.liveProductiveHours)}</p>
           </div>
           {todayAtt?.status && <Badge status={todayAtt.status} />}
           {s.activeBreak && <Badge status="On Break" />}

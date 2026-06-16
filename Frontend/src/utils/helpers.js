@@ -36,4 +36,15 @@ export const MONTHS = [
 
 export const monthName = (m) => MONTHS[m - 1] || m;
 
-export const fmtHours = (hours) => `${hours ?? 0} Hrs`;
+export const fmtHours = (hours) => {
+  const totalMinutes = Math.round(Number(hours || 0) * 60);
+
+  if (totalMinutes < 60) {
+    return `${totalMinutes} min`;
+  }
+
+  const wholeHours = Math.floor(totalMinutes / 60);
+  const minutes = String(totalMinutes % 60).padStart(2, "0");
+
+  return `${wholeHours}:${minutes} Hrs`;
+};

@@ -407,7 +407,10 @@ exports.downloadPayslip = async (req, res) => {
     const { payrollId } = req.params;
 
     const payroll = await Payroll.findById(payrollId)
-      .populate("employee")
+      .populate(
+        "employee",
+        "firstName lastName email employeeId department designation"
+      )
       .populate("salaryStructure");
 
     if (!payroll) {
@@ -495,7 +498,7 @@ exports.downloadPayslip = async (req, res) => {
       .fillColor("#A8C4E0")
       .fontSize(8.5)
       .font("Helvetica")
-      .text("123 Business Park, Tech City, India  •  hr@alicetech.com", nameX, 54);
+      .text("Siddhivinayak tower, Makarba, Ahmedabad, India  •  info@alicestechsolutions.com", nameX, 54);
 
     // Payslip title (right)
     doc

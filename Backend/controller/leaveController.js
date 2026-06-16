@@ -311,10 +311,12 @@ exports.getLeaveById =  async (req, res) => {
           leaveId
         )
           .populate(
-            "employee"
+            "employee",
+            "firstName lastName email employeeId department designation"
           )
           .populate(
-            "approvedBy"
+            "approvedBy",
+            "firstName lastName email employeeId"
           );
 
       if (!leave) {

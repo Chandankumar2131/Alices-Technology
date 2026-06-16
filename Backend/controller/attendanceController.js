@@ -1,33 +1,26 @@
 const Attendance = require("../model/Attendance");
 const BreakLog = require("../model/BreakLog");
 const moment = require("moment-timezone");
-
-const TZ = "Asia/Kolkata";
-const CHECK_IN_START = { hour: 19, minute: 0 };
-const CHECK_IN_END = { hour: 19, minute: 30 };
-const CHECK_OUT_TIME = { hour: 4, minute: 0 };
-
-const getShiftDate = (time = moment().tz(TZ)) => {
-  const localTime = moment(time).tz(TZ);
-  return localTime.hour() < 12
-    ? localTime.clone().subtract(1, "day").format("YYYY-MM-DD")
-    : localTime.format("YYYY-MM-DD");
-};
-
-const getShiftBoundary = (shiftDate, boundary) =>
-  moment.tz(
-    `${shiftDate} ${String(boundary.hour).padStart(2, "0")}:${String(
-      boundary.minute
-    ).padStart(2, "0")}`,
-    "YYYY-MM-DD HH:mm",
-    TZ
-  );
+const {
+  TZ,
+  CHECK_IN_START,
+  CHECK_IN_END,
+  CHECK_OUT_TIME,
+  getShiftDate,
+  getShiftBoundary,
+} = require("../utils/attendanceShift");
+const {
+  autoCheckoutOpenAttendances,
+  calculateAttendanceTotals,
+} = require("../utils/autoCheckout");
 
 // ==========================================
 // CHECK IN
 // ==========================================
 exports.checkIn = async (req, res) => {
   try {
+    await autoCheckoutOpenAttendances();
+
     const employeeId = req.user.id;
     const nowMoment = moment().tz(TZ);
     const now = nowMoment.toDate();
@@ -121,6 +114,8 @@ exports.checkIn = async (req, res) => {
 // ==========================================
 exports.checkOut = async (req, res) => {
   try {
+    await autoCheckoutOpenAttendances();
+
     const employeeId = req.user.id;
     const nowMoment = moment().tz(TZ);
     const now = nowMoment.toDate();
@@ -166,20 +161,7 @@ exports.checkOut = async (req, res) => {
 
     attendance.checkOut = now;
 
-    const totalHours = (attendance.checkOut - attendance.checkIn) / (1000 * 60 * 60);
-    attendance.totalHours = Number(totalHours.toFixed(2));
-
-    attendance.productiveHours = Number(
-      (attendance.totalHours - attendance.breakHours).toFixed(2)
-    );
-    if (attendance.productiveHours < 0) {
-      attendance.productiveHours = 0;
-    }
-
-    attendance.overtimeHours =
-      attendance.productiveHours > 8
-        ? Number((attendance.productiveHours - 8).toFixed(2))
-        : 0;
+    calculateAttendanceTotals(attendance);
 
     const checkoutTime = getShiftBoundary(attendanceDate, CHECK_OUT_TIME).add(1, "day");
     attendance.earlyLogout = nowMoment.isBefore(checkoutTime);

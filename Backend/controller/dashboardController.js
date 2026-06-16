@@ -14,6 +14,20 @@ const getShiftDate = (time = moment().tz(TZ)) => {
     : localTime.format("YYYY-MM-DD");
 };
 
+const getLiveProductiveHours = (attendance, totalBreakMinutes) => {
+  if (!attendance?.checkIn) {
+    return 0;
+  }
+
+  if (attendance.checkOut) {
+    return Number((attendance.productiveHours || 0).toFixed(2));
+  }
+
+  const totalMinutes = moment().tz(TZ).diff(moment(attendance.checkIn), "minutes");
+  const productiveMinutes = Math.max(totalMinutes - totalBreakMinutes, 0);
+  return Number((productiveMinutes / 60).toFixed(2));
+};
+
 
 // ==========================================
 // ADMIN DASHBOARD
@@ -24,14 +38,18 @@ exports.getAdminDashboard = async (req, res) => {
     const today =
       getShiftDate();
 
-    const totalEmployees =
-      await User.countDocuments({
-        accountType: "Employee",
-        isActive: true,
-      });
+    const employeeIds = await User.distinct("_id", {
+      accountType: "Employee",
+      isActive: true,
+    });
+
+    const totalEmployees = employeeIds.length;
 
     const presentToday =
       await Attendance.countDocuments({
+        employee: {
+          $in: employeeIds,
+        },
         attendanceDate: today,
         status: {
           $in: ["Present", "Half Day"],
@@ -40,12 +58,18 @@ exports.getAdminDashboard = async (req, res) => {
 
     const weekendToday =
       await Attendance.countDocuments({
+        employee: {
+          $in: employeeIds,
+        },
         attendanceDate: today,
         status: "Weekend",
       });
 
     const leaveToday =
       await Leave.countDocuments({
+        employee: {
+          $in: employeeIds,
+        },
         status: "Approved",
         startDate: {
           $lte: new Date(),
@@ -57,11 +81,17 @@ exports.getAdminDashboard = async (req, res) => {
 
     const activeBreaks =
       await BreakLog.countDocuments({
+        employee: {
+          $in: employeeIds,
+        },
         status: "Active",
       });
 
     const checkedOut =
       await Attendance.countDocuments({
+        employee: {
+          $in: employeeIds,
+        },
         attendanceDate: today,
         checkOut: {
           $ne: null,
@@ -70,6 +100,9 @@ exports.getAdminDashboard = async (req, res) => {
 
     const lateEmployees =
       await Attendance.countDocuments({
+        employee: {
+          $in: employeeIds,
+        },
         attendanceDate: today,
         lateArrival: true,
       });
@@ -90,6 +123,9 @@ exports.getAdminDashboard = async (req, res) => {
 
     const payrolls =
       await Payroll.find({
+        employee: {
+          $in: employeeIds,
+        },
         month: currentMonth,
         year: currentYear,
       });
@@ -141,8 +177,16 @@ exports.getLiveEmployees = async (req, res) => {
     const today =
       getShiftDate();
 
+    const employeeIds = await User.distinct("_id", {
+      accountType: "Employee",
+      isActive: true,
+    });
+
     const attendance =
       await Attendance.find({
+        employee: {
+          $in: employeeIds,
+        },
         attendanceDate: today,
       })
         .populate(
@@ -202,7 +246,7 @@ exports.getLiveEmployees = async (req, res) => {
                 record.totalHours,
 
               productiveHours:
-                record.productiveHours,
+                getLiveProductiveHours(record, totalBreakMinutes),
 
               lateArrival:
                 record.lateArrival,
@@ -286,6 +330,11 @@ exports.getEmployeeDashboard = async (req, res) => {
       }, 0);
     }
 
+    const liveProductiveHours = getLiveProductiveHours(
+      attendance,
+      totalBreakMinutes
+    );
+
     // Leave summary
     const totalLeaves = await Leave.countDocuments({
       employee: employeeId,
@@ -336,6 +385,7 @@ exports.getEmployeeDashboard = async (req, res) => {
         activeBreak,
         todayBreaks,
         totalBreakMinutes,
+        liveProductiveHours,
         leaves: {
           total: totalLeaves,
           approved: approvedLeaves,
@@ -414,7 +464,15 @@ exports.getTodayAttendance = async (req, res) => {
   try {
     const today = getShiftDate();
 
+    const employeeIds = await User.distinct("_id", {
+      accountType: "Employee",
+      isActive: true,
+    });
+
     const attendance = await Attendance.find({
+      employee: {
+        $in: employeeIds,
+      },
       attendanceDate: today,
     })
       .populate(
@@ -446,7 +504,15 @@ exports.getTodayAttendance = async (req, res) => {
 exports.getEmployeesOnBreak = async (req, res) => {
   try {
 
+    const employeeIds = await User.distinct("_id", {
+      accountType: "Employee",
+      isActive: true,
+    });
+
     const breaks = await BreakLog.find({
+      employee: {
+        $in: employeeIds,
+      },
       status: "Active",
     })
       .populate(
@@ -480,7 +546,15 @@ exports.getLateEmployees = async (req, res) => {
 
     const today = getShiftDate();
 
+    const employeeIds = await User.distinct("_id", {
+      accountType: "Employee",
+      isActive: true,
+    });
+
     const employees = await Attendance.find({
+      employee: {
+        $in: employeeIds,
+      },
       attendanceDate: today,
       lateArrival: true,
     }).populate(

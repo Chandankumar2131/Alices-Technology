@@ -65,10 +65,12 @@ exports.createAdmin = async (req, res) => {
       image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName}%20${lastName}`,
     });
 
+    const adminResponse = admin.toObject();
+
     return res.status(201).json({
       success: true,
       message: "Admin created successfully",
-      data: admin,
+      data: adminResponse,
     });
   } catch (error) {
     console.log(error);
@@ -183,7 +185,7 @@ exports.login = async (req, res) => {
 
     const user = await User.findOne({
       email,
-    }).populate("additionalDetails");
+    }).select("+password").populate("additionalDetails");
 
     if (!user) {
       return res.status(404).json({
@@ -238,8 +240,7 @@ exports.login = async (req, res) => {
 
     await user.save();
 
-    // Remove Password
-    user.password = undefined;
+    const userResponse = user.toObject();
 
     const options = {
       expires: new Date(
@@ -256,7 +257,7 @@ exports.login = async (req, res) => {
     ).status(200).json({
       success: true,
       token,
-      user,
+      user: userResponse,
       message: "Login successful",
     });
 
@@ -320,7 +321,7 @@ exports.deactivateEmployee =
           {
             new: true,
           }
-        );
+        ).select("-password -token -resetPasswordExpires");
 
       if (!employee) {
         return res.status(404).json({
@@ -492,7 +493,7 @@ exports.changePassword = async (req, res) => {
       });
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("+password");
     if (!user) {
       return res.status(404).json({
         success: false,

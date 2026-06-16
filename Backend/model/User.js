@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+      select: false,
     },
 
    accountType: {
@@ -50,10 +51,12 @@ const userSchema = new mongoose.Schema(
 
     token: {
       type: String,
+      select: false,
     },
 
     resetPasswordExpires: {
       type: Date,
+      select: false,
     },
 
     isActive: {
@@ -92,6 +95,22 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: {
+      transform: function (_doc, ret) {
+        delete ret.password;
+        delete ret.token;
+        delete ret.resetPasswordExpires;
+        return ret;
+      },
+    },
+    toObject: {
+      transform: function (_doc, ret) {
+        delete ret.password;
+        delete ret.token;
+        delete ret.resetPasswordExpires;
+        return ret;
+      },
+    },
   }
 );
 
