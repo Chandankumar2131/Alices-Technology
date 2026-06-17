@@ -1,6 +1,6 @@
 const moment = require("moment-timezone");
 
-const TZ = "America/New_York";
+const TZ = process.env.ATTENDANCE_TZ || "Asia/Kolkata";
 const CHECK_IN_START = { hour: 19, minute: 0 };
 const CHECK_IN_END = { hour: 19, minute: 10 };
 const CHECK_OUT_TIME = { hour: 4, minute: 0 };
