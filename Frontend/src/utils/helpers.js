@@ -36,6 +36,7 @@ export const fmtTime = (d) =>
         hour: "2-digit",
         minute: "2-digit",
         hour12: true,
+        timeZone: APP_TIME_ZONE,
       })
     : EMPTY_VALUE;
 

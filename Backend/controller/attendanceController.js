@@ -223,49 +223,42 @@ exports.getAttendanceByMonth = async (req, res) => {
       });
     }
 
-    const startDate = moment(
-      `${year}-${month}-01`,
-      "YYYY-MM-DD"
-    )
-      .startOf("month")
-      .toDate();
+    const monthStart = moment.tz(
+      `${year}-${String(month).padStart(2, "0")}-01`,
+      "YYYY-MM-DD",
+      TZ
+    );
 
-    const endDate = moment(
-      `${year}-${month}-01`,
-      "YYYY-MM-DD"
-    )
-      .endOf("month")
-      .toDate();
+    const monthEnd = monthStart.clone().endOf("month");
+
+    const startDateKey = monthStart.format("YYYY-MM-DD");
+    const endDateKey = monthEnd.format("YYYY-MM-DD");
 
     const attendanceRecords =
       await Attendance.find({
         employee: employeeId,
-        date: {
-          $gte: startDate,
-          $lte: endDate,
+        attendanceDate: {
+          $gte: startDateKey,
+          $lte: endDateKey,
         },
-      }).sort({ date: 1 });
+      }).sort({ attendanceDate: 1 });
 
     const attendanceMap = {};
 
     attendanceRecords.forEach(
       (record) => {
-        attendanceMap[
-          moment(record.date).format(
-            "YYYY-MM-DD"
-          )
-        ] = record;
+        attendanceMap[record.attendanceDate] = record;
       }
     );
 
     const calendar = [];
 
     let current =
-      moment(startDate);
+      monthStart.clone();
 
     while (
       current.isSameOrBefore(
-        endDate,
+        monthEnd,
         "day"
       )
     ) {
@@ -294,7 +287,9 @@ exports.getAttendanceByMonth = async (req, res) => {
         calendar.push({
           _id: record._id,
 
-          date: record.date,
+          date: record.attendanceDate,
+
+          attendanceDate: record.attendanceDate,
 
           dayName,
 
@@ -328,7 +323,9 @@ exports.getAttendanceByMonth = async (req, res) => {
       } else {
         calendar.push({
           date:
-            current.toDate(),
+            dateKey,
+
+          attendanceDate: dateKey,
 
           dayName,
 
