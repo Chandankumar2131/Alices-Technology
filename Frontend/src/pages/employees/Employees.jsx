@@ -22,6 +22,7 @@ const empty = {
   lastName: "",
   email: "",
   password: "",
+  employeeId: "",
   department: "",
   designation: "",
   joiningDate: "",
@@ -47,8 +48,8 @@ export default function Employees() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!form.firstName || !form.lastName || !form.email || !form.password || !form.joiningDate) {
-      notify.error("First name, last name, email, password and joining date are required");
+    if (!form.firstName || !form.lastName || !form.email || !form.password || !form.employeeId || !form.joiningDate) {
+      notify.error("First name, last name, email, password, employee ID and joining date are required");
       return;
     }
     setBusy(true);
@@ -219,6 +220,7 @@ export default function Employees() {
           </div>
           <Input label="Email" type="email" name="email" value={form.email} onChange={handleChange} />
           <Input label="Password" type="password" name="password" value={form.password} onChange={handleChange} />
+          <Input label="Employee ID" name="employeeId" value={form.employeeId} onChange={handleChange} />
           <div className="grid grid-cols-2 gap-3">
             <Input label="Department" name="department" value={form.department} onChange={handleChange} />
             <Input label="Designation" name="designation" value={form.designation} onChange={handleChange} />

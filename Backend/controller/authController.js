@@ -92,6 +92,7 @@ exports.createEmployee = async (req, res) => {
       lastName,
       email,
       password,
+      employeeId,
       department,
       designation,
       joiningDate,
@@ -103,11 +104,21 @@ exports.createEmployee = async (req, res) => {
       !lastName ||
       !email ||
       !password ||
+      !employeeId ||
       !joiningDate
     ) {
       return res.status(400).json({
         success: false,
-        message: "First name, last name, email, password and joining date are mandatory",
+        message: "First name, last name, email, password, employee ID and joining date are mandatory",
+      });
+    }
+
+    const normalizedEmployeeId = String(employeeId).trim();
+
+    if (!normalizedEmployeeId) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee ID is mandatory",
       });
     }
 
@@ -130,6 +141,17 @@ exports.createEmployee = async (req, res) => {
       });
     }
 
+    const existingEmployeeId = await User.findOne({
+      employeeId: normalizedEmployeeId,
+    });
+
+    if (existingEmployeeId) {
+      return res.status(409).json({
+        success: false,
+        message: "Employee ID already exists",
+      });
+    }
+
     // Hash Password
     const hashedPassword = await bcrypt.hash(
       password,
@@ -138,11 +160,6 @@ exports.createEmployee = async (req, res) => {
 
     // Create Empty Profile
     const profileDetails = await Profile.create({});
-
-    // Employee ID
-    const employeeId =
-      "EMP" +
-      Date.now().toString().slice(-6);
 
     // Create User
     const user = await User.create({
@@ -154,7 +171,7 @@ exports.createEmployee = async (req, res) => {
       department,
       designation,
       joiningDate: selectedJoiningDate,
-      employeeId,
+      employeeId: normalizedEmployeeId,
       additionalDetails: profileDetails._id,
       image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName}%20${lastName}`,
     });
