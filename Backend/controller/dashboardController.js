@@ -7,18 +7,32 @@ const moment = require("moment-timezone");
 const Submission = require("../model/Submission");
 const { TZ, getShiftDate } = require("../utils/attendanceShift");
 
-const getLiveProductiveHours = (attendance, totalBreakMinutes) => {
+const getLiveAttendanceHours = (attendance, totalBreakMinutes) => {
   if (!attendance?.checkIn) {
-    return 0;
+    return {
+      totalHours: 0,
+      productiveHours: 0,
+    };
   }
 
   if (attendance.checkOut) {
-    return Number((attendance.productiveHours || 0).toFixed(2));
+    return {
+      totalHours: Number((attendance.totalHours || 0).toFixed(2)),
+      productiveHours: Number((attendance.productiveHours || 0).toFixed(2)),
+    };
   }
 
   const totalMinutes = moment().tz(TZ).diff(moment(attendance.checkIn), "minutes");
+  const totalHours = Math.max(totalMinutes, 0) / 60;
   const productiveMinutes = Math.max(totalMinutes - totalBreakMinutes, 0);
-  return Number((productiveMinutes / 60).toFixed(2));
+  return {
+    totalHours: Number(totalHours.toFixed(2)),
+    productiveHours: Number((productiveMinutes / 60).toFixed(2)),
+  };
+};
+
+const getLiveProductiveHours = (attendance, totalBreakMinutes) => {
+  return getLiveAttendanceHours(attendance, totalBreakMinutes).productiveHours;
 };
 
 
@@ -223,6 +237,8 @@ exports.getLiveEmployees = async (req, res) => {
               return sum;
             }, 0);
 
+            const liveHours = getLiveAttendanceHours(record, totalBreakMinutes);
+
             return {
               employee:
                 record.employee,
@@ -236,10 +252,10 @@ exports.getLiveEmployees = async (req, res) => {
                 record.checkOut,
 
               totalHours:
-                record.totalHours,
+                liveHours.totalHours,
 
               productiveHours:
-                getLiveProductiveHours(record, totalBreakMinutes),
+                liveHours.productiveHours,
 
               lateArrival:
                 record.lateArrival,
@@ -323,7 +339,7 @@ exports.getEmployeeDashboard = async (req, res) => {
       }, 0);
     }
 
-    const liveProductiveHours = getLiveProductiveHours(
+    const liveHours = getLiveAttendanceHours(
       attendance,
       totalBreakMinutes
     );
@@ -378,7 +394,8 @@ exports.getEmployeeDashboard = async (req, res) => {
         activeBreak,
         todayBreaks,
         totalBreakMinutes,
-        liveProductiveHours,
+        liveTotalHours: liveHours.totalHours,
+        liveProductiveHours: liveHours.productiveHours,
         leaves: {
           total: totalLeaves,
           approved: approvedLeaves,
@@ -586,10 +603,27 @@ exports.getEmployeeTimeline = async (req, res) => {
         attendanceDate: -1,
       });
 
+    const timeline = attendance.map((record) => {
+      const totalBreakMinutes = (record.breakLogs || []).reduce((sum, b) => {
+        if (b.duration) return sum + b.duration;
+        if (b.status === "Active" && b.breakStart) {
+          return sum + moment().tz(TZ).diff(moment(b.breakStart), "minutes");
+        }
+        return sum;
+      }, 0);
+      const liveHours = getLiveAttendanceHours(record, totalBreakMinutes);
+
+      return {
+        ...record.toObject(),
+        totalHours: liveHours.totalHours,
+        productiveHours: liveHours.productiveHours,
+      };
+    });
+
     return res.status(200).json({
       success: true,
-      count: attendance.length,
-      data: attendance,
+      count: timeline.length,
+      data: timeline,
     });
 
   } catch (error) {
@@ -622,9 +656,26 @@ exports.getEmployeeDetailForAdmin = async (req, res) => {
       breaks = await BreakLog.find({ attendance: attendance._id }).sort({ breakStart: -1 });
     }
 
+    let attendanceData = attendance;
+    if (attendance) {
+      const totalBreakMinutes = breaks.reduce((sum, b) => {
+        if (b.duration) return sum + b.duration;
+        if (b.status === "Active" && b.breakStart) {
+          return sum + moment().tz(TZ).diff(moment(b.breakStart), "minutes");
+        }
+        return sum;
+      }, 0);
+      const liveHours = getLiveAttendanceHours(attendance, totalBreakMinutes);
+      attendanceData = {
+        ...attendance.toObject(),
+        totalHours: liveHours.totalHours,
+        productiveHours: liveHours.productiveHours,
+      };
+    }
+
     return res.status(200).json({
       success: true,
-      data: { employee, attendance, activeBreak, breaks },
+      data: { employee, attendance: attendanceData, activeBreak, breaks },
     });
   } catch (error) {
     console.log(error);
@@ -668,11 +719,28 @@ exports.getEmployeeDetailForAdmin = async (req, res) => {
       }).sort({ breakStart: -1 });
     }
 
+    let attendanceData = attendance;
+    if (attendance) {
+      const totalBreakMinutes = breaks.reduce((sum, b) => {
+        if (b.duration) return sum + b.duration;
+        if (b.status === "Active" && b.breakStart) {
+          return sum + moment().tz(TZ).diff(moment(b.breakStart), "minutes");
+        }
+        return sum;
+      }, 0);
+      const liveHours = getLiveAttendanceHours(attendance, totalBreakMinutes);
+      attendanceData = {
+        ...attendance.toObject(),
+        totalHours: liveHours.totalHours,
+        productiveHours: liveHours.productiveHours,
+      };
+    }
+
     return res.status(200).json({
       success: true,
       data: {
         employee,
-        attendance,
+        attendance: attendanceData,
         activeBreak,
         breaks,
       },

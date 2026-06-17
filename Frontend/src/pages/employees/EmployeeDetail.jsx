@@ -172,7 +172,7 @@ function AttendanceTab({ timeline }) {
     { key: "status", header: "Status", render: (r) => <Badge status={r.status} /> },
     { key: "checkIn", header: "In", render: (r) => fmtTime(r.checkIn) },
     { key: "checkOut", header: "Out", render: (r) => fmtTime(r.checkOut) },
-    { key: "totalHours", header: "Total Hrs", render: (r) => r.totalHours ?? 0 },
+    { key: "totalHours", header: "Total Hrs", render: (r) => fmtHours(r.totalHours) },
     { key: "productiveHours", header: "Productive", render: (r) => fmtHours(r.productiveHours) },
     { key: "lateArrival", header: "Late", render: (r) => (r.lateArrival ? "Yes" : "No") },
   ];
