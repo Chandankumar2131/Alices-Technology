@@ -1,5 +1,6 @@
 const Attendance = require("../model/Attendance");
 const BreakLog = require("../model/BreakLog");
+const AttendanceCorrection = require("../model/AttendanceCorrection");
 const moment = require("moment-timezone");
 const {
   TZ,
@@ -470,6 +471,254 @@ exports.getEmployeeAttendance = async (req, res) => {
       success: true,
       count: attendance.length,
       data: attendance,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// REQUEST CHECK-IN CORRECTION
+// ==========================================
+exports.requestCheckInCorrection = async (req, res) => {
+  try {
+    const employeeId = req.user.id;
+    const { attendanceId, requestedCheckIn, reason } = req.body;
+
+    if (!attendanceId || !requestedCheckIn || !reason) {
+      return res.status(400).json({
+        success: false,
+        message: "Attendance, requested check-in time and reason are required",
+      });
+    }
+
+    const attendance = await Attendance.findOne({
+      _id: attendanceId,
+      employee: employeeId,
+    });
+
+    if (!attendance || !attendance.checkIn) {
+      return res.status(404).json({
+        success: false,
+        message: "Attendance record not found",
+      });
+    }
+
+    const requestedMoment = moment.tz(requestedCheckIn, TZ);
+
+    if (!requestedMoment.isValid()) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid requested check-in time",
+      });
+    }
+
+    const shiftStart = getShiftBoundary(attendance.attendanceDate, CHECK_IN_START);
+    const shiftEnd = getShiftBoundary(attendance.attendanceDate, CHECK_OUT_TIME).add(1, "day");
+
+    if (requestedMoment.isBefore(shiftStart) || requestedMoment.isAfter(shiftEnd)) {
+      return res.status(400).json({
+        success: false,
+        message: "Requested check-in must be within the attendance shift",
+      });
+    }
+
+    if (attendance.checkOut && requestedMoment.isAfter(moment(attendance.checkOut))) {
+      return res.status(400).json({
+        success: false,
+        message: "Requested check-in cannot be after check-out",
+      });
+    }
+
+    const correction = await AttendanceCorrection.create({
+      employee: employeeId,
+      attendance: attendance._id,
+      currentCheckIn: attendance.checkIn,
+      requestedCheckIn: requestedMoment.toDate(),
+      reason,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Attendance correction request submitted",
+      data: correction,
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "A pending correction request already exists for this attendance",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// MY CHECK-IN CORRECTION REQUESTS
+// ==========================================
+exports.getMyCorrectionRequests = async (req, res) => {
+  try {
+    const requests = await AttendanceCorrection.find({ employee: req.user.id })
+      .populate("attendance")
+      .populate("approvedBy", "firstName lastName email")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: requests.length,
+      data: requests,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// ADMIN - ALL CHECK-IN CORRECTION REQUESTS
+// ==========================================
+exports.getAllCorrectionRequests = async (_req, res) => {
+  try {
+    const requests = await AttendanceCorrection.find()
+      .populate("employee", "firstName lastName email employeeId department designation")
+      .populate("attendance")
+      .populate("approvedBy", "firstName lastName email")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: requests.length,
+      data: requests,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// ADMIN - APPROVE CHECK-IN CORRECTION
+// ==========================================
+exports.approveCorrectionRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { adminRemarks } = req.body;
+
+    const correction = await AttendanceCorrection.findById(requestId);
+
+    if (!correction) {
+      return res.status(404).json({
+        success: false,
+        message: "Correction request not found",
+      });
+    }
+
+    if (correction.status !== "Pending") {
+      return res.status(400).json({
+        success: false,
+        message: "Correction request is already processed",
+      });
+    }
+
+    const attendance = await Attendance.findById(correction.attendance);
+
+    if (!attendance) {
+      return res.status(404).json({
+        success: false,
+        message: "Attendance record not found",
+      });
+    }
+
+    attendance.checkIn = correction.requestedCheckIn;
+    attendance.lateArrival = moment(attendance.checkIn).tz(TZ).isAfter(
+      getShiftBoundary(attendance.attendanceDate, CHECK_IN_END)
+    );
+
+    if (attendance.checkOut) {
+      calculateAttendanceTotals(attendance);
+    }
+
+    attendance.remarks = attendance.remarks
+      ? `${attendance.remarks} | Check-in corrected by admin`
+      : "Check-in corrected by admin";
+
+    correction.status = "Approved";
+    correction.approvedBy = req.user.id;
+    correction.approvedAt = new Date();
+    correction.adminRemarks = adminRemarks || "";
+
+    await attendance.save();
+    await correction.save();
+
+    const updatedCorrection = await AttendanceCorrection.findById(correction._id)
+      .populate("employee", "firstName lastName email employeeId department designation")
+      .populate("attendance")
+      .populate("approvedBy", "firstName lastName email");
+
+    return res.status(200).json({
+      success: true,
+      message: "Attendance correction approved",
+      data: updatedCorrection,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// ADMIN - REJECT CHECK-IN CORRECTION
+// ==========================================
+exports.rejectCorrectionRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { adminRemarks } = req.body;
+
+    const correction = await AttendanceCorrection.findById(requestId);
+
+    if (!correction) {
+      return res.status(404).json({
+        success: false,
+        message: "Correction request not found",
+      });
+    }
+
+    if (correction.status !== "Pending") {
+      return res.status(400).json({
+        success: false,
+        message: "Correction request is already processed",
+      });
+    }
+
+    correction.status = "Rejected";
+    correction.approvedBy = req.user.id;
+    correction.approvedAt = new Date();
+    correction.adminRemarks = adminRemarks || "";
+    await correction.save();
+
+    const updatedCorrection = await AttendanceCorrection.findById(correction._id)
+      .populate("employee", "firstName lastName email employeeId department designation")
+      .populate("attendance")
+      .populate("approvedBy", "firstName lastName email");
+
+    return res.status(200).json({
+      success: true,
+      message: "Attendance correction rejected",
+      data: updatedCorrection,
     });
   } catch (error) {
     return res.status(500).json({

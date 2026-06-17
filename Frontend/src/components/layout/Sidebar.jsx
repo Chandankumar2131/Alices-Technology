@@ -54,6 +54,7 @@ export default function Sidebar() {
             <p className={sectionLabel}>Admin</p>
             <NavLink to="/employees" className={linkClass}>👥 Employees</NavLink>
             <NavLink to="/leaves/manage" className={linkClass}>✅ Leave Approvals</NavLink>
+            <NavLink to="/attendance/corrections" className={linkClass}>⏱ Attendance Corrections</NavLink>
             <NavLink to="/payroll/manage" className={linkClass}>🧾 Payroll Admin</NavLink>
             <NavLink to="/salary/manage" className={linkClass}>⚙️ Salary Admin</NavLink>
             <NavLink to="/submissions/manage" className={linkClass}>🗂️ All Submissions</NavLink>

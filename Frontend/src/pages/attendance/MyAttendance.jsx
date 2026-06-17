@@ -5,6 +5,8 @@ import {
   checkOut,
   fetchAttendanceByMonth,
   fetchAttendanceSummary,
+  fetchMyCorrections,
+  requestAttendanceCorrection,
   selectAttendance,
 } from "../../features/attendance/attendanceSlice";
 import {
@@ -16,8 +18,10 @@ import {
 import { fetchMyDashboard, selectDashboard } from "../../features/dashboard/dashboardSlice";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
+import Input from "../../components/common/Input";
 import Select from "../../components/common/Select";
 import Badge from "../../components/common/Badge";
+import Modal from "../../components/common/Modal";
 import StatCard from "../../components/ui/StatCard";
 import AttendanceCalendar from "./AttendanceCalendar";
 import { BREAK_REASONS } from "../../constants/enums";
@@ -30,8 +34,11 @@ export default function MyAttendance() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [breakReason, setBreakReason] = useState("Lunch");
+  const [correctionOpen, setCorrectionOpen] = useState(false);
+  const [correctionForm, setCorrectionForm] = useState({ requestedCheckIn: "", reason: "" });
+  const [correctionBusy, setCorrectionBusy] = useState(false);
 
-  const { calendar, summary, loading } = useSelector(selectAttendance);
+  const { calendar, summary, myCorrections, loading } = useSelector(selectAttendance);
   const { today: todayBreaks, activeBreak } = useSelector(selectBreak);
   const { myDashboard } = useSelector(selectDashboard);
   const todayAtt = myDashboard?.attendance;
@@ -40,6 +47,7 @@ export default function MyAttendance() {
     dispatch(fetchMyDashboard());
     dispatch(fetchTodayBreaks());
     dispatch(fetchAttendanceSummary());
+    dispatch(fetchMyCorrections());
   }, [dispatch]);
 
   useEffect(() => {
@@ -84,6 +92,39 @@ export default function MyAttendance() {
     else notify.error(res.payload);
   };
 
+  const openCorrection = () => {
+    const current = todayAtt?.checkIn ? new Date(todayAtt.checkIn) : new Date();
+    const localValue = new Date(current.getTime() - current.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+    setCorrectionForm({ requestedCheckIn: localValue, reason: "" });
+    setCorrectionOpen(true);
+  };
+
+  const handleCorrectionSubmit = async (e) => {
+    e.preventDefault();
+    if (!correctionForm.requestedCheckIn || !correctionForm.reason) {
+      notify.error("Requested time and reason are required");
+      return;
+    }
+
+    setCorrectionBusy(true);
+    const res = await dispatch(
+      requestAttendanceCorrection({
+        attendanceId: todayAtt._id,
+        requestedCheckIn: correctionForm.requestedCheckIn,
+        reason: correctionForm.reason,
+      })
+    );
+    setCorrectionBusy(false);
+
+    if (requestAttendanceCorrection.fulfilled.match(res)) {
+      notify.success("Correction request submitted");
+      setCorrectionOpen(false);
+      dispatch(fetchMyCorrections());
+    } else notify.error(res.payload);
+  };
+
   const isCheckedIn = !!todayAtt?.checkIn;
   const isCheckedOut = !!todayAtt?.checkOut;
 
@@ -111,6 +152,7 @@ export default function MyAttendance() {
 
           <div className="ml-auto flex flex-wrap gap-2">
             <Button onClick={handleCheckIn} disabled={isCheckedIn} variant="success">Check In</Button>
+            <Button onClick={openCorrection} disabled={!isCheckedIn} variant="secondary">Request Correction</Button>
             <Button onClick={handleCheckOut} disabled={!isCheckedIn || isCheckedOut} variant="danger">Check Out</Button>
           </div>
         </div>
@@ -129,6 +171,23 @@ export default function MyAttendance() {
               </>
             )}
           </div>
+        )}
+      </Card>
+
+      <Card title="Correction Requests">
+        {myCorrections?.length ? (
+          <div className="space-y-2 text-sm">
+            {myCorrections.map((item) => (
+              <div key={item._id} className="grid gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2 text-slate-300 md:grid-cols-5">
+                <span>{fmtTime(item.currentCheckIn)} to {fmtTime(item.requestedCheckIn)}</span>
+                <span>{item.attendance?.attendanceDate || "-"}</span>
+                <span className="md:col-span-2">{item.reason}</span>
+                <Badge status={item.status}>{item.status}</Badge>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">No correction requests yet.</p>
         )}
       </Card>
 
@@ -172,6 +231,37 @@ export default function MyAttendance() {
       >
         <AttendanceCalendar calendar={calendar} loading={loading} month={month} year={year} />
       </Card>
+
+      <Modal
+        open={correctionOpen}
+        onClose={() => setCorrectionOpen(false)}
+        title="Request Check-In Correction"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCorrectionOpen(false)}>Cancel</Button>
+            <Button onClick={handleCorrectionSubmit} loading={correctionBusy}>Submit Request</Button>
+          </>
+        }
+      >
+        <form onSubmit={handleCorrectionSubmit} className="space-y-4">
+          <Input
+            label="Requested Check-In Time"
+            type="datetime-local"
+            value={correctionForm.requestedCheckIn}
+            onChange={(e) => setCorrectionForm({ ...correctionForm, requestedCheckIn: e.target.value })}
+          />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-300">Reason</label>
+            <textarea
+              value={correctionForm.reason}
+              onChange={(e) => setCorrectionForm({ ...correctionForm, reason: e.target.value })}
+              rows={3}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/40"
+              placeholder="Example: I reached office on time but forgot to check in."
+            />
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

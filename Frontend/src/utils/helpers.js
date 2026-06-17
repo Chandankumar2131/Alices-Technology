@@ -1,4 +1,4 @@
-export const APP_TIME_ZONE = "America/New_York";
+export const APP_TIME_ZONE = "Asia/Kolkata";
 const EMPTY_VALUE = "\u2014";
 
 export const fmtMoney = (n) =>

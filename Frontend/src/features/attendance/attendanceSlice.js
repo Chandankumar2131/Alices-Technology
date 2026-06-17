@@ -17,11 +17,28 @@ export const fetchAttendanceByMonth = createAsyncThunk("attendance/month", async
 export const fetchAttendanceSummary = createAsyncThunk("attendance/summary", async (_, { rejectWithValue }) => {
   try { return await attendanceService.getSummary(); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
+export const requestAttendanceCorrection = createAsyncThunk("attendance/requestCorrection", async (payload, { rejectWithValue }) => {
+  try { return await attendanceService.requestCorrection(payload); } catch (e) { return rejectWithValue(getApiError(e)); }
+});
+export const fetchMyCorrections = createAsyncThunk("attendance/myCorrections", async (_, { rejectWithValue }) => {
+  try { return await attendanceService.getMyCorrections(); } catch (e) { return rejectWithValue(getApiError(e)); }
+});
+export const fetchAllCorrections = createAsyncThunk("attendance/allCorrections", async (_, { rejectWithValue }) => {
+  try { return await attendanceService.getAllCorrections(); } catch (e) { return rejectWithValue(getApiError(e)); }
+});
+export const approveAttendanceCorrection = createAsyncThunk("attendance/approveCorrection", async ({ requestId, adminRemarks }, { rejectWithValue }) => {
+  try { return await attendanceService.approveCorrection(requestId, adminRemarks); } catch (e) { return rejectWithValue(getApiError(e)); }
+});
+export const rejectAttendanceCorrection = createAsyncThunk("attendance/rejectCorrection", async ({ requestId, adminRemarks }, { rejectWithValue }) => {
+  try { return await attendanceService.rejectCorrection(requestId, adminRemarks); } catch (e) { return rejectWithValue(getApiError(e)); }
+});
 
 const initialState = {
   history: [],
   calendar: [],
   summary: null,
+  myCorrections: [],
+  allCorrections: [],
   today: null, // latest check-in/out record from check actions
   loading: false,
   error: null,
@@ -40,7 +57,18 @@ const slice = createSlice({
      .addCase(fetchAttendanceByMonth.pending, (s) => { s.loading = true; })
      .addCase(fetchAttendanceByMonth.fulfilled, (s, a) => { s.loading = false; s.calendar = a.payload.data; })
      .addCase(fetchAttendanceByMonth.rejected, (s, a) => { s.loading = false; s.error = a.payload; })
-     .addCase(fetchAttendanceSummary.fulfilled, (s, a) => { s.summary = a.payload.data; });
+     .addCase(fetchAttendanceSummary.fulfilled, (s, a) => { s.summary = a.payload.data; })
+     .addCase(requestAttendanceCorrection.fulfilled, (s, a) => { s.myCorrections.unshift(a.payload.data); })
+     .addCase(fetchMyCorrections.fulfilled, (s, a) => { s.myCorrections = a.payload.data; })
+     .addCase(fetchAllCorrections.pending, (s) => { s.loading = true; })
+     .addCase(fetchAllCorrections.fulfilled, (s, a) => { s.loading = false; s.allCorrections = a.payload.data; })
+     .addCase(fetchAllCorrections.rejected, (s, a) => { s.loading = false; s.error = a.payload; })
+     .addCase(approveAttendanceCorrection.fulfilled, (s, a) => {
+        const u = a.payload.data; s.allCorrections = s.allCorrections.map((r) => r._id === u._id ? { ...r, ...u } : r);
+     })
+     .addCase(rejectAttendanceCorrection.fulfilled, (s, a) => {
+        const u = a.payload.data; s.allCorrections = s.allCorrections.map((r) => r._id === u._id ? { ...r, ...u } : r);
+     });
   },
 });
 

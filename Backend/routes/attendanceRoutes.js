@@ -11,6 +11,11 @@ const {
   getAttendanceSummary,
   getAllAttendance,
   getEmployeeAttendance,
+  requestCheckInCorrection,
+  getMyCorrectionRequests,
+  getAllCorrectionRequests,
+  approveCorrectionRequest,
+  rejectCorrectionRequest,
 } = require("../controller/attendanceController");
 
 // Middleware
@@ -56,6 +61,20 @@ router.get(
   getAttendanceSummary
 );
 
+// Request Check-In Correction
+router.post(
+  "/corrections",
+  auth,
+  requestCheckInCorrection
+);
+
+// My Check-In Correction Requests
+router.get(
+  "/corrections/my",
+  auth,
+  getMyCorrectionRequests
+);
+
 // ==========================================
 // ADMIN ROUTES
 // ==========================================
@@ -74,6 +93,30 @@ router.get(
   auth,
   isAdmin,
   getEmployeeAttendance
+);
+
+// All Check-In Correction Requests
+router.get(
+  "/corrections/all",
+  auth,
+  isAdmin,
+  getAllCorrectionRequests
+);
+
+// Approve Check-In Correction
+router.patch(
+  "/corrections/approve/:requestId",
+  auth,
+  isAdmin,
+  approveCorrectionRequest
+);
+
+// Reject Check-In Correction
+router.patch(
+  "/corrections/reject/:requestId",
+  auth,
+  isAdmin,
+  rejectCorrectionRequest
 );
 
 module.exports = router;

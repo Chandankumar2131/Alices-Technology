@@ -8,6 +8,7 @@ import Spinner from "../components/common/Spinner";
 const Login = lazy(() => import("../pages/Login"));
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const MyAttendance = lazy(() => import("../pages/attendance/MyAttendance"));
+const AttendanceCorrectionsAdmin = lazy(() => import("../pages/attendance/AttendanceCorrectionsAdmin"));
 const MyLeaves = lazy(() => import("../pages/leaves/MyLeaves"));
 const LeaveAdmin = lazy(() => import("../pages/leaves/LeaveAdmin"));
 const MyPayroll = lazy(() => import("../pages/payroll/MyPayroll"));
@@ -45,6 +46,7 @@ export default function AppRoutes() {
               <Route path="/employees" element={<Employees />} />
               <Route path="/employees/:id" element={<EmployeeDetail />} />
               <Route path="/leaves/manage" element={<LeaveAdmin />} />
+              <Route path="/attendance/corrections" element={<AttendanceCorrectionsAdmin />} />
               <Route path="/payroll/manage" element={<PayrollAdmin />} />
               <Route path="/salary/manage" element={<SalaryAdmin />} />
               <Route path="/submissions/manage" element={<SubmissionsAdmin />} />
