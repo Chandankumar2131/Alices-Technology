@@ -25,7 +25,7 @@ import Modal from "../../components/common/Modal";
 import StatCard from "../../components/ui/StatCard";
 import AttendanceCalendar from "./AttendanceCalendar";
 import { BREAK_REASONS } from "../../constants/enums";
-import { fmtHours, fmtTime } from "../../utils/helpers";
+import { fmtHours, fmtTime, toOfficeDateTimeInputValue } from "../../utils/helpers";
 import notify from "../../utils/toast";
 
 export default function MyAttendance() {
@@ -93,11 +93,8 @@ export default function MyAttendance() {
   };
 
   const openCorrection = () => {
-    const current = todayAtt?.checkIn ? new Date(todayAtt.checkIn) : new Date();
-    const localValue = new Date(current.getTime() - current.getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 16);
-    setCorrectionForm({ requestedCheckIn: localValue, reason: "" });
+    const current = todayAtt?.checkIn || new Date();
+    setCorrectionForm({ requestedCheckIn: toOfficeDateTimeInputValue(current), reason: "" });
     setCorrectionOpen(true);
   };
 

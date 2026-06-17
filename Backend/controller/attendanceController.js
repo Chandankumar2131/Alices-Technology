@@ -15,6 +15,21 @@ const {
   calculateAttendanceTotals,
 } = require("../utils/autoCheckout");
 
+const parseOfficeDateTime = (value) => {
+  const text = String(value || "").trim();
+  const dateTimeOnly = text.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(?::(\d{2}))?$/);
+
+  if (dateTimeOnly) {
+    return moment.tz(
+      `${dateTimeOnly[1]} ${dateTimeOnly[2]}:${dateTimeOnly[3] || "00"}`,
+      "YYYY-MM-DD HH:mm:ss",
+      TZ
+    );
+  }
+
+  return moment.tz(text, TZ);
+};
+
 // ==========================================
 // CHECK IN
 // ==========================================
@@ -504,7 +519,7 @@ exports.requestCheckInCorrection = async (req, res) => {
       });
     }
 
-    const requestedMoment = moment.tz(requestedCheckIn, TZ);
+    const requestedMoment = parseOfficeDateTime(requestedCheckIn);
 
     if (!requestedMoment.isValid()) {
       return res.status(400).json({

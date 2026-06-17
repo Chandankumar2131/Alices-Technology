@@ -43,6 +43,23 @@ export const fmtTime = (d) =>
 export const fmtDateTime = (d) =>
   d ? `${fmtDate(d)}, ${fmtTime(d)}` : EMPTY_VALUE;
 
+export const toOfficeDateTimeInputValue = (d) => {
+  if (!d) return "";
+
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(d));
+  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+
+  return `${byType.year}-${byType.month}-${byType.day}T${byType.hour}:${byType.minute}`;
+};
+
 export const fullName = (u) =>
   u ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : EMPTY_VALUE;
 
