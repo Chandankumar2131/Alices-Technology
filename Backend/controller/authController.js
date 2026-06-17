@@ -94,6 +94,7 @@ exports.createEmployee = async (req, res) => {
       password,
       department,
       designation,
+      joiningDate,
     } = req.body;
 
     // Validation
@@ -101,11 +102,21 @@ exports.createEmployee = async (req, res) => {
       !firstName ||
       !lastName ||
       !email ||
-      !password
+      !password ||
+      !joiningDate
     ) {
       return res.status(400).json({
         success: false,
-        message: "All required fields are mandatory",
+        message: "First name, last name, email, password and joining date are mandatory",
+      });
+    }
+
+    const selectedJoiningDate = new Date(joiningDate);
+
+    if (Number.isNaN(selectedJoiningDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid joining date",
       });
     }
 
@@ -142,6 +153,7 @@ exports.createEmployee = async (req, res) => {
       accountType: "Employee",
       department,
       designation,
+      joiningDate: selectedJoiningDate,
       employeeId,
       additionalDetails: profileDetails._id,
       image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName}%20${lastName}`,

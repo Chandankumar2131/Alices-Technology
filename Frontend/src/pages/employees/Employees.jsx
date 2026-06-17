@@ -24,6 +24,7 @@ const empty = {
   password: "",
   department: "",
   designation: "",
+  joiningDate: "",
 };
 
 export default function Employees() {
@@ -46,8 +47,8 @@ export default function Employees() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!form.firstName || !form.lastName || !form.email || !form.password) {
-      notify.error("First name, last name, email and password are required");
+    if (!form.firstName || !form.lastName || !form.email || !form.password || !form.joiningDate) {
+      notify.error("First name, last name, email, password and joining date are required");
       return;
     }
     setBusy(true);
@@ -222,6 +223,13 @@ export default function Employees() {
             <Input label="Department" name="department" value={form.department} onChange={handleChange} />
             <Input label="Designation" name="designation" value={form.designation} onChange={handleChange} />
           </div>
+          <Input
+            label="Joining Date"
+            type="date"
+            name="joiningDate"
+            value={form.joiningDate}
+            onChange={handleChange}
+          />
         </form>
       </Modal>
 
