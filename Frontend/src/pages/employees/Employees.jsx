@@ -5,8 +5,10 @@ import {
   fetchEmployees,
   createEmployee,
   deactivateEmployee,
+  resetEmployeePassword,
   selectEmployee,
 } from "../../features/employee/employeeSlice";
+import useAuth from "../../hooks/useAuth";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
@@ -27,11 +29,14 @@ const empty = {
 export default function Employees() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { isSuperAdmin } = useAuth();
   const { list, loading } = useSelector(selectEmployee);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
   const [busy, setBusy] = useState(false);
   const [toDeactivate, setToDeactivate] = useState(null);
+  const [toResetPassword, setToResetPassword] = useState(null);
+  const [temporaryPassword, setTemporaryPassword] = useState("");
 
   useEffect(() => {
     dispatch(fetchEmployees());
@@ -62,6 +67,28 @@ export default function Employees() {
     if (deactivateEmployee.fulfilled.match(res)) {
       notify.success("Employee deactivated");
       setToDeactivate(null);
+    } else notify.error(res.payload);
+  };
+
+  const confirmResetPassword = async () => {
+    if (!temporaryPassword || temporaryPassword.length < 6) {
+      notify.error("Temporary password must be at least 6 characters");
+      return;
+    }
+
+    setBusy(true);
+    const res = await dispatch(
+      resetEmployeePassword({
+        id: toResetPassword._id,
+        temporaryPassword,
+      })
+    );
+    setBusy(false);
+
+    if (resetEmployeePassword.fulfilled.match(res)) {
+      notify.success("Temporary password set");
+      setToResetPassword(null);
+      setTemporaryPassword("");
     } else notify.error(res.payload);
   };
 
@@ -137,6 +164,18 @@ export default function Employees() {
               Deactivate
             </Button>
           )}
+          {isSuperAdmin && r.isActive && (
+            <Button
+              variant="secondary"
+              className="!px-2 !py-1"
+              onClick={() => {
+                setToResetPassword(r);
+                setTemporaryPassword("");
+              }}
+            >
+              Reset Password
+            </Button>
+          )}
         </div>
       ),
     },
@@ -205,6 +244,46 @@ export default function Employees() {
           Deactivate <strong className="text-slate-100">{fullName(toDeactivate)}</strong>? They
           won't be able to log in.
         </p>
+      </Modal>
+
+      <Modal
+        open={!!toResetPassword}
+        onClose={() => {
+          setToResetPassword(null);
+          setTemporaryPassword("");
+        }}
+        title="Reset Employee Password"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setToResetPassword(null);
+                setTemporaryPassword("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button loading={busy} onClick={confirmResetPassword}>
+              Set Temporary Password
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-300">
+            Set a temporary password for{" "}
+            <strong className="text-slate-100">{fullName(toResetPassword)}</strong>. Share it
+            with the employee so they can log in and change it from their profile.
+          </p>
+          <Input
+            label="Temporary Password"
+            type="password"
+            value={temporaryPassword}
+            onChange={(e) => setTemporaryPassword(e.target.value)}
+            placeholder="Minimum 6 characters"
+          />
+        </div>
       </Modal>
     </div>
   );

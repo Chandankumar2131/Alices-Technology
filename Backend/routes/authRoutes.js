@@ -13,6 +13,7 @@ const {
   updateProfile,
   updateProfileDetails,
   changePassword,
+  resetEmployeePassword,
 } = require("../controller/authController");
 
 // Middleware
@@ -35,6 +36,9 @@ router.get("/employees",auth,isAdmin,getAllEmployees);
 
 // Deactivate Employee
 router.patch("/deactivate/:id",auth,isAdmin,deactivateEmployee);
+
+// Reset Employee Password
+router.post("/reset-employee-password/:id", auth, isSuperAdmin, resetEmployeePassword);
   
 // Create Admin
 router.post("/create-admin", auth, isSuperAdmin, createAdmin);

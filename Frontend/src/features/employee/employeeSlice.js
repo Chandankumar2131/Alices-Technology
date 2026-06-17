@@ -13,6 +13,9 @@ export const createEmployee = createAsyncThunk("employee/create", async (payload
 export const deactivateEmployee = createAsyncThunk("employee/deactivate", async (id, { rejectWithValue }) => {
   try { return await authService.deactivateEmployee(id); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
+export const resetEmployeePassword = createAsyncThunk("employee/resetPassword", async ({ id, temporaryPassword }, { rejectWithValue }) => {
+  try { return await authService.resetEmployeePassword(id, temporaryPassword); } catch (e) { return rejectWithValue(getApiError(e)); }
+});
 
 // Detail bundle (Overview tab)
 export const fetchEmployeeDetail = createAsyncThunk("employee/detail", async (id, { rejectWithValue }) => {
@@ -43,6 +46,9 @@ const slice = createSlice({
      .addCase(fetchEmployees.rejected, (s, a) => { s.loading = false; s.error = a.payload; })
      .addCase(createEmployee.fulfilled, (s, a) => { s.list.unshift(a.payload.data); })
      .addCase(deactivateEmployee.fulfilled, (s, a) => {
+        const u = a.payload.data; s.list = s.list.map((e) => e._id === u._id ? { ...e, ...u } : e);
+     })
+     .addCase(resetEmployeePassword.fulfilled, (s, a) => {
         const u = a.payload.data; s.list = s.list.map((e) => e._id === u._id ? { ...e, ...u } : e);
      })
      .addCase(fetchEmployeeDetail.pending, (s) => { s.detailLoading = true; s.selected = null; })

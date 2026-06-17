@@ -130,6 +130,9 @@ Backend/
 
 Employee logs into the system and performs check-in.
 
+Check-in opens at 07:00 PM in the configured attendance timezone. By default,
+the backend uses India time (`Asia/Kolkata`).
+
 System automatically:
 
 * Creates attendance record
@@ -192,6 +195,9 @@ PORT=5000
 MONGODB_URL=your_mongodb_connection_string
 
 JWT_SECRET=your_jwt_secret
+
+# Optional. Defaults to Asia/Kolkata.
+ATTENDANCE_TZ=Asia/Kolkata
 ```
 
 ---

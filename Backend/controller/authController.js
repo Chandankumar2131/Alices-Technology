@@ -349,6 +349,57 @@ exports.deactivateEmployee =
     }
   };
 
+// ==========================================
+// RESET EMPLOYEE PASSWORD (SUPER ADMIN ONLY)
+// ==========================================
+exports.resetEmployeePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { temporaryPassword } = req.body;
+
+    if (!temporaryPassword || temporaryPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Temporary password must be at least 6 characters",
+      });
+    }
+
+    const employee = await User.findById(id).select("+password");
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    if (employee.accountType !== "Employee") {
+      return res.status(403).json({
+        success: false,
+        message: "Only employee passwords can be reset from this action",
+      });
+    }
+
+    employee.password = await bcrypt.hash(temporaryPassword, 10);
+    employee.token = undefined;
+    await employee.save();
+
+    const employeeResponse = employee.toObject();
+
+    return res.status(200).json({
+      success: true,
+      message: "Employee password reset successfully",
+      data: employeeResponse,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to reset employee password",
+      error: error.message,
+    });
+  }
+};
+
   // ==========================================//
   // USER PROFILE DETAILS  //
   // ==========================================//
