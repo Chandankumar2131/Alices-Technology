@@ -102,7 +102,7 @@ export default function MySubmissions() {
       >
         <form onSubmit={handleCreate} className="space-y-4">
           <Input label="Candidate Name" name="candidateName" value={form.candidateName} onChange={handleChange} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Input label="Email" type="email" name="candidateEmail" value={form.candidateEmail} onChange={handleChange} />
             <Input label="Phone" name="candidatePhone" value={form.candidatePhone} onChange={handleChange} />
           </div>

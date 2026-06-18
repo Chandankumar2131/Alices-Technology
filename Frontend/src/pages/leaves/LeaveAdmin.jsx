@@ -52,7 +52,7 @@ export default function LeaveAdmin() {
       header: "Actions",
       render: (r) =>
         r.status === "Pending" ? (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="success" className="!px-2 !py-1" onClick={() => openAction("approve", r)}>Approve</Button>
             <Button variant="danger" className="!px-2 !py-1" onClick={() => openAction("reject", r)}>Reject</Button>
           </div>

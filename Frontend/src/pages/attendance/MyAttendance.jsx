@@ -147,7 +147,7 @@ export default function MyAttendance() {
           </div>
           {todayAtt?.status && <Badge status={todayAtt.status} />}
 
-          <div className="ml-auto flex flex-wrap gap-2">
+          <div className="flex w-full flex-wrap gap-2 sm:ml-auto sm:w-auto">
             <Button onClick={handleCheckIn} disabled={isCheckedIn} variant="success">Check In</Button>
             <Button onClick={openCorrection} disabled={!isCheckedIn} variant="secondary">Request Correction</Button>
             <Button onClick={handleCheckOut} disabled={!isCheckedIn || isCheckedOut} variant="danger">Check Out</Button>
@@ -193,7 +193,7 @@ export default function MyAttendance() {
         {todayBreaks?.length ? (
           <div className="space-y-2 text-sm">
             {todayBreaks.map((b) => (
-              <div key={b._id} className="flex items-center justify-between border-b border-gray-50 py-2">
+              <div key={b._id} className="flex flex-col gap-1 border-b border-gray-50 py-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="font-medium">{b.reason}</span>
                 <span className="text-gray-500">{fmtTime(b.breakStart)} - {fmtTime(b.breakEnd)}</span>
                 <span>{b.duration ? `${b.duration} min` : "—"}</span>
@@ -208,7 +208,7 @@ export default function MyAttendance() {
 
       {/* Summary */}
       {summary && (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <StatCard label="Present Days" value={summary.presentDays} icon="✅" accent="text-green-600" />
           <StatCard label="Half Days" value={summary.halfDays || 0} icon="½" accent="text-amber-600" />
           <StatCard label="Absent Days" value={summary.absentDays} icon="❌" accent="text-red-600" />
@@ -221,7 +221,7 @@ export default function MyAttendance() {
       <Card
         title="Monthly Calendar"
         action={
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex">
             <Select options={months} value={month} onChange={(e) => setMonth(Number(e.target.value))} />
             <Select options={years} value={year} onChange={(e) => setYear(Number(e.target.value))} />
           </div>

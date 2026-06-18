@@ -68,7 +68,7 @@ export default function EmployeeDetail() {
               {emp.email} · {emp.employeeId}
             </p>
           </div>
-          <div className="ml-auto">
+          <div className="w-full sm:ml-auto sm:w-auto">
             <Button variant="outline" onClick={() => navigate(-1)}>
               Back
             </Button>
@@ -134,7 +134,7 @@ function Overview({ selected, dashboard, profile }) {
 
       {dashboard && (
         <Card title="Summary">
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
             <MiniStat label="Total Leaves" value={dashboard.leaves?.total ?? 0} />
             <MiniStat label="Approved" value={dashboard.leaves?.approved ?? 0} />
             <MiniStat label="Pending" value={dashboard.leaves?.pending ?? 0} />
@@ -149,7 +149,7 @@ function Overview({ selected, dashboard, profile }) {
             {breaks.map((item) => (
               <div
                 key={item._id}
-                className="grid grid-cols-3 gap-3 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2 text-slate-300"
+                className="grid grid-cols-1 gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2 text-slate-300 sm:grid-cols-3"
               >
                 <span>{item.reason}</span>
                 <span className="text-slate-500">
@@ -269,7 +269,7 @@ function LeavesTab({ dashboard }) {
 
   return (
     <Card title="Leave Summary">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           ["Total", leaves.total],
           ["Approved", leaves.approved],
@@ -335,7 +335,7 @@ function SalaryTab({ salary }) {
 
 function Row({ label, value, bold, accent = "text-slate-100" }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2">
+    <div className="flex flex-col gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
       <span className="text-slate-400">{label}</span>
       <span className={`${bold ? "font-bold" : "font-medium"} ${accent}`}>{value}</span>
     </div>

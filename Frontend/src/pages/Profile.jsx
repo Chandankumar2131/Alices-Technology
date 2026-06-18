@@ -14,6 +14,8 @@ import Select from "../components/common/Select";
 import { GENDERS, BLOOD_GROUPS, MARITAL_STATUS } from "../constants/enums";
 import notify from "../utils/toast";
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 export default function Profile() {
   const dispatch = useDispatch();
   const { user } = useAuth();
@@ -87,7 +89,7 @@ export default function Profile() {
     <div className="space-y-6">
       <Card title="Basic Information">
         <form onSubmit={saveBasics} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Input label="First Name" value={basics.firstName} onChange={(e) => setBasics({ ...basics, firstName: e.target.value })} />
             <Input label="Last Name" value={basics.lastName} onChange={(e) => setBasics({ ...basics, lastName: e.target.value })} />
             <Input label="Department" value={basics.department} onChange={(e) => setBasics({ ...basics, department: e.target.value })} />

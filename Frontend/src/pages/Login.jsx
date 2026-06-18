@@ -51,7 +51,7 @@ export default function Login() {
       </div>
 
       {/* Centered container holding both halves */}
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl items-center justify-center gap-8 px-6 py-10 lg:gap-16">
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl items-center justify-center gap-8 px-3 py-6 sm:px-6 sm:py-10 lg:gap-16">
         {/* LEFT: welcome panel (hidden on small screens) */}
         <div className="hidden flex-1 justify-end lg:flex">
           <WelcomeCard />
@@ -59,7 +59,7 @@ export default function Login() {
 
         {/* RIGHT: login card */}
         <div className="flex w-full max-w-md flex-1 justify-center lg:justify-start">
-          <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-slate-900/60 bg-gradient-to-br from-cyan-500/5 via-slate-900/20 to-indigo-600/5 p-8 backdrop-blur-xl border border-white/5 shadow-[0_8px_40px_rgba(0,0,0,0.4)] animate-fade-up">
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-slate-900/60 bg-gradient-to-br from-cyan-500/5 via-slate-900/20 to-indigo-600/5 p-5 backdrop-blur-xl border border-white/5 shadow-[0_8px_40px_rgba(0,0,0,0.4)] animate-fade-up sm:p-8">
             {/* top accent glow line (dimmer) */}
             <div className="pointer-events-none absolute -top-px left-1/2 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-cyan-300/30 to-transparent" />
 
@@ -68,7 +68,7 @@ export default function Login() {
                 <img src={logo} alt="Company logo" className="h-full w-full object-contain p-2" />
               </div>
 
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-200 to-slate-400 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-200 to-slate-400 bg-clip-text text-transparent sm:text-3xl">
                 Alice's Tech HRM System
               </h1>
               <RotatingSubtitle />

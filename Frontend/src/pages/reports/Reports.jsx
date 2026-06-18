@@ -127,7 +127,7 @@ export default function Reports() {
               {lateEmployees.map((item) => (
                 <div
                   key={item._id || item.employee?._id || item.checkIn}
-                  className="flex items-center justify-between gap-4 rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3"
+                  className="flex flex-col gap-3 rounded-lg border border-amber-400/20 bg-amber-400/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
                     <EmployeeLink employee={item.employee} />

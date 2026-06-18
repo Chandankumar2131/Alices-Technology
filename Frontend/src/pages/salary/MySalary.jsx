@@ -50,7 +50,7 @@ export default function MySalary() {
 
 function Row({ label, value, bold, accent = "text-slate-100" }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-800 bg-slate-950/25 px-3 py-2">
+    <div className="flex flex-col gap-2 rounded-lg border border-slate-800 bg-slate-950/25 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
       <span className="text-slate-400">{label}</span>
       <span className={`${bold ? "font-bold" : "font-medium"} ${accent}`}>{value}</span>
     </div>

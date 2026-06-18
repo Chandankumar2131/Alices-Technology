@@ -95,7 +95,7 @@ export default function PayrollAdmin() {
       >
         <form onSubmit={handleGenerate} className="space-y-4">
           <Select label="Employee" options={empOptions} value={form.employeeId} onChange={(e) => setForm({ ...form, employeeId: e.target.value })} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Select label="Month" options={monthOptions} value={form.month} onChange={(e) => setForm({ ...form, month: Number(e.target.value) })} />
             <Select label="Year" options={yearOptions} value={form.year} onChange={(e) => setForm({ ...form, year: Number(e.target.value) })} />
           </div>

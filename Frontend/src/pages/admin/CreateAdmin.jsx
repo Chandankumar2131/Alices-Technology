@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useDispatch } from "react-redux";
 import { authService } from "../../service/authService";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
@@ -36,13 +35,13 @@ export default function CreateAdmin() {
   return (
     <Card title="Create Admin">
       <form onSubmit={handleSubmit} className="max-w-lg space-y-4">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Input label="First Name" name="firstName" value={form.firstName} onChange={handleChange} />
           <Input label="Last Name" name="lastName" value={form.lastName} onChange={handleChange} />
         </div>
         <Input label="Email" type="email" name="email" value={form.email} onChange={handleChange} />
         <Input label="Password" type="password" name="password" value={form.password} onChange={handleChange} />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Input label="Department" name="department" value={form.department} onChange={handleChange} />
           <Input label="Designation" name="designation" value={form.designation} onChange={handleChange} />
         </div>

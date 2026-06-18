@@ -8,7 +8,7 @@ const CHECK_OUT_TIME = { hour: 4, minute: 0 };
 const AUTO_CHECKOUT_TIME = { hour: 5, minute: 0 };
 const SHIFT_DATE_CUTOFF = AUTO_CHECKOUT_TIME;
 const HALF_DAY_MIN_HOURS = 4;
-const FULL_DAY_MIN_HOURS = 7 + 50 / 60;
+const FULL_DAY_MIN_HOURS = 7 + 20 / 60;
 
 const getShiftDate = (time = moment().tz(TZ)) => {
   const localTime = moment(time).tz(TZ);

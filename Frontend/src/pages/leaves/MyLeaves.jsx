@@ -74,7 +74,7 @@ export default function MyLeaves() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Select label="Leave Type" name="leaveType" options={LEAVE_TYPES} value={form.leaveType} onChange={handleChange} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Input label="Start Date" type="date" name="startDate" value={form.startDate} onChange={handleChange} />
             <Input label="End Date" type="date" name="endDate" value={form.endDate} onChange={handleChange} />
           </div>

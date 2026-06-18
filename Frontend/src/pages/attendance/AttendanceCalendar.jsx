@@ -67,12 +67,13 @@ export default function AttendanceCalendar({ calendar = [], loading, month, year
 
   return (
     <div>
-      <div className="mb-2 grid grid-cols-7 gap-2 text-center text-xs font-semibold text-slate-500">
+      <div className="overflow-x-auto pb-1">
+      <div className="mb-2 grid min-w-[42rem] grid-cols-7 gap-2 text-center text-xs font-semibold text-slate-500">
         {WEEKDAYS.map((day) => (
           <div key={day}>{day}</div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid min-w-[42rem] grid-cols-7 gap-2">
         {blanks.map((_, index) => (
           <div key={`blank-${index}`} />
         ))}
@@ -106,6 +107,7 @@ export default function AttendanceCalendar({ calendar = [], loading, month, year
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );
