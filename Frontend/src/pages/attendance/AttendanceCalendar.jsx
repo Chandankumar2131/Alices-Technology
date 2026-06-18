@@ -6,6 +6,7 @@ const STATUS_BG = {
   Absent: "border-rose-100 bg-rose-100",
   Leave: "border-sky-100 bg-sky-100",
   Weekend: "border-slate-700 bg-slate-800/80",
+  Holiday: "border-violet-100 bg-violet-100",
   "Half Day": "border-amber-100 bg-amber-100",
   Upcoming: "border-rose-100 bg-rose-100",
 };
@@ -15,6 +16,7 @@ const STATUS_TEXT = {
   Absent: "text-red-700",
   Leave: "text-sky-700",
   Weekend: "text-sky-300",
+  Holiday: "text-violet-700",
   "Half Day": "text-amber-700",
   Upcoming: "text-red-800",
 };
@@ -24,6 +26,7 @@ const DATE_TEXT = {
   Absent: "text-red-800",
   Leave: "text-sky-800",
   Weekend: "text-sky-300",
+  Holiday: "text-violet-800",
   "Half Day": "text-amber-800",
   Upcoming: "text-red-800",
 };
@@ -95,7 +98,7 @@ export default function AttendanceCalendar({ calendar = [], loading, month, year
               </div>
 
               {visibleStatus !== "Upcoming" && (
-                <p className={`font-medium ${text}`}>{visibleStatus}</p>
+                <p className={`font-medium ${text}`}>{day.holidayName || visibleStatus}</p>
               )}
 
               {day.checkIn && (

@@ -20,6 +20,7 @@ const SubmissionsAdmin = lazy(() => import("../pages/submissions/SubmissionsAdmi
 const Employees = lazy(() => import("../pages/employees/Employees"));
 const EmployeeDetail = lazy(() => import("../pages/employees/EmployeeDetail"));
 const CreateAdmin = lazy(() => import("../pages/admin/CreateAdmin"));
+const Holidays = lazy(() => import("../pages/admin/Holidays"));
 const Reports = lazy(() => import("../pages/reports/Reports"));
 const Profile = lazy(() => import("../pages/Profile"));
 const AppLayout = lazy(() => import("../components/layout/AppLayout"));
@@ -51,6 +52,7 @@ export default function AppRoutes() {
               <Route path="/salary/manage" element={<SalaryAdmin />} />
               <Route path="/submissions/manage" element={<SubmissionsAdmin />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/holidays" element={<Holidays />} />
             </Route>
 
             {/* SuperAdmin only */}

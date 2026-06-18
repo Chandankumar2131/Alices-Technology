@@ -175,11 +175,18 @@ export default function MyAttendance() {
         {myCorrections?.length ? (
           <div className="space-y-2 text-sm">
             {myCorrections.map((item) => (
-              <div key={item._id} className="grid gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2 text-slate-300 md:grid-cols-5">
-                <span>{fmtTime(item.currentCheckIn)} to {fmtTime(item.requestedCheckIn)}</span>
-                <span>{item.attendance?.attendanceDate || "-"}</span>
-                <span className="md:col-span-2">{item.reason}</span>
-                <Badge status={item.status}>{item.status}</Badge>
+              <div
+                key={item._id}
+                className="grid gap-3 rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-3 text-slate-300 md:grid-cols-[1fr_8rem_2fr_auto] md:items-center"
+              >
+                <span className="whitespace-nowrap font-medium text-slate-200">
+                  {fmtTime(item.currentCheckIn)} to {fmtTime(item.requestedCheckIn)}
+                </span>
+                <span className="text-slate-400">{item.attendance?.attendanceDate || "-"}</span>
+                <span className="min-w-0 break-words">{item.reason}</span>
+                <span className="justify-self-start md:justify-self-end">
+                  <Badge status={item.status}>{item.status}</Badge>
+                </span>
               </div>
             ))}
           </div>
@@ -208,11 +215,12 @@ export default function MyAttendance() {
 
       {/* Summary */}
       {summary && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
           <StatCard label="Present Days" value={summary.presentDays} icon="✅" accent="text-green-600" />
           <StatCard label="Half Days" value={summary.halfDays || 0} icon="½" accent="text-amber-600" />
           <StatCard label="Absent Days" value={summary.absentDays} icon="❌" accent="text-red-600" />
           <StatCard label="Leave Days" value={summary.leaveDays} icon="🌴" accent="text-blue-600" />
+          <StatCard label="Holidays" value={summary.holidayDays || 0} icon="H" accent="text-violet-600" />
           <StatCard label="Late Days" value={summary.lateDays} icon="⏰" accent="text-orange-600" />
         </div>
       )}

@@ -1,6 +1,7 @@
 const Attendance = require("../model/Attendance");
 const BreakLog = require("../model/BreakLog");
 const AttendanceCorrection = require("../model/AttendanceCorrection");
+const Holiday = require("../model/Holiday");
 const moment = require("moment-timezone");
 const {
   TZ,
@@ -259,13 +260,25 @@ exports.getAttendanceByMonth = async (req, res) => {
         },
       }).sort({ attendanceDate: 1 });
 
+    const holidayRecords = await Holiday.find({
+      date: {
+        $gte: startDateKey,
+        $lte: endDateKey,
+      },
+    });
+
     const attendanceMap = {};
+    const holidayMap = {};
 
     attendanceRecords.forEach(
       (record) => {
         attendanceMap[record.attendanceDate] = record;
       }
     );
+
+    holidayRecords.forEach((holiday) => {
+      holidayMap[holiday.date] = holiday;
+    });
 
     const calendar = [];
 
@@ -293,6 +306,8 @@ exports.getAttendanceByMonth = async (req, res) => {
           "Saturday" ||
         dayName ===
           "Sunday";
+
+      const holiday = holidayMap[dateKey];
 
       const record =
         attendanceMap[
@@ -346,7 +361,9 @@ exports.getAttendanceByMonth = async (req, res) => {
           dayName,
 
           status:
-            isWeekend
+            holiday
+              ? "Holiday"
+              : isWeekend
               ? "Weekend"
               : "Absent",
 
@@ -365,6 +382,8 @@ exports.getAttendanceByMonth = async (req, res) => {
           earlyLogout: false,
 
           remarks: "",
+
+          holidayName: holiday?.name || "",
         });
       }
 
@@ -406,6 +425,7 @@ exports.getAttendanceSummary = async (req, res) => {
       halfDays: 0,
       absentDays: 0,
       leaveDays: 0,
+      holidayDays: 0,
       weekendDays: 0,
       lateDays: 0,
       totalHours: 0,
@@ -418,6 +438,7 @@ exports.getAttendanceSummary = async (req, res) => {
       if (record.status === "Half Day") summary.halfDays++;
       if (record.status === "Absent") summary.absentDays++;
       if (record.status === "Leave") summary.leaveDays++;
+      if (record.status === "Holiday") summary.holidayDays++;
       if (record.status === "Weekend") summary.weekendDays++;
       if (record.lateArrival) summary.lateDays++;
 

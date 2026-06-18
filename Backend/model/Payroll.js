@@ -44,6 +44,11 @@ const payrollSchema = new mongoose.Schema(
         default: 0,
     },
 
+    holidayDays: {
+        type: Number,
+        default: 0,
+    },
+
     absentDays: {
         type: Number,
         default: 0,

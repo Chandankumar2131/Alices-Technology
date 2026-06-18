@@ -1,5 +1,14 @@
 const mongoose = require("mongoose");
 
+const ATTENDANCE_STATUSES = [
+  "Present",
+  "Absent",
+  "Leave",
+  "Half Day",
+  "Weekend",
+  "Holiday",
+];
+
 const attendanceSchema = new mongoose.Schema(
   {
     employee: {
@@ -13,13 +22,11 @@ const attendanceSchema = new mongoose.Schema(
       default: Date.now,
     },
 
-    // Date in YYYY-MM-DD format
     attendanceDate: {
       type: String,
       required: true,
     },
 
-    // Day Information
     dayName: {
       type: String,
       trim: true,
@@ -30,7 +37,6 @@ const attendanceSchema = new mongoose.Schema(
       default: false,
     },
 
-    // Check In / Check Out
     checkIn: {
       type: Date,
       default: null,
@@ -41,7 +47,6 @@ const attendanceSchema = new mongoose.Schema(
       default: null,
     },
 
-    // Break Logs
     breakLogs: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -49,7 +54,6 @@ const attendanceSchema = new mongoose.Schema(
       },
     ],
 
-    // Working Hours
     totalHours: {
       type: Number,
       default: 0,
@@ -70,7 +74,6 @@ const attendanceSchema = new mongoose.Schema(
       default: 0,
     },
 
-    // Flags
     lateArrival: {
       type: Boolean,
       default: false,
@@ -81,16 +84,9 @@ const attendanceSchema = new mongoose.Schema(
       default: false,
     },
 
-    // Attendance Status
     status: {
       type: String,
-      enum: [
-        "Present",
-        "Absent",
-        "Leave",
-        "Half Day",
-        "Weekend",
-      ],
+      enum: ATTENDANCE_STATUSES,
       default: "Present",
     },
 
@@ -113,13 +109,7 @@ const attendanceSchema = new mongoose.Schema(
 
     systemStatus: {
       type: String,
-      enum: [
-        "Present",
-        "Absent",
-        "Leave",
-        "Half Day",
-        "Weekend",
-      ],
+      enum: ATTENDANCE_STATUSES,
     },
 
     overrideBy: {
@@ -142,7 +132,6 @@ const attendanceSchema = new mongoose.Schema(
   }
 );
 
-// Prevent duplicate attendance for same employee on same day
 attendanceSchema.index(
   {
     employee: 1,
@@ -153,7 +142,4 @@ attendanceSchema.index(
   }
 );
 
-module.exports = mongoose.model(
-  "Attendance",
-  attendanceSchema
-);
+module.exports = mongoose.model("Attendance", attendanceSchema);

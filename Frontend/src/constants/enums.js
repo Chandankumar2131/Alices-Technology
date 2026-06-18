@@ -40,6 +40,7 @@ export const ATTENDANCE_STATUS = [
   "Leave",
   "Half Day",
   "Weekend",
+  "Holiday",
 ];
 
 // Payroll
@@ -69,6 +70,7 @@ export const STATUS_COLORS = {
   Leave: "bg-blue-100 text-blue-700",
   "Half Day": "bg-amber-100 text-amber-700",
   Weekend: "bg-gray-100 text-gray-600",
+  Holiday: "bg-violet-100 text-violet-700",
   // Payroll
   Paid: "bg-green-100 text-green-700",
   // Submissions

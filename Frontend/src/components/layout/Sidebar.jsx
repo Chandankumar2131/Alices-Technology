@@ -67,6 +67,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
             <NavLink to="/salary/manage" onClick={onMobileClose} className={linkClass}>Salary Admin</NavLink>
             <NavLink to="/submissions/manage" onClick={onMobileClose} className={linkClass}>All Submissions</NavLink>
             <NavLink to="/reports" onClick={onMobileClose} className={linkClass}>Reports</NavLink>
+            <NavLink to="/holidays" onClick={onMobileClose} className={linkClass}>Holidays</NavLink>
           </>
         )}
 

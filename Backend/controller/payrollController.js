@@ -3,6 +3,7 @@ const Attendance = require("../model/Attendance");
 const SalaryStructure = require("../model/SalaryStructure");
 const PDFDocument = require("pdfkit");
 const User = require("../model/User");
+const Holiday = require("../model/Holiday");
 const path = require("path")
 const moment = require("moment-timezone");
 const { TZ } = require("../utils/attendanceShift");
@@ -89,9 +90,21 @@ exports.generatePayroll = async (req, res) => {
         },
       });
 
+    const holidays = await Holiday.find({
+      date: {
+        $gte: monthStart.format("YYYY-MM-DD"),
+        $lte: monthEnd.format("YYYY-MM-DD"),
+      },
+    });
+    const holidayDates = new Set(holidays.map((holiday) => holiday.date));
+    const attendanceDates = new Set(
+      attendance.map((record) => record.attendanceDate)
+    );
+
     let presentDays = 0;
     let halfDays = 0;
     let leaveDays = 0;
+    let holidayDays = 0;
     let absentDays = 0;
     let overtimeHours = 0;
 
@@ -117,6 +130,13 @@ exports.generatePayroll = async (req, res) => {
           "Leave"
         ) {
           leaveDays++;
+        }
+
+        if (
+          record.status ===
+          "Holiday"
+        ) {
+          holidayDays++;
         }
 
         if (
@@ -152,12 +172,16 @@ exports.generatePayroll = async (req, res) => {
           month - 1,
           i
         ).getDay();
+      const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(i).padStart(2, "0")}`;
 
       if (
         day !== 0 &&
         day !== 6
       ) {
         workingDays++;
+        if (holidayDates.has(dateKey) && !attendanceDates.has(dateKey)) {
+          holidayDays++;
+        }
       }
     }
 
@@ -165,7 +189,8 @@ exports.generatePayroll = async (req, res) => {
       workingDays -
       presentDays -
       halfDays -
-      leaveDays;
+      leaveDays -
+      holidayDays;
 
     if (absentDays < 0) {
       absentDays = 0;
@@ -178,6 +203,7 @@ exports.generatePayroll = async (req, res) => {
     const paidDays =
       presentDays +
       leaveDays +
+      holidayDays +
       halfDays * 0.5;
 
     const unpaidDays =
@@ -210,6 +236,8 @@ exports.generatePayroll = async (req, res) => {
         halfDays,
 
         leaveDays,
+
+        holidayDays,
 
         absentDays,
 
@@ -672,6 +700,7 @@ exports.downloadPayslip = async (req, res) => {
       ["Present", payroll.presentDays],
       ["Half Day", payroll.halfDays || 0],
       ["Leave", payroll.leaveDays],
+      ["Holiday", payroll.holidayDays || 0],
       ["Absent", payroll.absentDays],
       ["Overtime", `${payroll.overtimeHours || 0}h`],
     ];
