@@ -105,6 +105,37 @@ const attendanceSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+
+    statusOverride: {
+      type: Boolean,
+      default: false,
+    },
+
+    systemStatus: {
+      type: String,
+      enum: [
+        "Present",
+        "Absent",
+        "Leave",
+        "Half Day",
+        "Weekend",
+      ],
+    },
+
+    overrideBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    overrideAt: {
+      type: Date,
+    },
+
+    overrideReason: {
+      type: String,
+      trim: true,
+      default: "",
+    },
   },
   {
     timestamps: true,

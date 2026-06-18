@@ -10,13 +10,16 @@ import {
 } from "../../features/employee/employeeSlice";
 import { fetchEmployeePayroll, selectPayroll } from "../../features/payroll/payrollSlice";
 import { fetchEmployeeSalary, selectSalary } from "../../features/salary/salarySlice";
+import { markHalfDayAsPresent } from "../../features/attendance/attendanceSlice";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import Badge from "../../components/common/Badge";
 import Table from "../../components/common/Table";
+import Modal from "../../components/common/Modal";
 import Spinner from "../../components/common/Spinner";
 import EmptyState from "../../components/ui/EmptyState";
 import { fmtDate, fmtTime, fmtMoney, fmtHours, fullName, monthName } from "../../utils/helpers";
+import notify from "../../utils/toast";
 
 const TABS = ["Overview", "Attendance", "Leaves", "Payroll", "Salary"];
 
@@ -90,7 +93,7 @@ export default function EmployeeDetail() {
       </div>
 
       {tab === "Overview" && <Overview selected={selected} dashboard={dashboard} profile={profile} />}
-      {tab === "Attendance" && <AttendanceTab timeline={timeline} />}
+      {tab === "Attendance" && <AttendanceTab timeline={timeline} employeeId={id} />}
       {tab === "Leaves" && <LeavesTab dashboard={dashboard} />}
       {tab === "Payroll" && <PayrollTab payroll={payroll} />}
       {tab === "Salary" && <SalaryTab salary={salary} />}
@@ -166,7 +169,34 @@ function Overview({ selected, dashboard, profile }) {
   );
 }
 
-function AttendanceTab({ timeline }) {
+function AttendanceTab({ timeline, employeeId }) {
+  const dispatch = useDispatch();
+  const [overrideTarget, setOverrideTarget] = useState(null);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const confirmOverride = async () => {
+    if (!overrideTarget) return;
+
+    setBusy(true);
+    const res = await dispatch(
+      markHalfDayAsPresent({
+        attendanceId: overrideTarget._id,
+        reason,
+      })
+    );
+    setBusy(false);
+
+    if (markHalfDayAsPresent.fulfilled.match(res)) {
+      notify.success("Half day marked present");
+      setOverrideTarget(null);
+      setReason("");
+      dispatch(fetchEmployeeTimeline(employeeId));
+    } else {
+      notify.error(res.payload);
+    }
+  };
+
   const columns = [
     { key: "date", header: "Date", render: (r) => fmtDate(r.date) },
     { key: "status", header: "Status", render: (r) => <Badge status={r.status} /> },
@@ -175,11 +205,61 @@ function AttendanceTab({ timeline }) {
     { key: "totalHours", header: "Total Hrs", render: (r) => fmtHours(r.totalHours) },
     { key: "productiveHours", header: "Productive", render: (r) => fmtHours(r.productiveHours) },
     { key: "lateArrival", header: "Late", render: (r) => (r.lateArrival ? "Yes" : "No") },
+    {
+      key: "actions",
+      header: "Actions",
+      render: (r) =>
+        r.status === "Half Day" ? (
+          <Button
+            variant="success"
+            className="!px-2 !py-1"
+            onClick={() => {
+              setOverrideTarget(r);
+              setReason("");
+            }}
+          >
+            Mark Present
+          </Button>
+        ) : (
+          <span className="text-xs text-slate-500">-</span>
+        ),
+    },
   ];
   return (
-    <Card title="Attendance History">
-      <Table columns={columns} data={timeline} emptyText="No attendance records" />
-    </Card>
+    <>
+      <Card title="Attendance History">
+        <Table columns={columns} data={timeline} emptyText="No attendance records" />
+      </Card>
+
+      <Modal
+        open={!!overrideTarget}
+        onClose={() => setOverrideTarget(null)}
+        title="Mark Half Day as Present"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setOverrideTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="success" loading={busy} onClick={confirmOverride}>
+              Mark Present
+            </Button>
+          </>
+        }
+      >
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-300">
+            Reason (optional)
+          </label>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={3}
+            className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/40"
+            placeholder="Example: Approved by manager"
+          />
+        </div>
+      </Modal>
+    </>
   );
 }
 
@@ -207,6 +287,7 @@ function PayrollTab({ payroll }) {
   const columns = [
     { key: "period", header: "Period", render: (r) => `${monthName(r.month)} ${r.year}` },
     { key: "presentDays", header: "Present" },
+    { key: "halfDays", header: "Half Day", render: (r) => r.halfDays || 0 },
     { key: "absentDays", header: "Absent" },
     { key: "netSalary", header: "Net", render: (r) => fmtMoney(r.netSalary) },
     { key: "paymentStatus", header: "Status", render: (r) => <Badge status={r.paymentStatus} /> },

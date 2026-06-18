@@ -32,6 +32,7 @@ export default function MyPayroll() {
     { key: "period", header: "Period", render: (r) => `${monthName(r.month)} ${r.year}` },
     { key: "workingDays", header: "Working Days" },
     { key: "presentDays", header: "Present" },
+    { key: "halfDays", header: "Half Day", render: (r) => r.halfDays || 0 },
     { key: "leaveDays", header: "Leave" },
     { key: "absentDays", header: "Absent" },
     { key: "netSalary", header: "Net Salary", render: (r) => fmtMoney(r.netSalary) },

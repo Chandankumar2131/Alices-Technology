@@ -16,6 +16,7 @@ const {
   getAllCorrectionRequests,
   approveCorrectionRequest,
   rejectCorrectionRequest,
+  markHalfDayAsPresent,
 } = require("../controller/attendanceController");
 
 // Middleware
@@ -117,6 +118,14 @@ router.patch(
   auth,
   isAdmin,
   rejectCorrectionRequest
+);
+
+// Mark Half Day as Present
+router.patch(
+  "/override/mark-present/:attendanceId",
+  auth,
+  isAdmin,
+  markHalfDayAsPresent
 );
 
 module.exports = router;

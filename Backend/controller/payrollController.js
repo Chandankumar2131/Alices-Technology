@@ -4,6 +4,7 @@ const SalaryStructure = require("../model/SalaryStructure");
 const PDFDocument = require("pdfkit");
 const User = require("../model/User");
 const path = require("path")
+const moment = require("moment-timezone");
 const { TZ } = require("../utils/attendanceShift");
 
 // ==========================================
@@ -72,31 +73,24 @@ exports.generatePayroll = async (req, res) => {
       });
     }
 
-    const startDate = new Date(
-      year,
-      month - 1,
-      1
+    const monthStart = moment.tz(
+      `${year}-${String(month).padStart(2, "0")}-01`,
+      "YYYY-MM-DD",
+      TZ
     );
-
-    const endDate = new Date(
-      year,
-      month,
-      0,
-      23,
-      59,
-      59
-    );
+    const monthEnd = monthStart.clone().endOf("month");
 
     const attendance =
       await Attendance.find({
         employee: employeeId,
-        date: {
-          $gte: startDate,
-          $lte: endDate,
+        attendanceDate: {
+          $gte: monthStart.format("YYYY-MM-DD"),
+          $lte: monthEnd.format("YYYY-MM-DD"),
         },
       });
 
     let presentDays = 0;
+    let halfDays = 0;
     let leaveDays = 0;
     let absentDays = 0;
     let overtimeHours = 0;
@@ -109,6 +103,13 @@ exports.generatePayroll = async (req, res) => {
           "Present"
         ) {
           presentDays++;
+        }
+
+        if (
+          record.status ===
+          "Half Day"
+        ) {
+          halfDays++;
         }
 
         if (
@@ -163,6 +164,7 @@ exports.generatePayroll = async (req, res) => {
     absentDays =
       workingDays -
       presentDays -
+      halfDays -
       leaveDays;
 
     if (absentDays < 0) {
@@ -173,9 +175,18 @@ exports.generatePayroll = async (req, res) => {
       salaryStructure.netSalary /
       workingDays;
 
+    const paidDays =
+      presentDays +
+      leaveDays +
+      halfDays * 0.5;
+
+    const unpaidDays =
+      workingDays -
+      paidDays;
+
     const absentDeduction =
       perDaySalary *
-      absentDays;
+      unpaidDays;
 
     const finalSalary =
       salaryStructure.netSalary -
@@ -195,6 +206,8 @@ exports.generatePayroll = async (req, res) => {
         workingDays,
 
         presentDays,
+
+        halfDays,
 
         leaveDays,
 
@@ -657,6 +670,7 @@ exports.downloadPayslip = async (req, res) => {
     const stats = [
       ["Working Days", payroll.workingDays],
       ["Present", payroll.presentDays],
+      ["Half Day", payroll.halfDays || 0],
       ["Leave", payroll.leaveDays],
       ["Absent", payroll.absentDays],
       ["Overtime", `${payroll.overtimeHours || 0}h`],

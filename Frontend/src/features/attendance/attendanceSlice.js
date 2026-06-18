@@ -32,6 +32,9 @@ export const approveAttendanceCorrection = createAsyncThunk("attendance/approveC
 export const rejectAttendanceCorrection = createAsyncThunk("attendance/rejectCorrection", async ({ requestId, adminRemarks }, { rejectWithValue }) => {
   try { return await attendanceService.rejectCorrection(requestId, adminRemarks); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
+export const markHalfDayAsPresent = createAsyncThunk("attendance/markHalfDayAsPresent", async ({ attendanceId, reason }, { rejectWithValue }) => {
+  try { return await attendanceService.markHalfDayAsPresent(attendanceId, reason); } catch (e) { return rejectWithValue(getApiError(e)); }
+});
 
 const initialState = {
   history: [],
@@ -68,6 +71,11 @@ const slice = createSlice({
      })
      .addCase(rejectAttendanceCorrection.fulfilled, (s, a) => {
         const u = a.payload.data; s.allCorrections = s.allCorrections.map((r) => r._id === u._id ? { ...r, ...u } : r);
+     })
+     .addCase(markHalfDayAsPresent.fulfilled, (s, a) => {
+        const updated = a.payload.data;
+        s.calendar = s.calendar.map((r) => r._id === updated._id ? { ...r, ...updated } : r);
+        s.history = s.history.map((r) => r._id === updated._id ? { ...r, ...updated } : r);
      });
   },
 });

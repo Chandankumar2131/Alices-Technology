@@ -1,7 +1,37 @@
 const Attendance = require("../model/Attendance");
 const BreakLog = require("../model/BreakLog");
 const moment = require("moment-timezone");
-const { TZ, AUTO_CHECKOUT_TIME, getShiftBoundary } = require("./attendanceShift");
+const {
+  TZ,
+  AUTO_CHECKOUT_TIME,
+  FULL_DAY_CHECK_IN_LIMIT,
+  HALF_DAY_MIN_HOURS,
+  FULL_DAY_MIN_HOURS,
+  getShiftBoundary,
+} = require("./attendanceShift");
+
+const getCalculatedAttendanceStatus = (attendance) => {
+  if (!attendance.checkIn) {
+    return "Absent";
+  }
+
+  const productiveHours = Number(attendance.productiveHours || 0);
+
+  if (productiveHours < HALF_DAY_MIN_HOURS) {
+    return "Absent";
+  }
+
+  const fullDayCheckInLimit = getShiftBoundary(
+    attendance.attendanceDate,
+    FULL_DAY_CHECK_IN_LIMIT
+  );
+
+  if (moment(attendance.checkIn).tz(TZ).isAfter(fullDayCheckInLimit)) {
+    return "Half Day";
+  }
+
+  return productiveHours >= FULL_DAY_MIN_HOURS ? "Present" : "Half Day";
+};
 
 const calculateAttendanceTotals = (attendance) => {
   const totalHours =
@@ -20,6 +50,10 @@ const calculateAttendanceTotals = (attendance) => {
     attendance.productiveHours > 8
       ? Number((attendance.productiveHours - 8).toFixed(2))
       : 0;
+
+  if (!attendance.statusOverride) {
+    attendance.status = getCalculatedAttendanceStatus(attendance);
+  }
 };
 
 const closeOpenAttendance = async (attendance, checkoutMoment) => {
@@ -96,5 +130,6 @@ const startAutoCheckoutJob = () => {
 module.exports = {
   autoCheckoutOpenAttendances,
   calculateAttendanceTotals,
+  getCalculatedAttendanceStatus,
   startAutoCheckoutJob,
 };

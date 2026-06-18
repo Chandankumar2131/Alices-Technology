@@ -208,8 +208,9 @@ export default function MyAttendance() {
 
       {/* Summary */}
       {summary && (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
           <StatCard label="Present Days" value={summary.presentDays} icon="✅" accent="text-green-600" />
+          <StatCard label="Half Days" value={summary.halfDays || 0} icon="½" accent="text-amber-600" />
           <StatCard label="Absent Days" value={summary.absentDays} icon="❌" accent="text-red-600" />
           <StatCard label="Leave Days" value={summary.leaveDays} icon="🌴" accent="text-blue-600" />
           <StatCard label="Late Days" value={summary.lateDays} icon="⏰" accent="text-orange-600" />

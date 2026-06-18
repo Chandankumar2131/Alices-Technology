@@ -18,4 +18,6 @@ export const attendanceService = {
     api.patch(`/attendance/corrections/approve/${requestId}`, { adminRemarks }).then(unwrap),
   rejectCorrection: (requestId, adminRemarks) =>
     api.patch(`/attendance/corrections/reject/${requestId}`, { adminRemarks }).then(unwrap),
+  markHalfDayAsPresent: (attendanceId, reason) =>
+    api.patch(`/attendance/override/mark-present/${attendanceId}`, { reason }).then(unwrap),
 };

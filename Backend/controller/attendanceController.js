@@ -13,6 +13,7 @@ const {
 const {
   autoCheckoutOpenAttendances,
   calculateAttendanceTotals,
+  getCalculatedAttendanceStatus,
 } = require("../utils/autoCheckout");
 
 const parseOfficeDateTime = (value) => {
@@ -402,6 +403,7 @@ exports.getAttendanceSummary = async (req, res) => {
 
     const summary = {
       presentDays: 0,
+      halfDays: 0,
       absentDays: 0,
       leaveDays: 0,
       weekendDays: 0,
@@ -413,6 +415,7 @@ exports.getAttendanceSummary = async (req, res) => {
 
     attendance.forEach((record) => {
       if (record.status === "Present") summary.presentDays++;
+      if (record.status === "Half Day") summary.halfDays++;
       if (record.status === "Absent") summary.absentDays++;
       if (record.status === "Leave") summary.leaveDays++;
       if (record.status === "Weekend") summary.weekendDays++;
@@ -482,6 +485,56 @@ exports.getEmployeeAttendance = async (req, res) => {
     return res.status(200).json({
       success: true,
       count: attendance.length,
+      data: attendance,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// ADMIN - MARK HALF DAY AS PRESENT
+// ==========================================
+exports.markHalfDayAsPresent = async (req, res) => {
+  try {
+    const { attendanceId } = req.params;
+    const { reason } = req.body;
+
+    const attendance = await Attendance.findById(attendanceId);
+
+    if (!attendance) {
+      return res.status(404).json({
+        success: false,
+        message: "Attendance record not found",
+      });
+    }
+
+    if (attendance.status !== "Half Day") {
+      return res.status(400).json({
+        success: false,
+        message: "Only half day attendance can be marked present",
+      });
+    }
+
+    attendance.systemStatus =
+      attendance.systemStatus || getCalculatedAttendanceStatus(attendance);
+    attendance.status = "Present";
+    attendance.statusOverride = true;
+    attendance.overrideBy = req.user.id;
+    attendance.overrideAt = new Date();
+    attendance.overrideReason = reason || "";
+    attendance.remarks = attendance.remarks
+      ? `${attendance.remarks} | Half day marked present by admin`
+      : "Half day marked present by admin";
+
+    await attendance.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Half day marked as present",
       data: attendance,
     });
   } catch (error) {
@@ -659,6 +712,11 @@ exports.approveCorrectionRequest = async (req, res) => {
     );
 
     if (attendance.checkOut) {
+      attendance.statusOverride = false;
+      attendance.systemStatus = undefined;
+      attendance.overrideBy = undefined;
+      attendance.overrideAt = undefined;
+      attendance.overrideReason = "";
       calculateAttendanceTotals(attendance);
     }
 
