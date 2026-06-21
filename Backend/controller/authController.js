@@ -3,6 +3,7 @@ const User = require("../model/User");
 const Profile = require("../model/Profile");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { getPagination, paginatedResponse } = require("../utils/pagination");
 require("dotenv").config();
 // ==========================================
 // CREATE ADMIN (SUPER ADMIN ONLY)
@@ -265,8 +266,6 @@ exports.login = async (req, res) => {
     // Update Last Login
     user.lastLogin = new Date();
 
-    user.token = token;
-
     await user.save();
 
     const userResponse = user.toObject();
@@ -277,6 +276,8 @@ exports.login = async (req, res) => {
           7 * 24 * 60 * 60 * 1000
       ),
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     };
 
     return res.cookie(
@@ -285,7 +286,6 @@ exports.login = async (req, res) => {
       options
     ).status(200).json({
       success: true,
-      token,
       user: userResponse,
       message: "Login successful",
     });
@@ -300,26 +300,48 @@ exports.login = async (req, res) => {
     });
   }
 };
+
+// ==========================================
+// LOGOUT
+// ==========================================
+exports.logout = async (_req, res) => {
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  };
+
+  return res.clearCookie("token", options).status(200).json({
+    success: true,
+    message: "Logout successful",
+  });
+};
 // ==========================================
 // GET ALL EMPLOYEES 
 // ==========================================
 exports.getAllEmployees =
   async (req, res) => {
     try {
+      const { page, limit, skip } = getPagination(req.query);
+      const filter = {
+        accountType: "Employee",
+      };
 
       const employees =
-        await User.find({
-          accountType: "Employee",
-        })
+        await User.find(filter)
           .populate(
             "additionalDetails"
           )
-          .select("-password");
+          .select("-password")
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit);
+
+      const total = await User.countDocuments(filter);
 
       return res.status(200).json({
         success: true,
-        count: employees.length,
-        data: employees,
+        ...paginatedResponse({ page, limit, total, data: employees }),
       });
 
     } catch (error) {

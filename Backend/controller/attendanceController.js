@@ -16,6 +16,7 @@ const {
   calculateAttendanceTotals,
   getCalculatedAttendanceStatus,
 } = require("../utils/autoCheckout");
+const { getPagination, paginatedResponse } = require("../utils/pagination");
 
 const parseOfficeDateTime = (value) => {
   const text = String(value || "").trim();
@@ -205,15 +206,21 @@ exports.checkOut = async (req, res) => {
 exports.getMyAttendance = async (req, res) => {
   try {
     const employeeId = req.user.id;
-
-    const attendance = await Attendance.find({
+    const { page, limit, skip } = getPagination(req.query);
+    const filter = {
       employee: employeeId,
-    }).sort({ date: -1 });
+    };
+
+    const attendance = await Attendance.find(filter)
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Attendance.countDocuments(filter);
 
     return res.status(200).json({
       success: true,
-      count: attendance.length,
-      data: attendance,
+      ...paginatedResponse({ page, limit, total, data: attendance }),
     });
   } catch (error) {
     return res.status(500).json({
@@ -469,17 +476,22 @@ exports.getAttendanceSummary = async (req, res) => {
 // ==========================================
 exports.getAllAttendance = async (req, res) => {
   try {
+    const { page, limit, skip } = getPagination(req.query);
+
     const attendance = await Attendance.find()
       .populate(
         "employee",
         "firstName lastName email employeeId department designation"
       )
-      .sort({ date: -1 });
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Attendance.countDocuments();
 
     return res.status(200).json({
       success: true,
-      count: attendance.length,
-      data: attendance,
+      ...paginatedResponse({ page, limit, total, data: attendance }),
     });
   } catch (error) {
     return res.status(500).json({
@@ -495,18 +507,23 @@ exports.getAllAttendance = async (req, res) => {
 exports.getEmployeeAttendance = async (req, res) => {
   try {
     const { employeeId } = req.params;
+    const { page, limit, skip } = getPagination(req.query);
+    const filter = { employee: employeeId };
 
-    const attendance = await Attendance.find({ employee: employeeId })
+    const attendance = await Attendance.find(filter)
       .populate(
         "employee",
         "firstName lastName email employeeId department designation"
       )
-      .sort({ date: -1 });
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Attendance.countDocuments(filter);
 
     return res.status(200).json({
       success: true,
-      count: attendance.length,
-      data: attendance,
+      ...paginatedResponse({ page, limit, total, data: attendance }),
     });
   } catch (error) {
     return res.status(500).json({
@@ -652,15 +669,21 @@ exports.requestCheckInCorrection = async (req, res) => {
 // ==========================================
 exports.getMyCorrectionRequests = async (req, res) => {
   try {
-    const requests = await AttendanceCorrection.find({ employee: req.user.id })
+    const { page, limit, skip } = getPagination(req.query);
+    const filter = { employee: req.user.id };
+
+    const requests = await AttendanceCorrection.find(filter)
       .populate("attendance")
       .populate("approvedBy", "firstName lastName email")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await AttendanceCorrection.countDocuments(filter);
 
     return res.status(200).json({
       success: true,
-      count: requests.length,
-      data: requests,
+      ...paginatedResponse({ page, limit, total, data: requests }),
     });
   } catch (error) {
     return res.status(500).json({
@@ -673,18 +696,23 @@ exports.getMyCorrectionRequests = async (req, res) => {
 // ==========================================
 // ADMIN - ALL CHECK-IN CORRECTION REQUESTS
 // ==========================================
-exports.getAllCorrectionRequests = async (_req, res) => {
+exports.getAllCorrectionRequests = async (req, res) => {
   try {
+    const { page, limit, skip } = getPagination(req.query);
+
     const requests = await AttendanceCorrection.find()
       .populate("employee", "firstName lastName email employeeId department designation")
       .populate("attendance")
       .populate("approvedBy", "firstName lastName email")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await AttendanceCorrection.countDocuments();
 
     return res.status(200).json({
       success: true,
-      count: requests.length,
-      data: requests,
+      ...paginatedResponse({ page, limit, total, data: requests }),
     });
   } catch (error) {
     return res.status(500).json({

@@ -51,6 +51,10 @@ const breakLogSchema = new mongoose.Schema(
 }
 );
 
+breakLogSchema.index({ employee: 1, status: 1 });
+breakLogSchema.index({ attendance: 1, breakStart: -1 });
+breakLogSchema.index({ status: 1, breakStart: -1 });
+
 module.exports = mongoose.model(
     "BreakLog",
     breakLogSchema

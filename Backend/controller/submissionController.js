@@ -1,4 +1,5 @@
 const Submission = require("../model/Submission");
+const { getPagination, paginatedResponse } = require("../utils/pagination");
 
 // ==========================================
 // CREATE SUBMISSION
@@ -52,19 +53,25 @@ exports.createSubmission = async (req, res) => {
 // ==========================================
 exports.getMySubmissions = async (req, res) => {
   try {
-    const submissions = await Submission.find({
+    const { page, limit, skip } = getPagination(req.query);
+    const filter = {
       recruiter: req.user.id,
-    })
+    };
+
+    const submissions = await Submission.find(filter)
       .populate(
         "recruiter",
         "firstName lastName employeeId"
       )
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Submission.countDocuments(filter);
 
     return res.status(200).json({
       success: true,
-      count: submissions.length,
-      data: submissions,
+      ...paginatedResponse({ page, limit, total, data: submissions }),
     });
   } catch (error) {
     return res.status(500).json({
@@ -113,17 +120,22 @@ exports.updateSubmission = async (req, res) => {
 // ==========================================
 exports.getAllSubmissions = async (req, res) => {
   try {
+    const { page, limit, skip } = getPagination(req.query);
+
     const submissions = await Submission.find()
       .populate(
         "recruiter",
         "firstName lastName employeeId department designation"
       )
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Submission.countDocuments();
 
     return res.status(200).json({
       success: true,
-      count: submissions.length,
-      data: submissions,
+      ...paginatedResponse({ page, limit, total, data: submissions }),
     });
   } catch (error) {
     return res.status(500).json({

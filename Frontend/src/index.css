@@ -1,12 +1,80 @@
 @import "tailwindcss";
 
+:root {
+  color-scheme: dark;
+  --page-bg: #080d16;
+  --panel: rgba(15, 23, 42, 0.78);
+  --panel-strong: rgba(15, 23, 42, 0.94);
+  --line: rgba(148, 163, 184, 0.16);
+  --line-strong: rgba(125, 211, 252, 0.28);
+  --text: #e5edf7;
+  --muted: #94a3b8;
+  --brand: #22d3ee;
+  --brand-2: #a3e635;
+  --focus: rgba(34, 211, 238, 0.45);
+  --shadow: 0 18px 55px rgba(0, 0, 0, 0.34);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--page-bg);
+}
+
 body {
   margin: 0;
-  background-color: #0f172a; /* slate-900 */
-  color: #e2e8f0;            /* slate-200 */
-  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(34, 211, 238, 0.12), transparent 28rem),
+    radial-gradient(circle at 86% 12%, rgba(163, 230, 53, 0.08), transparent 24rem),
+    linear-gradient(135deg, #070b12 0%, #0d1422 48%, #101623 100%);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.28);
+  color: #f8fafc;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.62);
+  border: 2px solid rgba(15, 23, 42, 0.8);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 211, 238, 0.65);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 /* Animations */

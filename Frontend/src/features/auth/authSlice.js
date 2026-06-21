@@ -3,14 +3,12 @@ import { authService } from "../../service/authService";
 import { getApiError } from "../../utils/apiError";
 import { ROLES } from "../../constants/enums";
 
-// Hydrate from localStorage on boot
-const tokenLS = localStorage.getItem("token");
 const userLS = localStorage.getItem("user");
 
 const initialState = {
   user: userLS ? JSON.parse(userLS) : null,
-  token: tokenLS || null,
-  isAuthenticated: !!tokenLS,
+  isAuthenticated: false,
+  initialized: false,
   loading: false,
   error: null,
 };
@@ -20,7 +18,18 @@ export const login = createAsyncThunk(
   "auth/login",
   async (payload, { rejectWithValue }) => {
     try {
-      return await authService.login(payload); // { success, token, user }
+      return await authService.login(payload); // { success, user }
+    } catch (err) {
+      return rejectWithValue(getApiError(err));
+    }
+  }
+);
+
+export const logout = createAsyncThunk(
+  "auth/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await authService.logout();
     } catch (err) {
       return rejectWithValue(getApiError(err));
     }
@@ -77,12 +86,11 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    logout: (state) => {
+    clearSession: (state) => {
       state.user = null;
-      state.token = null;
       state.isAuthenticated = false;
+      state.initialized = true;
       state.error = null;
-      localStorage.removeItem("token");
       localStorage.removeItem("user");
     },
     clearAuthError: (state) => {
@@ -99,9 +107,8 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
-        state.token = action.payload.token;
         state.isAuthenticated = true;
-        localStorage.setItem("token", action.payload.token);
+        state.initialized = true;
         localStorage.setItem("user", JSON.stringify(action.payload.user));
       })
       .addCase(login.rejected, (state, action) => {
@@ -109,23 +116,50 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
       // profile fetch / update keep store + LS in sync
+      .addCase(fetchProfile.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchProfile.fulfilled, (state, action) => {
+        state.loading = false;
         state.user = action.payload;
+        state.isAuthenticated = true;
+        state.initialized = true;
         localStorage.setItem("user", JSON.stringify(action.payload));
+      })
+      .addCase(fetchProfile.rejected, (state) => {
+        state.loading = false;
+        state.user = null;
+        state.isAuthenticated = false;
+        state.initialized = true;
+        localStorage.removeItem("user");
       })
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.user = { ...state.user, ...action.payload };
         localStorage.setItem("user", JSON.stringify(state.user));
+      })
+      .addCase(logout.fulfilled, (state) => {
+        state.user = null;
+        state.isAuthenticated = false;
+        state.initialized = true;
+        state.error = null;
+        localStorage.removeItem("user");
+      })
+      .addCase(logout.rejected, (state) => {
+        state.user = null;
+        state.isAuthenticated = false;
+        state.initialized = true;
+        localStorage.removeItem("user");
       });
   },
 });
 
-export const { logout, clearAuthError } = authSlice.actions;
+export const { clearSession, clearAuthError } = authSlice.actions;
 
 // SELECTORS
 export const selectAuth = (s) => s.auth;
 export const selectUser = (s) => s.auth.user;
 export const selectIsAuthenticated = (s) => s.auth.isAuthenticated;
+export const selectAuthInitialized = (s) => s.auth.initialized;
 export const selectRole = (s) => s.auth.user?.accountType;
 
 export const selectIsSuperAdmin = (s) =>

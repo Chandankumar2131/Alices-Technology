@@ -15,7 +15,15 @@ const { startAutoCheckoutJob } = require("./utils/autoCheckout");
 require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const compression = require("compression");
+const helmet = require("helmet");
 const { dbConnection } = require("./config/database");
+const { requestMetrics, getMetrics } = require("./middleware/requestMetrics");
+const {
+  standardLimiter,
+  authLimiter,
+  writeLimiter,
+} = require("./middleware/rateLimiters");
 
 const app = express();
 
@@ -25,6 +33,9 @@ const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(helmet());
+app.use(compression());
+app.use(requestMetrics);
 
 const allowedOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(",") : "*";
 app.use(
@@ -33,6 +44,9 @@ app.use(
     credentials: true,
   })
 );
+app.use("/api", standardLimiter);
+app.use("/api/v1/auth/login", authLimiter);
+app.use(["/api/v1/attendance/checkin", "/api/v1/attendance/checkout"], writeLimiter);
 
 // ================================
 // Database Connection
@@ -60,6 +74,22 @@ app.get("/", (req, res) => {
   return res.json({
     success: true,
     message: "HRM Backend Server Running Successfully",
+  });
+});
+
+app.get("/health", (req, res) => {
+  return res.status(200).json({
+    success: true,
+    status: "ok",
+    uptimeSeconds: Math.round(process.uptime()),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get("/metrics", (req, res) => {
+  return res.status(200).json({
+    success: true,
+    data: getMetrics(),
   });
 });
 

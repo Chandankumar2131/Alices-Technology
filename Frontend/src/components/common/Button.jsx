@@ -1,10 +1,10 @@
 const VARIANTS = {
   primary:
-    "bg-gradient-to-r from-cyan-500 to-indigo-500 text-slate-950 hover:from-cyan-400 hover:to-indigo-400 shadow-lg shadow-cyan-500/20",
-  secondary: "bg-slate-800 text-slate-100 border border-slate-700 hover:bg-slate-700",
-  danger: "bg-rose-600 text-white hover:bg-rose-500",
-  success: "bg-emerald-500 text-slate-950 hover:bg-emerald-400",
-  outline: "border border-cyan-500/50 text-cyan-200 hover:bg-cyan-500/10",
+    "bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-950/30 hover:bg-cyan-200",
+  secondary: "border border-white/10 bg-slate-900/80 text-slate-100 hover:border-slate-500/70 hover:bg-slate-800",
+  danger: "bg-rose-500 text-white shadow-lg shadow-rose-950/25 hover:bg-rose-400",
+  success: "bg-lime-300 text-slate-950 shadow-lg shadow-lime-950/20 hover:bg-lime-200",
+  outline: "border border-cyan-300/45 bg-cyan-300/5 text-cyan-100 hover:bg-cyan-300/12",
 };
 
 export default function Button({
@@ -20,7 +20,7 @@ export default function Button({
     <button
       type={type}
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${VARIANTS[variant]} ${className}`}
+      className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 ${VARIANTS[variant]} ${className}`}
       {...props}
     >
       {loading && (

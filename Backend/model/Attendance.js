@@ -141,5 +141,9 @@ attendanceSchema.index(
     unique: true,
   }
 );
+attendanceSchema.index({ employee: 1, date: -1 });
+attendanceSchema.index({ attendanceDate: 1, status: 1 });
+attendanceSchema.index({ attendanceDate: 1, lateArrival: 1 });
+attendanceSchema.index({ date: -1 });
 
 module.exports = mongoose.model("Attendance", attendanceSchema);

@@ -114,4 +114,7 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+userSchema.index({ accountType: 1, isActive: 1, createdAt: -1 });
+userSchema.index({ department: 1 });
+
 module.exports = mongoose.model("User", userSchema);

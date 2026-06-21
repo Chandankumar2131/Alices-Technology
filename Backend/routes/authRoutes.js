@@ -5,6 +5,7 @@ const router = express.Router();
 // Controllers
 const {
   login,
+  logout,
   createEmployee, 
   getAllEmployees,
   deactivateEmployee,
@@ -25,6 +26,7 @@ const isSuperAdmin = require("../middleware/isSuperAdmin");
 // ==========================================
 // Employee/Admin Login
 router.post("/login", login);
+router.post("/logout", logout);
 // ==========================================
 // ADMIN ROUTES
 // ==========================================

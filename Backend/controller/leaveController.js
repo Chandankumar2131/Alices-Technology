@@ -1,6 +1,7 @@
 const Leave = require("../model/Leave");
 const Attendance = require("../model/Attendance");
 const moment = require("moment");
+const { getPagination, paginatedResponse } = require("../utils/pagination");
 
 // ==========================================
 // APPLY LEAVE
@@ -78,18 +79,24 @@ exports.getMyLeaves = async (
   res
 ) => {
   try {
+    const { page, limit, skip } = getPagination(req.query);
+    const filter = {
+      employee: req.user.id,
+    };
 
     const leaves =
-      await Leave.find({
-        employee: req.user.id,
-      }).sort({
-        createdAt: -1,
-      });
+      await Leave.find(filter)
+        .sort({
+          createdAt: -1,
+        })
+        .skip(skip)
+        .limit(limit);
+
+    const total = await Leave.countDocuments(filter);
 
     return res.status(200).json({
       success: true,
-      count: leaves.length,
-      data: leaves,
+      ...paginatedResponse({ page, limit, total, data: leaves }),
     });
 
   } catch (error) {
@@ -109,6 +116,7 @@ exports.getAllLeaves = async (
   res
 ) => {
   try {
+    const { page, limit, skip } = getPagination(req.query);
 
     const leaves =
       await Leave.find()
@@ -122,12 +130,15 @@ exports.getAllLeaves = async (
         )
         .sort({
           createdAt: -1,
-        });
+        })
+        .skip(skip)
+        .limit(limit);
+
+    const total = await Leave.countDocuments();
 
     return res.status(200).json({
       success: true,
-      count: leaves.length,
-      data: leaves,
+      ...paginatedResponse({ page, limit, total, data: leaves }),
     });
 
   } catch (error) {

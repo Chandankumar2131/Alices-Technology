@@ -2,6 +2,7 @@ import api, { unwrap } from "../lib/api";
 
 export const authService = {
   login: (payload) => api.post("/auth/login", payload).then(unwrap),
+  logout: () => api.post("/auth/logout").then(unwrap),
   createAdmin: (payload) =>
     api.post("/auth/create-admin", payload).then(unwrap),
   createEmployee: (payload) =>

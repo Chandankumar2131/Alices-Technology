@@ -107,6 +107,9 @@ payrollSchema.index(
     unique: true,
 }
 );
+payrollSchema.index({ employee: 1, year: -1, month: -1 });
+payrollSchema.index({ createdAt: -1 });
+payrollSchema.index({ paymentStatus: 1, createdAt: -1 });
 
 module.exports = mongoose.model(
     "Payroll",

@@ -5,16 +5,16 @@ import useAuth from "../../hooks/useAuth";
 import { fullName } from "../../utils/helpers";
 
 const linkBase =
-  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition";
+  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition";
 const linkClass = ({ isActive }) =>
   `${linkBase} ${
     isActive
-      ? "bg-gradient-to-r from-cyan-500/20 to-indigo-500/20 text-cyan-200 ring-1 ring-cyan-400/20"
-      : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
+      ? "bg-cyan-300/12 text-cyan-100 ring-1 ring-cyan-300/25 shadow-[0_10px_24px_rgba(8,145,178,0.12)]"
+      : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-100"
   }`;
 
 const sectionLabel =
-  "px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-600";
+  "px-3 pt-5 pb-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-600";
 
 export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }) {
   const { user, role, isAdmin, isSuperAdmin } = useAuth();
@@ -30,13 +30,18 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
   const content = (
     <>
       <div className="mb-6 flex items-center justify-between gap-3 px-2">
-        <div className="bg-gradient-to-r from-cyan-300 to-indigo-300 bg-clip-text text-xl font-bold text-transparent">
-          Alice's HRM Portal
+        <div className="min-w-0">
+          <div className="truncate text-lg font-bold tracking-tight text-slate-50">
+            Alice's HRM
+          </div>
+          <div className="mt-0.5 text-xs font-medium text-cyan-200/80">
+            Workforce Portal
+          </div>
         </div>
         <button
           type="button"
           onClick={onMobileClose}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 text-slate-300 md:hidden"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-slate-300 transition hover:border-cyan-300/30 md:hidden"
           aria-label="Close navigation"
         >
           x
@@ -80,27 +85,27 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
       </nav>
 
       <div className="mt-6 border-t border-slate-800 pt-4">
-        <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3">
+        <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3 shadow-inner shadow-black/10">
           {user?.image ? (
             <img
               src={user.image}
               alt=""
-              className="h-10 w-10 rounded-full border border-slate-700 object-cover"
+              className="h-10 w-10 rounded-lg border border-white/10 object-cover"
             />
           ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-sm font-semibold text-cyan-300">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-cyan-300/10 text-sm font-semibold text-cyan-200">
               {(user?.firstName || "U").slice(0, 1)}
             </div>
           )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-slate-100">{fullName(user)}</p>
-            <p className="text-xs text-cyan-400">{role}</p>
+            <p className="text-xs text-cyan-300/85">{role}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={handleLogout}
-          className="mt-3 w-full rounded-lg bg-rose-500/15 px-3 py-2 text-sm font-medium text-rose-300 transition hover:bg-rose-500/25"
+          className="mt-3 w-full rounded-lg border border-rose-300/15 bg-rose-500/10 px-3 py-2.5 text-sm font-semibold text-rose-200 transition hover:border-rose-300/30 hover:bg-rose-500/18"
         >
           Logout
         </button>
@@ -110,7 +115,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
 
   return (
     <>
-      <aside className="hidden w-64 shrink-0 border-r border-slate-800 bg-slate-900/80 p-4 backdrop-blur-sm md:flex md:flex-col">
+      <aside className="hidden w-64 shrink-0 border-r border-white/10 bg-slate-950/72 p-4 shadow-[12px_0_40px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-col">
         {content}
       </aside>
 
@@ -122,7 +127,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
             onClick={onMobileClose}
             aria-label="Close navigation overlay"
           />
-          <aside className="relative flex h-full w-[min(20rem,85vw)] flex-col border-r border-slate-800 bg-slate-950 p-4 shadow-2xl">
+          <aside className="relative flex h-full w-[min(20rem,85vw)] flex-col border-r border-white/10 bg-slate-950 p-4 shadow-2xl">
             {content}
           </aside>
         </div>

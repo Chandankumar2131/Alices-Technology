@@ -70,6 +70,10 @@ const submissionSchema = new mongoose.Schema(
   }
 );
 
+submissionSchema.index({ recruiter: 1, createdAt: -1 });
+submissionSchema.index({ status: 1, createdAt: -1 });
+submissionSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model(
   "Submission",
   submissionSchema

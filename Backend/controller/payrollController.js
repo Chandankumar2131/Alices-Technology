@@ -7,6 +7,7 @@ const Holiday = require("../model/Holiday");
 const path = require("path")
 const moment = require("moment-timezone");
 const { TZ } = require("../utils/attendanceShift");
+const { getPagination, paginatedResponse } = require("../utils/pagination");
 
 // ==========================================
 // GENERATE PAYROLL
@@ -280,25 +281,29 @@ exports.generatePayroll = async (req, res) => {
 // ==========================================
 exports.getMyPayroll = async (req, res) => {
     try {
+      const { page, limit, skip } = getPagination(req.query);
+      const filter = {
+        employee:
+          req.user.id,
+      };
 
       const payroll =
-        await Payroll.find({
-          employee:
-            req.user.id,
-        })
+        await Payroll.find(filter)
           .populate(
             "salaryStructure"
           )
           .sort({
             year: -1,
             month: -1,
-          });
+          })
+          .skip(skip)
+          .limit(limit);
+
+      const total = await Payroll.countDocuments(filter);
 
       return res.status(200).json({
         success: true,
-        count:
-          payroll.length,
-        data: payroll,
+        ...paginatedResponse({ page, limit, total, data: payroll }),
       });
 
     } catch (error) {
@@ -321,12 +326,14 @@ exports.getEmployeePayroll = async (req, res) => {
       const {
         employeeId,
       } = req.params;
+      const { page, limit, skip } = getPagination(req.query);
+      const filter = {
+        employee:
+          employeeId,
+      };
 
       const payroll =
-        await Payroll.find({
-          employee:
-            employeeId,
-        })
+        await Payroll.find(filter)
           .populate(
             "employee",
             "firstName lastName email employeeId"
@@ -337,13 +344,15 @@ exports.getEmployeePayroll = async (req, res) => {
           .sort({
             year: -1,
             month: -1,
-          });
+          })
+          .skip(skip)
+          .limit(limit);
+
+      const total = await Payroll.countDocuments(filter);
 
       return res.status(200).json({
         success: true,
-        count:
-          payroll.length,
-        data: payroll,
+        ...paginatedResponse({ page, limit, total, data: payroll }),
       });
 
     } catch (error) {
@@ -362,6 +371,7 @@ exports.getEmployeePayroll = async (req, res) => {
 // ==========================================
 exports.getAllPayrolls =async (req, res) => {
     try {
+      const { page, limit, skip } = getPagination(req.query);
 
       const payrolls =
         await Payroll.find()
@@ -371,13 +381,15 @@ exports.getAllPayrolls =async (req, res) => {
           )
           .sort({
             createdAt: -1,
-          });
+          })
+          .skip(skip)
+          .limit(limit);
+
+      const total = await Payroll.countDocuments();
 
       return res.status(200).json({
         success: true,
-        count:
-          payrolls.length,
-        data: payrolls,
+        ...paginatedResponse({ page, limit, total, data: payrolls }),
       });
 
     } catch (error) {

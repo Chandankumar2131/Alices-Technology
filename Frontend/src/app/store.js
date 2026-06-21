@@ -1,7 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { setUnauthorizedHandler } from "../lib/api";
 
-import authReducer, { logout } from "../features/auth/authSlice";
+import authReducer, { clearSession } from "../features/auth/authSlice";
 import attendanceReducer from "../features/attendance/attendanceSlice";
 import breakReducer from "../features/break/breakSlice";
 import leaveReducer from "../features/leave/leaveSlice";
@@ -27,7 +27,7 @@ export const store = configureStore({
 
 // Wire global 401 -> logout (no circular import)
 setUnauthorizedHandler(() => {
-  store.dispatch(logout());
+  store.dispatch(clearSession());
 });
 
 export default store;
