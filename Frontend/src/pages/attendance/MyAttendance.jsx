@@ -148,7 +148,7 @@ export default function MyAttendance() {
           {todayAtt?.status && <Badge status={todayAtt.status} />}
 
           <div className="flex w-full flex-wrap gap-2 sm:ml-auto sm:w-auto">
-            <Button onClick={handleCheckIn} disabled={isCheckedIn} variant="success">Check In</Button>
+            <Button onClick={handleCheckIn} disabled={isCheckedIn} variant="primary">Check In</Button>
             <Button onClick={openCorrection} disabled={!isCheckedIn} variant="secondary">Request Correction</Button>
             <Button onClick={handleCheckOut} disabled={!isCheckedIn || isCheckedOut} variant="danger">Check Out</Button>
           </div>
