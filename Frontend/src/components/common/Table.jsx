@@ -6,7 +6,7 @@ export default function Table({ columns, data = [], loading, emptyText = "No rec
   if (!data.length) return <EmptyState message={emptyText} />;
 
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-white/10 bg-slate-950/35 shadow-[0_14px_36px_rgba(0,0,0,0.2)]">
+    <div className="theme-table w-full overflow-x-auto rounded-lg border shadow-[0_14px_36px_rgba(0,0,0,0.2)]">
       <table className="min-w-[44rem] divide-y divide-white/10 text-sm md:min-w-full">
         <thead className="bg-slate-900/85">
           <tr>
@@ -19,7 +19,7 @@ export default function Table({ columns, data = [], loading, emptyText = "No rec
         </thead>
         <tbody className="divide-y divide-white/10">
           {data.map((row, i) => (
-            <tr key={row._id || i} className="transition hover:bg-cyan-300/[0.04]">
+            <tr key={row._id || i} className="motion-row transition hover:bg-cyan-300/[0.04]">
               {columns.map((c) => (
                 <td key={c.key} className="px-3 py-3.5 align-top text-slate-300 sm:px-4">
                   {c.render ? c.render(row) : row[c.key] ?? "-"}

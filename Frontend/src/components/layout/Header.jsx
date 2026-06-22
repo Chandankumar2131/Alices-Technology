@@ -1,4 +1,5 @@
 import useAuth from "../../hooks/useAuth";
+import ThemeToggle from "../common/ThemeToggle";
 
 export default function Header({ onMenuClick }) {
   const { user, role } = useAuth();
@@ -11,7 +12,7 @@ export default function Header({ onMenuClick }) {
     : "Track today's records, approvals, and team activity from one place.";
 
   return (
-    <header className="sticky top-0 z-30 flex min-h-16 items-center gap-3 border-b border-white/10 bg-slate-950/72 px-3 py-3 shadow-[0_10px_35px_rgba(0,0,0,0.18)] backdrop-blur-xl sm:px-5 md:px-6">
+    <header className="theme-header sticky top-0 z-30 flex min-h-16 items-center gap-3 border-b px-3 py-3 shadow-[0_10px_35px_rgba(0,0,0,0.18)] backdrop-blur-xl sm:px-5 md:px-6">
       <button
         type="button"
         onClick={onMenuClick}
@@ -24,7 +25,8 @@ export default function Header({ onMenuClick }) {
         <h1 className="break-words text-base font-semibold leading-tight text-slate-50 sm:text-lg">{title}</h1>
         <p className="mt-0.5 text-xs leading-snug text-slate-400 sm:text-sm">{subtitle}</p>
       </div>
-      <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-cyan-100 sm:flex">
+      <ThemeToggle />
+      <div className="theme-role-pill hidden items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] sm:flex">
         {roleLabel}
       </div>
     </header>

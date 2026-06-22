@@ -128,7 +128,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
 
   return (
     <>
-      <aside className="hidden w-64 shrink-0 border-r border-white/10 bg-slate-950/72 p-4 shadow-[12px_0_40px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-col">
+      <aside className="theme-sidebar hidden w-64 shrink-0 border-r p-4 shadow-[12px_0_40px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-col">
         {content}
       </aside>
 
@@ -140,7 +140,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
             onClick={onMobileClose}
             aria-label="Close navigation overlay"
           />
-          <aside className="relative flex h-full w-[min(20rem,85vw)] flex-col border-r border-white/10 bg-slate-950 p-4 shadow-2xl">
+          <aside className="theme-sidebar relative flex h-full w-[min(20rem,85vw)] flex-col border-r p-4 shadow-2xl">
             {content}
           </aside>
         </div>

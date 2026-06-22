@@ -15,6 +15,21 @@
   --shadow: 0 18px 55px rgba(0, 0, 0, 0.34);
 }
 
+.theme-light {
+  color-scheme: light;
+  --page-bg: #c6d8e4;
+  --panel: rgba(232, 241, 247, 0.94);
+  --panel-strong: rgba(240, 247, 251, 0.98);
+  --line: rgba(30, 64, 93, 0.22);
+  --line-strong: rgba(8, 104, 138, 0.46);
+  --text: #0f172a;
+  --muted: #64748b;
+  --brand: #0891b2;
+  --brand-2: #4f46e5;
+  --focus: rgba(8, 145, 178, 0.34);
+  --shadow: 0 18px 42px rgba(30, 64, 93, 0.18);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -34,6 +49,263 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background 260ms ease, color 220ms ease;
+}
+
+.app-shell,
+.theme-header,
+.theme-sidebar,
+.theme-card,
+.theme-field,
+.theme-table,
+.theme-toggle,
+.theme-role-pill,
+button,
+a,
+input,
+select,
+textarea,
+table,
+thead,
+tbody,
+tr,
+td,
+th {
+  transition:
+    background-color 260ms ease,
+    background 260ms ease,
+    border-color 260ms ease,
+    color 220ms ease,
+    box-shadow 260ms ease,
+    opacity 220ms ease;
+}
+
+.theme-toggle-thumb {
+  transition: transform 240ms ease, background-color 240ms ease;
+}
+
+.theme-light body {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(8, 104, 138, 0.24), transparent 27rem),
+    radial-gradient(circle at 88% 8%, rgba(67, 56, 202, 0.16), transparent 24rem),
+    linear-gradient(135deg, #cbdde8 0%, #bacedc 48%, #cfd9eb 100%);
+}
+
+.app-shell {
+  background: linear-gradient(135deg, #070b12 0%, #0d1422 52%, #101827 100%);
+}
+
+.theme-light .app-shell {
+  background:
+    linear-gradient(90deg, rgba(184, 214, 229, 0.98) 0 16.4rem, transparent 16.4rem),
+    radial-gradient(circle at 34% 0%, rgba(8, 104, 138, 0.24), transparent 25rem),
+    radial-gradient(circle at 95% 22%, rgba(67, 56, 202, 0.14), transparent 22rem),
+    linear-gradient(135deg, #c8dce7 0%, #b8ccd9 52%, #ced8ea 100%);
+  color: #0f172a;
+}
+
+.theme-header {
+  background: rgba(2, 6, 23, 0.72);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.theme-light .theme-header {
+  background: rgba(211, 230, 240, 0.95);
+  border-color: rgba(8, 84, 118, 0.22);
+  box-shadow: 0 10px 30px rgba(30, 64, 93, 0.16);
+}
+
+.theme-sidebar {
+  background: rgba(2, 6, 23, 0.72);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.theme-light .theme-sidebar {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(8, 104, 138, 0.28), transparent 15rem),
+    linear-gradient(180deg, rgba(198, 224, 237, 0.98), rgba(216, 232, 241, 0.96));
+  border-color: rgba(8, 84, 118, 0.24);
+  box-shadow: 12px 0 38px rgba(30, 64, 93, 0.17);
+}
+
+.theme-card {
+  background: var(--panel);
+  border-color: var(--line);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  ring-color: var(--line);
+}
+
+.theme-card:hover {
+  border-color: var(--line-strong);
+  background: var(--panel-strong);
+}
+
+.theme-field {
+  background: rgba(2, 6, 23, 0.55);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+.theme-field::placeholder {
+  color: #64748b;
+}
+
+.theme-field:focus {
+  background: rgba(2, 6, 23, 0.8);
+  border-color: rgba(103, 232, 249, 0.6);
+  --tw-ring-color: rgba(103, 232, 249, 0.15);
+}
+
+.theme-light .theme-field {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(15, 23, 42, 0.14);
+  color: #0f172a;
+}
+
+.theme-light .theme-field:focus {
+  background: #ffffff;
+  border-color: rgba(8, 145, 178, 0.48);
+  --tw-ring-color: rgba(8, 145, 178, 0.14);
+}
+
+.theme-table {
+  background: rgba(2, 6, 23, 0.35);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.theme-light .theme-table {
+  background: rgba(232, 242, 248, 0.94);
+  border-color: rgba(30, 64, 93, 0.2);
+}
+
+.theme-toggle {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #cffafe;
+}
+
+.theme-toggle-track {
+  background: rgba(8, 47, 73, 0.8);
+}
+
+.theme-toggle-thumb {
+  left: 0.125rem;
+  background: #67e8f9;
+}
+
+.theme-light .theme-toggle {
+  background: rgba(255, 255, 255, 0.76);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+.theme-light .theme-toggle-track {
+  background: rgba(8, 145, 178, 0.18);
+}
+
+.theme-light .theme-toggle-thumb {
+  transform: translateX(1rem);
+  background: #0891b2;
+}
+
+.theme-role-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #cffafe;
+}
+
+.theme-light .theme-role-pill {
+  background: rgba(8, 145, 178, 0.1);
+  border-color: rgba(8, 145, 178, 0.18);
+  color: #155e75;
+}
+
+.theme-light .theme-sidebar > * {
+  color: #0f172a;
+}
+
+.theme-light .theme-sidebar .text-cyan-200\/80 {
+  color: #0891b2 !important;
+}
+
+.theme-light .theme-sidebar .text-slate-600 {
+  color: #7c8da6 !important;
+}
+
+.theme-light .theme-sidebar a {
+  color: #52637c;
+}
+
+.theme-light .theme-sidebar a:hover {
+  background: rgba(8, 145, 178, 0.08) !important;
+  color: #0f172a !important;
+}
+
+.theme-light .theme-sidebar a[aria-current="page"] {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.24), rgba(67, 56, 202, 0.13)) !important;
+  border: 1px solid rgba(8, 84, 118, 0.28);
+  color: #064b63 !important;
+  box-shadow: 0 14px 30px rgba(8, 84, 118, 0.18);
+}
+
+.theme-light .theme-sidebar a[aria-current="page"] span {
+  color: inherit;
+}
+
+.theme-light .theme-sidebar button {
+  color: #be123c;
+}
+
+.theme-light .theme-card h3 {
+  color: #102033 !important;
+}
+
+.theme-light .theme-card > div:first-child {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+.theme-light table thead {
+  background: rgba(222, 237, 245, 0.92) !important;
+}
+
+.theme-light table tbody tr:hover {
+  background: rgba(8, 145, 178, 0.045) !important;
+}
+
+.theme-light .divide-white\/10 > :not([hidden]) ~ :not([hidden]),
+.theme-light .divide-slate-800 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+.theme-light .text-slate-50,
+.theme-light .text-slate-100,
+.theme-light .text-slate-200,
+.theme-light .text-slate-300 {
+  color: #0f172a !important;
+}
+
+.theme-light .text-slate-400,
+.theme-light .text-slate-500,
+.theme-light .text-gray-500 {
+  color: #64748b !important;
+}
+
+.theme-light .border-slate-800,
+.theme-light .border-white\/10 {
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+.theme-light .bg-slate-950\/40,
+.theme-light .bg-slate-950\/55,
+.theme-light .bg-slate-900\/80,
+.theme-light .bg-white\/\[0\.04\] {
+  background-color: rgba(229, 240, 247, 0.9) !important;
+}
+
+.theme-light .shadow-\[0_16px_45px_rgba\(0\,0\,0\,0\.24\)\] {
+  box-shadow: 0 18px 46px rgba(15, 23, 42, 0.08) !important;
 }
 
 ::selection {
@@ -104,6 +376,18 @@ textarea:focus-visible {
   0%, 100% { transform: translateY(0) scale(1); }
   50%      { transform: translateY(-14px) scale(1.05); }
 }
+@keyframes softScaleIn {
+  from { opacity: 0; transform: translateY(4px) scale(0.995); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes overlayFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes modalEnter {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
 .animate-fade-up    { animation: fadeUp 0.7s ease-out both; }
 .animate-pop        { animation: pop 0.5s ease-out both; }
 .animate-shake      { animation: shake 0.4s ease-in-out; }
@@ -111,6 +395,23 @@ textarea:focus-visible {
 .animate-blink      { animation: blink 1s step-end infinite; }
 .animate-float      { animation: float 7s ease-in-out infinite; }
 .animate-float-slow { animation: float 10s ease-in-out infinite; }
+.animate-soft-scale { animation: softScaleIn 0.18s ease-out both; }
+.animate-overlay    { animation: overlayFade 0.12s ease-out both; }
+.animate-modal      { animation: modalEnter 0.16s ease-out both; }
+.motion-card        { animation: none; }
+.motion-row         { animation: none; }
+.motion-page        { animation: softScaleIn 0.18s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 
 /* Login background motion */
 @keyframes auroraDrift {
