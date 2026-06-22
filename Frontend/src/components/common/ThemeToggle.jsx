@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 
 const getInitialTheme = () => {
   const saved = localStorage.getItem("theme");
@@ -16,10 +17,27 @@ export default function ThemeToggle() {
     localStorage.setItem("theme", theme);
   }, [isLight, theme]);
 
+  const changeTheme = () => {
+    const nextTheme = isLight ? "dark" : "light";
+
+    if (document.startViewTransition) {
+      document.startViewTransition(() => {
+        flushSync(() => setTheme(nextTheme));
+      });
+      return;
+    }
+
+    document.documentElement.classList.add("theme-switching");
+    setTheme(nextTheme);
+    window.setTimeout(() => {
+      document.documentElement.classList.remove("theme-switching");
+    }, 360);
+  };
+
   return (
     <button
       type="button"
-      onClick={() => setTheme(isLight ? "dark" : "light")}
+      onClick={changeTheme}
       className="theme-toggle inline-flex h-10 items-center gap-2 rounded-full border px-2.5 text-xs font-semibold uppercase tracking-[0.08em] transition"
       aria-label={`Switch to ${isLight ? "dark" : "light"} mode`}
       title={`Switch to ${isLight ? "dark" : "light"} mode`}

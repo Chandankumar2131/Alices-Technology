@@ -4,7 +4,7 @@ export default function StatCard({ label, value, icon, accent = "text-cyan-400" 
   return (
     <Card className="flex min-h-28 items-center gap-4">
       {icon && (
-        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-2xl ${accent}`}>
+        <div className={`theme-stat-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border text-2xl ${accent}`}>
           {icon}
         </div>
       )}

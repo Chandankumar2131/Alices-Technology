@@ -1,1 +1,0 @@
-import{t as e}from"./jsx-runtime-Dw_czukf.js";var t=e();function n({message:e=`Nothing here yet`}){return(0,t.jsxs)(`div`,{className:`flex flex-col items-center justify-center gap-2 py-12 text-center`,children:[(0,t.jsx)(`div`,{className:`text-3xl opacity-70`,children:`📭`}),(0,t.jsx)(`p`,{className:`text-sm text-slate-500`,children:e})]})}export{n as t};

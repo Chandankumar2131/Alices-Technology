@@ -1,1 +1,0 @@
-import{r as e}from"./index-kQ-CnUI1.js";var t={success:t=>e.success(t),error:t=>e.error(t),loading:t=>e.loading(t),dismiss:t=>e.dismiss(t)};export{t};
