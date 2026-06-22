@@ -331,40 +331,40 @@ th {
 
 .theme-light .theme-report-metric {
   background:
-    linear-gradient(135deg, rgba(235, 246, 252, 0.74), rgba(207, 226, 238, 0.58)),
-    rgba(229, 240, 247, 0.62) !important;
-  border-color: rgba(30, 64, 93, 0.2) !important;
-  box-shadow: 0 16px 34px rgba(30, 64, 93, 0.13) !important;
+    linear-gradient(135deg, rgba(239, 247, 251, 0.92), rgba(213, 231, 241, 0.84)),
+    rgba(229, 240, 247, 0.88) !important;
+  border-color: rgba(30, 64, 93, 0.24) !important;
+  box-shadow: 0 16px 34px rgba(30, 64, 93, 0.16) !important;
   backdrop-filter: blur(14px) saturate(1.12);
 }
 
 .theme-light .theme-report-metric .text-slate-100 {
-  color: #0b1728 !important;
+  color: #07111f !important;
 }
 
 .theme-light .theme-report-metric .text-slate-500 {
-  color: #5d7089 !important;
+  color: #40546f !important;
 }
 
 .theme-light .theme-dept-card {
   background:
-    linear-gradient(135deg, rgba(237, 247, 252, 0.72), rgba(211, 230, 240, 0.54)),
-    rgba(229, 240, 247, 0.58) !important;
-  border-color: rgba(30, 64, 93, 0.18) !important;
-  box-shadow: 0 12px 26px rgba(30, 64, 93, 0.1);
+    linear-gradient(135deg, rgba(238, 247, 252, 0.9), rgba(213, 231, 241, 0.8)),
+    rgba(229, 240, 247, 0.86) !important;
+  border-color: rgba(30, 64, 93, 0.24) !important;
+  box-shadow: 0 12px 26px rgba(30, 64, 93, 0.14);
   backdrop-filter: blur(12px) saturate(1.1);
 }
 
 .theme-light .theme-dept-card .text-slate-200 {
-  color: #102033 !important;
+  color: #07111f !important;
 }
 
 .theme-light .theme-dept-card .text-slate-500 {
-  color: #64748b !important;
+  color: #40546f !important;
 }
 
 .theme-light .theme-dept-card .text-cyan-300 {
-  color: #075985 !important;
+  color: #064b63 !important;
 }
 
 .theme-light .theme-dept-track {
@@ -372,9 +372,9 @@ th {
 }
 
 .theme-light .theme-report-chip {
-  background: rgba(8, 145, 178, 0.13) !important;
-  border-color: rgba(8, 104, 138, 0.26) !important;
-  color: #075985 !important;
+  background: rgba(8, 104, 138, 0.16) !important;
+  border-color: rgba(8, 84, 118, 0.34) !important;
+  color: #064b63 !important;
 }
 
 .theme-light .theme-card > div:first-child {
