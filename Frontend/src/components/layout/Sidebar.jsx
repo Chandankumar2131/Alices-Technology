@@ -13,6 +13,13 @@ const linkClass = ({ isActive }) =>
       : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-100"
   }`;
 
+const createAdminLinkClass = ({ isActive }) =>
+  `group relative mt-2 flex items-center gap-3 overflow-hidden rounded-lg border px-3 py-3 text-sm font-bold transition ${
+    isActive
+      ? "border-cyan-200/45 bg-cyan-300 text-slate-950 shadow-[0_16px_34px_rgba(34,211,238,0.22)]"
+      : "border-cyan-300/25 bg-cyan-300/10 text-cyan-100 shadow-[0_12px_28px_rgba(8,145,178,0.14)] hover:border-cyan-200/45 hover:bg-cyan-300/18 hover:text-white"
+  }`;
+
 const sectionLabel =
   "px-3 pt-5 pb-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-600";
 
@@ -77,7 +84,15 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
         {isSuperAdmin && (
           <>
             <p className={sectionLabel}>Super Admin</p>
-            <NavLink to="/admins/create" onClick={onMobileClose} className={linkClass}>Create Admin</NavLink>
+            <NavLink to="/admins/create" onClick={onMobileClose} className={createAdminLinkClass}>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-lg leading-none ring-1 ring-white/20">
+                +
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate">Create Admin</span>
+                <span className="block truncate text-xs font-medium opacity-70">Add privileged user</span>
+              </span>
+            </NavLink>
           </>
         )}
       </nav>

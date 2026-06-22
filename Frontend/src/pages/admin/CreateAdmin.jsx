@@ -45,7 +45,13 @@ export default function CreateAdmin() {
           <Input label="Department" name="department" value={form.department} onChange={handleChange} />
           <Input label="Designation" name="designation" value={form.designation} onChange={handleChange} />
         </div>
-        <Button type="submit" loading={busy}>Create Admin</Button>
+        <Button
+          type="submit"
+          loading={busy}
+          className="w-full py-3 text-base shadow-[0_18px_36px_rgba(34,211,238,0.2)] sm:w-auto"
+        >
+          + Create Admin
+        </Button>
       </form>
     </Card>
   );

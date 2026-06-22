@@ -127,7 +127,6 @@ export default function MyAttendance() {
 
   const months = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: new Date(0, i).toLocaleString("en", { month: "long" }) }));
   const years = Array.from({ length: 5 }, (_, i) => ({ value: now.getFullYear() - i, label: String(now.getFullYear() - i) }));
-
   return (
     <div className="space-y-6">
       {/* Today controls */}
