@@ -346,6 +346,28 @@ th {
   color: #40546f !important;
 }
 
+.theme-light .theme-report-metric span {
+  background: rgba(255, 255, 255, 0.58) !important;
+  border-color: rgba(8, 84, 118, 0.28) !important;
+  color: #064b63 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
+}
+
+.theme-light .theme-report-metric span.text-emerald-300 {
+  border-color: rgba(4, 120, 87, 0.28) !important;
+  color: #047857 !important;
+}
+
+.theme-light .theme-report-metric span.text-amber-300 {
+  border-color: rgba(180, 83, 9, 0.3) !important;
+  color: #b45309 !important;
+}
+
+.theme-light .theme-report-metric span.text-indigo-300 {
+  border-color: rgba(67, 56, 202, 0.28) !important;
+  color: #4338ca !important;
+}
+
 .theme-light .theme-dept-card {
   background:
     linear-gradient(135deg, rgba(238, 247, 252, 0.9), rgba(213, 231, 241, 0.8)),
