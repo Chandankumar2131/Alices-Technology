@@ -75,7 +75,7 @@ export default function Reports() {
         title="Department Analytics"
         action={
           topDepartment && (
-            <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-cyan-200">
+            <span className="theme-report-chip rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-cyan-200">
               Top: {topDepartment._id || "No Department"}
             </span>
           )
@@ -89,7 +89,7 @@ export default function Reports() {
             return (
               <div
                 key={dept._id || "none"}
-                className="rounded-lg border border-slate-800 bg-slate-950/50 p-4"
+                className="theme-dept-card rounded-lg border border-slate-800 bg-slate-950/50 p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -100,7 +100,7 @@ export default function Reports() {
                   </div>
                   <p className="text-2xl font-bold text-cyan-300">{count}</p>
                 </div>
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
+                <div className="theme-dept-track mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
                   <div
                     className="h-full rounded-full bg-cyan-400"
                     style={{ width: `${percentage}%` }}
@@ -163,7 +163,7 @@ const metricTone = {
 
 function ReportMetric({ label, value, tone }) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 shadow-xl shadow-black/20">
+    <div className="theme-report-metric rounded-xl border border-slate-800 bg-slate-900/70 p-4 shadow-xl shadow-black/20">
       <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
       <div className="mt-3 flex items-end justify-between">
         <p className="text-3xl font-bold text-slate-100">{value}</p>
