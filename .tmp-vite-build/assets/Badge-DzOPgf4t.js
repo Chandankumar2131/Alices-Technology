@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-Dw_czukf.js";import{yt as t}from"./index-DiCzzvWE.js";var n=e();function r({status:e,children:r}){let i=r||e;return(0,n.jsx)(`span`,{className:`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ring-white/10 ${t[e]||`bg-gray-100 text-gray-600`}`,children:i})}export{r as t};

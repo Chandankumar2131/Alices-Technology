@@ -399,6 +399,33 @@ th {
   color: #064b63 !important;
 }
 
+.theme-light .theme-late-card {
+  background:
+    linear-gradient(135deg, rgba(255, 248, 226, 0.88), rgba(238, 226, 195, 0.66)),
+    rgba(247, 236, 207, 0.82) !important;
+  border-color: rgba(180, 83, 9, 0.28) !important;
+  box-shadow: 0 10px 24px rgba(120, 53, 15, 0.1);
+}
+
+.theme-light .theme-late-card:hover {
+  background:
+    linear-gradient(135deg, rgba(255, 251, 235, 0.94), rgba(240, 226, 193, 0.74)),
+    rgba(247, 236, 207, 0.88) !important;
+  border-color: rgba(180, 83, 9, 0.38) !important;
+}
+
+.theme-light .theme-late-card a {
+  color: #0369a1 !important;
+}
+
+.theme-light .theme-late-card .text-slate-500 {
+  color: #6b5b43 !important;
+}
+
+.theme-light .theme-late-time {
+  color: #b45309 !important;
+}
+
 .theme-light .theme-card > div:first-child {
   border-color: rgba(15, 23, 42, 0.08) !important;
 }
