@@ -7,7 +7,7 @@ export default function Header({ onMenuClick }) {
   const roleLabel = role === "SuperAdmin" ? "Super Admin" : role || "User";
   const title = isEmployee ? `Welcome back, ${name}` : `${roleLabel} Workspace`;
   const subtitle = isEmployee
-    ? "Your attendance, leaves, submissions, and payroll are ready."
+    ? "Your attendance, leaves, and payroll are ready."
     : "Track today's records, approvals, and team activity from one place.";
 
   return (

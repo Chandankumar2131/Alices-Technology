@@ -53,7 +53,6 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
         <NavLink to="/dashboard" onClick={onMobileClose} className={linkClass}>Dashboard</NavLink>
         <NavLink to="/attendance" onClick={onMobileClose} className={linkClass}>My Attendance</NavLink>
         {isEmployee && <NavLink to="/leaves" onClick={onMobileClose} className={linkClass}>Leaves</NavLink>}
-        <NavLink to="/submissions" onClick={onMobileClose} className={linkClass}>Submissions</NavLink>
         {isEmployee && (
           <>
             <NavLink to="/payroll" onClick={onMobileClose} className={linkClass}>Payroll</NavLink>
@@ -70,7 +69,6 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
             <NavLink to="/attendance/corrections" onClick={onMobileClose} className={linkClass}>Attendance Corrections</NavLink>
             <NavLink to="/payroll/manage" onClick={onMobileClose} className={linkClass}>Payroll Admin</NavLink>
             <NavLink to="/salary/manage" onClick={onMobileClose} className={linkClass}>Salary Admin</NavLink>
-            <NavLink to="/submissions/manage" onClick={onMobileClose} className={linkClass}>All Submissions</NavLink>
             <NavLink to="/reports" onClick={onMobileClose} className={linkClass}>Reports</NavLink>
             <NavLink to="/holidays" onClick={onMobileClose} className={linkClass}>Holidays</NavLink>
           </>

@@ -12,27 +12,6 @@ export const LEAVE_STATUS = ["Pending", "Approved", "Rejected"];
 // Break
 export const BREAK_REASONS = ["Lunch", "Tea", "Personal", "Meeting", "Other"];
 
-// Submission
-export const PORTALS = [
-  "LinkedIn",
-  "Dice",
-  "Indeed",
-  "Monster",
-  "Naukri",
-  "Company Website",
-  "Other",
-];
-
-export const SUBMISSION_STATUS = [
-  "Submitted",
-  "Interview Scheduled",
-  "Interview Completed",
-  "Selected",
-  "Rejected",
-  "Offer Released",
-  "Joined",
-];
-
 // Attendance
 export const ATTENDANCE_STATUS = [
   "Present",
@@ -73,13 +52,7 @@ export const STATUS_COLORS = {
   Holiday: "bg-violet-100 text-violet-700",
   // Payroll
   Paid: "bg-green-100 text-green-700",
-  // Submissions
-  Submitted: "bg-blue-100 text-blue-700",
-  "Interview Scheduled": "bg-indigo-100 text-indigo-700",
-  "Interview Completed": "bg-purple-100 text-purple-700",
   Selected: "bg-green-100 text-green-700",
-  "Offer Released": "bg-teal-100 text-teal-700",
-  Joined: "bg-emerald-100 text-emerald-700",
   // Live status
   Working: "bg-green-100 text-green-700",
   "On Break": "bg-amber-100 text-amber-700",

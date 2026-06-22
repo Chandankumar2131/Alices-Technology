@@ -33,7 +33,7 @@ const slice = createSlice({
   initialState: {
     list: [],
     selected: null,    // detail bundle: { employee, attendance, activeBreak, breaks }
-    dashboard: null,   // leaves/submissions/payroll summary
+    dashboard: null,   // leaves/payroll summary
     timeline: [],
     loading: false,
     detailLoading: false,

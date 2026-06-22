@@ -40,7 +40,6 @@ export default function EmployeeDashboard() {
         <StatCard label="Approved Leaves" value={leaves.approved ?? 0} icon="✅" accent="text-green-600" />
         <StatCard label="Pending Leaves" value={leaves.pending ?? 0} icon="📝" accent="text-amber-600" />
         <StatCard label="Rejected Leaves" value={leaves.rejected ?? 0} icon="❌" accent="text-red-600" />
-        <StatCard label="Total Submissions" value={s.totalSubmissions ?? 0} icon="📄" />
         <StatCard
           label="Last Salary"
           value={fmtMoney(payroll?.netSalary)}

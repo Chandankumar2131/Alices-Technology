@@ -138,7 +138,6 @@ function Overview({ selected, dashboard, profile }) {
             <MiniStat label="Total Leaves" value={dashboard.leaves?.total ?? 0} />
             <MiniStat label="Approved" value={dashboard.leaves?.approved ?? 0} />
             <MiniStat label="Pending" value={dashboard.leaves?.pending ?? 0} />
-            <MiniStat label="Submissions" value={dashboard.totalSubmissions ?? 0} />
           </div>
         </Card>
       )}

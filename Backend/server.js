@@ -7,7 +7,6 @@ const leaveRoutes = require("./routes/leaveRoutes");
 const salaryRoutes = require("./routes/salaryRoutes");
 const payrollRoutes = require("./routes/payrollRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
-const submissionRoutes = require("./routes/submissionRoutes");
 const holidayRoutes = require("./routes/holidayRoutes");
 const { startAutoCheckoutJob } = require("./utils/autoCheckout");
 
@@ -64,7 +63,6 @@ app.use("/api/v1/leave",leaveRoutes);
 app.use("/api/v1/salary", salaryRoutes);
 app.use("/api/v1/payroll",payrollRoutes);
 app.use("/api/v1/dashboard",dashboardRoutes);
-app.use("/api/v1/submission", submissionRoutes);
 app.use("/api/v1/holiday", holidayRoutes);
 // ================================
 // Default Route

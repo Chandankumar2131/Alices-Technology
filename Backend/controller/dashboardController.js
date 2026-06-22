@@ -4,7 +4,6 @@ const Leave = require("../model/Leave");
 const Payroll = require("../model/Payroll");
 const BreakLog = require("../model/BreakLog");
 const moment = require("moment-timezone");
-const Submission = require("../model/Submission");
 const { TZ, getShiftDate } = require("../utils/attendanceShift");
 
 const getLiveAttendanceHours = (attendance, totalBreakMinutes) => {
@@ -364,11 +363,6 @@ exports.getEmployeeDashboard = async (req, res) => {
       status: "Rejected",
     });
 
-    // Submission count
-    const totalSubmissions = await Submission.countDocuments({
-      recruiter: employeeId,
-    });
-
     // Latest payroll
     const latestPayroll = await Payroll.findOne({
       employee: employeeId,
@@ -402,7 +396,6 @@ exports.getEmployeeDashboard = async (req, res) => {
           pending: pendingLeaves,
           rejected: rejectedLeaves,
         },
-        totalSubmissions,
         latestPayroll,
         recentAttendance,
       },

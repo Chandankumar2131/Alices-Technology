@@ -8,7 +8,6 @@ import leaveReducer from "../features/leave/leaveSlice";
 import salaryReducer from "../features/salary/salarySlice";
 import payrollReducer from "../features/payroll/payrollSlice";
 import dashboardReducer from "../features/dashboard/dashboardSlice";
-import submissionReducer from "../features/submission/submissionSlice";
 import employeeReducer from "../features/employee/employeeSlice";
 
 export const store = configureStore({
@@ -20,7 +19,6 @@ export const store = configureStore({
     salary: salaryReducer,
     payroll: payrollReducer,
     dashboard: dashboardReducer,
-    submission: submissionReducer,
     employee: employeeReducer,
   },
 });

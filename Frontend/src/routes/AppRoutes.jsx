@@ -15,8 +15,6 @@ const MyPayroll = lazy(() => import("../pages/payroll/MyPayroll"));
 const PayrollAdmin = lazy(() => import("../pages/payroll/PayrollAdmin"));
 const MySalary = lazy(() => import("../pages/salary/MySalary"));
 const SalaryAdmin = lazy(() => import("../pages/salary/SalaryAdmin"));
-const MySubmissions = lazy(() => import("../pages/submissions/MySubmissions"));
-const SubmissionsAdmin = lazy(() => import("../pages/submissions/SubmissionsAdmin"));
 const Employees = lazy(() => import("../pages/employees/Employees"));
 const EmployeeDetail = lazy(() => import("../pages/employees/EmployeeDetail"));
 const CreateAdmin = lazy(() => import("../pages/admin/CreateAdmin"));
@@ -39,7 +37,6 @@ export default function AppRoutes() {
             <Route path="/leaves" element={<MyLeaves />} />
             <Route path="/payroll" element={<MyPayroll />} />
             <Route path="/salary" element={<MySalary />} />
-            <Route path="/submissions" element={<MySubmissions />} />
             <Route path="/profile" element={<Profile />} />
 
             {/* Admin + SuperAdmin */}
@@ -50,7 +47,6 @@ export default function AppRoutes() {
               <Route path="/attendance/corrections" element={<AttendanceCorrectionsAdmin />} />
               <Route path="/payroll/manage" element={<PayrollAdmin />} />
               <Route path="/salary/manage" element={<SalaryAdmin />} />
-              <Route path="/submissions/manage" element={<SubmissionsAdmin />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/holidays" element={<Holidays />} />
             </Route>
