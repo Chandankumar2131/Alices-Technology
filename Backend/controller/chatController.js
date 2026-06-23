@@ -11,13 +11,11 @@ const normalizeMessageText = (text) => String(text || "").trim();
 const canChatWith = (currentUser, otherUser) => {
   if (!otherUser || !otherUser.isActive) return false;
   if (String(currentUser.id) === String(otherUser._id)) return false;
-
-  if (currentUser.accountType === "Employee") {
-    return otherUser.accountType === "Admin" || otherUser.accountType === "SuperAdmin";
-  }
-
   return true;
 };
+
+const isAdminUser = (user) =>
+  user.accountType === "Admin" || user.accountType === "SuperAdmin";
 
 const findOrCreateConversation = async (userId, otherUserId) => {
   const participantIds = [userId, otherUserId].map(
@@ -25,11 +23,13 @@ const findOrCreateConversation = async (userId, otherUserId) => {
   );
 
   let conversation = await Conversation.findOne({
+    type: "direct",
     participants: { $all: participantIds, $size: 2 },
   });
 
   if (!conversation) {
     conversation = await Conversation.create({
+      type: "direct",
       participants: participantIds,
       lastMessageAt: new Date(),
     });
@@ -42,13 +42,14 @@ const populateMessage = (message) =>
   message.populate([
     { path: "sender", select: userSelect },
     { path: "receiver", select: userSelect },
+    { path: "receivers", select: userSelect },
   ]);
 
 exports.listChatUsers = async (req, res) => {
   try {
     const filter =
       req.user.accountType === "Employee"
-        ? { accountType: { $in: ["Admin", "SuperAdmin"] }, isActive: true }
+        ? { _id: { $ne: req.user.id }, isActive: true }
         : { _id: { $ne: req.user.id }, isActive: true };
 
     const users = await User.find(filter).select(userSelect).sort({
@@ -70,13 +71,80 @@ exports.listChatUsers = async (req, res) => {
   }
 };
 
+exports.createGroup = async (req, res) => {
+  try {
+    if (!isAdminUser(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only admin can create groups",
+      });
+    }
+
+    const name = String(req.body.name || "").trim();
+    const memberIds = Array.isArray(req.body.memberIds) ? req.body.memberIds : [];
+    const uniqueMemberIds = [...new Set(memberIds.map(String))].filter(
+      (id) => id && id !== String(req.user.id)
+    );
+
+    if (!name || uniqueMemberIds.length < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Group name and at least one member are required",
+      });
+    }
+
+    const members = await User.find({
+      _id: { $in: uniqueMemberIds },
+      isActive: true,
+    }).select("_id");
+
+    if (members.length !== uniqueMemberIds.length) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more selected members are invalid",
+      });
+    }
+
+    const conversation = await Conversation.create({
+      type: "group",
+      name,
+      createdBy: req.user.id,
+      participants: [req.user.id, ...uniqueMemberIds],
+      lastMessageAt: new Date(),
+    });
+
+    const populated = await Conversation.findById(conversation._id)
+      .populate("participants", userSelect)
+      .populate("createdBy", userSelect);
+
+    const io = req.app.get("io");
+    if (io) {
+      populated.participants.forEach((participant) => {
+        io.to(`user:${participant._id}`).emit("chat:group_created", populated);
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      data: populated,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create group",
+      error: error.message,
+    });
+  }
+};
+
 exports.listConversations = async (req, res) => {
   try {
     const conversations = await Conversation.find({ participants: req.user.id })
       .populate("participants", userSelect)
+      .populate("createdBy", userSelect)
       .populate({
         path: "lastMessage",
-        select: "text sender receiver createdAt readAt",
+        select: "text sender receiver receivers createdAt readAt",
       })
       .sort({ lastMessageAt: -1, updatedAt: -1 });
 
@@ -93,7 +161,7 @@ exports.listConversations = async (req, res) => {
   }
 };
 
-exports.getMessages = async (req, res) => {
+exports.getDirectMessages = async (req, res) => {
   try {
     const { userId } = req.params;
     const otherUser = await User.findById(userId).select(userSelect);
@@ -129,33 +197,101 @@ exports.getMessages = async (req, res) => {
   }
 };
 
+exports.getConversationMessages = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      participants: req.user.id,
+    }).populate("participants", userSelect);
+
+    if (!conversation) {
+      return res.status(404).json({
+        success: false,
+        message: "Conversation not found",
+      });
+    }
+
+    const messages = await Message.find({ conversation: conversation._id })
+      .populate("sender", userSelect)
+      .populate("receiver", userSelect)
+      .populate("receivers", userSelect)
+      .sort({ createdAt: 1 })
+      .limit(100);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        conversation,
+        messages,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch messages",
+      error: error.message,
+    });
+  }
+};
+
 exports.sendMessage = async (req, res) => {
   try {
-    const { receiverId, text } = req.body;
+    const { receiverId, conversationId, text } = req.body;
     const messageText = normalizeMessageText(text);
 
-    if (!receiverId || !messageText) {
+    if ((!receiverId && !conversationId) || !messageText) {
       return res.status(400).json({
         success: false,
-        message: "Receiver and message are required",
+        message: "Receiver or conversation and message are required",
       });
     }
 
-    const receiver = await User.findById(receiverId).select(userSelect);
-    if (!canChatWith(req.user, receiver)) {
-      return res.status(403).json({
-        success: false,
-        message: "You cannot chat with this user",
+    let conversation;
+    let receiver = null;
+    let receivers = [];
+
+    if (conversationId) {
+      conversation = await Conversation.findOne({
+        _id: conversationId,
+        participants: req.user.id,
       });
+
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          message: "Conversation not found",
+        });
+      }
+
+      receivers = conversation.participants.filter(
+        (participantId) => String(participantId) !== String(req.user.id)
+      );
+    } else {
+      receiver = await User.findById(receiverId).select(userSelect);
+      if (!canChatWith(req.user, receiver)) {
+        return res.status(403).json({
+          success: false,
+          message: "You cannot chat with this user",
+        });
+      }
+
+      conversation = await findOrCreateConversation(req.user.id, receiverId);
+      receivers = [receiverId];
     }
 
-    const conversation = await findOrCreateConversation(req.user.id, receiverId);
-    let message = await Message.create({
+    const messagePayload = {
       conversation: conversation._id,
       sender: req.user.id,
-      receiver: receiverId,
+      receivers,
       text: messageText,
-    });
+    };
+
+    if (receiverId) {
+      messagePayload.receiver = receiverId;
+    }
+
+    let message = await Message.create(messagePayload);
 
     conversation.lastMessage = message._id;
     conversation.lastMessageAt = message.createdAt;
@@ -165,7 +301,9 @@ exports.sendMessage = async (req, res) => {
 
     const io = req.app.get("io");
     if (io) {
-      io.to(`user:${receiverId}`).to(`user:${req.user.id}`).emit("chat:message", message);
+      conversation.participants.forEach((participantId) => {
+        io.to(`user:${participantId}`).emit("chat:message", message);
+      });
     }
 
     return res.status(201).json({
@@ -192,6 +330,7 @@ exports.markConversationRead = async (req, res) => {
         ],
         $size: 2,
       },
+      type: "direct",
     });
 
     if (!conversation) {

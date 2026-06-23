@@ -3,9 +3,11 @@ const { auth } = require("../middleware/auth");
 const {
   listChatUsers,
   listConversations,
-  getMessages,
+  getDirectMessages,
+  getConversationMessages,
   sendMessage,
   markConversationRead,
+  createGroup,
 } = require("../controller/chatController");
 
 const router = express.Router();
@@ -13,7 +15,9 @@ const router = express.Router();
 router.use(auth);
 router.get("/users", listChatUsers);
 router.get("/conversations", listConversations);
-router.get("/messages/:userId", getMessages);
+router.post("/groups", createGroup);
+router.get("/messages/direct/:userId", getDirectMessages);
+router.get("/messages/conversation/:conversationId", getConversationMessages);
 router.post("/messages", sendMessage);
 router.patch("/messages/:userId/read", markConversationRead);
 
