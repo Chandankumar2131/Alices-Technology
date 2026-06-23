@@ -14,9 +14,13 @@ export const dashboardService = {
     api.get(`/dashboard/employee/${employeeId}`).then(unwrap),
   getEmployeeTimeline: (employeeId) =>
     api.get(`/dashboard/employee/${employeeId}/timeline`).then(unwrap),
+  getEmployeeDayDetail: (employeeId, date) =>
+    api.get(`/dashboard/employee/${employeeId}/day/${date}`).then(unwrap),
   getEmployeeDetail: (employeeId) =>
     api.get(`/dashboard/employee/${employeeId}/detail`).then(unwrap),
   // Employee
   getMyDashboard: () =>
     api.get("/dashboard/employee-dashboard").then(unwrap),
+  getMyDayDetail: (date) =>
+    api.get(`/dashboard/employee-dashboard/day/${date}`).then(unwrap),
 };

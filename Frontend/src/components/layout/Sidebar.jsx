@@ -39,7 +39,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
       <div className="mb-6 flex items-center justify-between gap-3 px-2">
         <div className="min-w-0">
           <div className="truncate text-lg font-bold tracking-tight text-slate-50">
-            Alice's HRM
+            Alice's Tech HRM
           </div>
           <div className="mt-0.5 text-xs font-medium text-cyan-200/80">
             Workforce Portal

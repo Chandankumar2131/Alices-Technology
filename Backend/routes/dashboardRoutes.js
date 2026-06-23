@@ -11,6 +11,8 @@ const {
   getEmployeesOnBreak,
   getLateEmployees,
   getEmployeeTimeline,
+  getEmployeeDayDetail,
+  getMyDayDetail,
   getEmployeeDetailForAdmin
 } = require("../controller/dashboardController"); 
 
@@ -73,9 +75,20 @@ router.get(
   getEmployeeTimeline
 );
 router.get(
+  "/employee/:employeeId/day/:date",
+  auth,
+  isAdmin,
+  getEmployeeDayDetail
+);
+router.get(
   "/employee-dashboard",
   auth,
   getEmployeeDashboard
+);
+router.get(
+  "/employee-dashboard/day/:date",
+  auth,
+  getMyDayDetail
 );
 router.get(
   "/employee/:employeeId/detail",

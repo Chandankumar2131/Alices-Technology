@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchEmployeeDetail,
@@ -197,7 +197,18 @@ function AttendanceTab({ timeline, employeeId }) {
   };
 
   const columns = [
-    { key: "date", header: "Date", render: (r) => fmtDate(r.date) },
+    {
+      key: "date",
+      header: "Date",
+      render: (r) => (
+        <Link
+          to={`/employees/${employeeId}/attendance/${r.attendanceDate}`}
+          className="font-semibold text-cyan-300 transition hover:text-cyan-200"
+        >
+          {fmtDate(r.date)}
+        </Link>
+      ),
+    },
     { key: "status", header: "Status", render: (r) => <Badge status={r.status} /> },
     { key: "checkIn", header: "In", render: (r) => fmtTime(r.checkIn) },
     { key: "checkOut", header: "Out", render: (r) => fmtTime(r.checkOut) },

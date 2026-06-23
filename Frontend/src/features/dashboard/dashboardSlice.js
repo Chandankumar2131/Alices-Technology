@@ -8,6 +8,9 @@ export const fetchAdminDashboard = createAsyncThunk("dashboard/admin", async (_,
 export const fetchMyDashboard = createAsyncThunk("dashboard/my", async (_, { rejectWithValue }) => {
   try { return await dashboardService.getMyDashboard(); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
+export const fetchMyDayDetail = createAsyncThunk("dashboard/myDayDetail", async (date, { rejectWithValue }) => {
+  try { return await dashboardService.getMyDayDetail(date); } catch (e) { return rejectWithValue(getApiError(e)); }
+});
 export const fetchLiveEmployees = createAsyncThunk("dashboard/live", async (_, { rejectWithValue }) => {
   try { return await dashboardService.getLiveEmployees(); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
@@ -24,7 +27,7 @@ export const fetchOnBreak = createAsyncThunk("dashboard/onBreak", async (_, { re
 const slice = createSlice({
   name: "dashboard",
   initialState: {
-    adminStats: null, myDashboard: null, liveEmployees: [],
+    adminStats: null, myDashboard: null, myDayDetail: null, liveEmployees: [],
     deptAnalytics: [], lateEmployees: [], onBreak: [], loading: false, error: null,
   },
   reducers: {},
@@ -35,6 +38,9 @@ const slice = createSlice({
      .addCase(fetchMyDashboard.pending, (s) => { s.loading = true; })
      .addCase(fetchMyDashboard.fulfilled, (s, a) => { s.loading = false; s.myDashboard = a.payload.data; })
      .addCase(fetchMyDashboard.rejected, (s, a) => { s.loading = false; s.error = a.payload; })
+     .addCase(fetchMyDayDetail.pending, (s) => { s.loading = true; s.myDayDetail = null; })
+     .addCase(fetchMyDayDetail.fulfilled, (s, a) => { s.loading = false; s.myDayDetail = a.payload.data; })
+     .addCase(fetchMyDayDetail.rejected, (s, a) => { s.loading = false; s.error = a.payload; })
      .addCase(fetchLiveEmployees.fulfilled, (s, a) => { s.liveEmployees = a.payload.data; })
      .addCase(fetchDeptAnalytics.fulfilled, (s, a) => { s.deptAnalytics = a.payload.data; })
      .addCase(fetchLateEmployees.fulfilled, (s, a) => { s.lateEmployees = a.payload.data; })

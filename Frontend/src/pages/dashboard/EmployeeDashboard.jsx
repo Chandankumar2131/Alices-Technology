@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMyDashboard, selectDashboard } from "../../features/dashboard/dashboardSlice";
 import StatCard from "../../components/ui/StatCard";
@@ -26,7 +27,18 @@ export default function EmployeeDashboard() {
   const payroll = s.latestPayroll;
 
   const columns = [
-    { key: "date", header: "Date", render: (r) => fmtDate(r.attendanceDate) },
+    {
+      key: "date",
+      header: "Date",
+      render: (r) => (
+        <Link
+          to={`/attendance/${r.attendanceDate}`}
+          className="font-semibold text-cyan-300 transition hover:text-cyan-200"
+        >
+          {fmtDate(r.attendanceDate)}
+        </Link>
+      ),
+    },
     { key: "status", header: "Status", render: (r) => <Badge status={r.status} /> },
     { key: "checkIn", header: "Check In", render: (r) => fmtTime(r.checkIn) },
     { key: "checkOut", header: "Check Out", render: (r) => fmtTime(r.checkOut) },

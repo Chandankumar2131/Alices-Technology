@@ -627,6 +627,78 @@ exports.getEmployeeTimeline = async (req, res) => {
     });
   }
 };
+
+// ==========================================
+// ADMIN: SINGLE EMPLOYEE DAY DETAIL
+// ==========================================
+exports.getEmployeeDayDetail = async (req, res) => {
+  try {
+    const { employeeId, date } = req.params;
+
+    const employee = await User.findById(employeeId)
+      .select("firstName lastName email employeeId department designation image");
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    const attendance = await Attendance.findOne({
+      employee: employeeId,
+      attendanceDate: date,
+    });
+
+    if (!attendance) {
+      return res.status(404).json({
+        success: false,
+        message: "Attendance record not found for this date",
+      });
+    }
+
+    const breaks = await BreakLog.find({
+      attendance: attendance._id,
+    }).sort({ breakStart: 1 });
+
+    const totalBreakMinutes = breaks.reduce((sum, item) => {
+      if (item.duration) return sum + item.duration;
+      if (item.status === "Active" && item.breakStart) {
+        return sum + moment().tz(TZ).diff(moment(item.breakStart), "minutes");
+      }
+      return sum;
+    }, 0);
+
+    const liveHours = getLiveAttendanceHours(attendance, totalBreakMinutes);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        employee,
+        attendance: {
+          ...attendance.toObject(),
+          totalHours: liveHours.totalHours,
+          productiveHours: liveHours.productiveHours,
+        },
+        breaks,
+        totalBreakMinutes,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// EMPLOYEE: MY SINGLE DAY DETAIL
+// ==========================================
+exports.getMyDayDetail = async (req, res) => {
+  req.params.employeeId = req.user.id;
+  return exports.getEmployeeDayDetail(req, res);
+};
 // ADMIN: SINGLE EMPLOYEE DETAIL (profile + today + breaks)
 exports.getEmployeeDetailForAdmin = async (req, res) => {
   try {

@@ -27,6 +27,9 @@ export const fetchEmployeeDashboard = createAsyncThunk("employee/dashboard", asy
 export const fetchEmployeeTimeline = createAsyncThunk("employee/timeline", async (id, { rejectWithValue }) => {
   try { return await dashboardService.getEmployeeTimeline(id); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
+export const fetchEmployeeDayDetail = createAsyncThunk("employee/dayDetail", async ({ id, date }, { rejectWithValue }) => {
+  try { return await dashboardService.getEmployeeDayDetail(id, date); } catch (e) { return rejectWithValue(getApiError(e)); }
+});
 
 const slice = createSlice({
   name: "employee",
@@ -35,11 +38,12 @@ const slice = createSlice({
     selected: null,    // detail bundle: { employee, attendance, activeBreak, breaks }
     dashboard: null,   // leaves/payroll summary
     timeline: [],
+    dayDetail: null,
     loading: false,
     detailLoading: false,
     error: null,
   },
-  reducers: { clearSelectedEmployee: (s) => { s.selected = null; s.dashboard = null; s.timeline = []; } },
+  reducers: { clearSelectedEmployee: (s) => { s.selected = null; s.dashboard = null; s.timeline = []; s.dayDetail = null; } },
   extraReducers: (b) => {
     b.addCase(fetchEmployees.pending, (s) => { s.loading = true; })
      .addCase(fetchEmployees.fulfilled, (s, a) => { s.loading = false; s.list = a.payload.data; })
@@ -55,7 +59,10 @@ const slice = createSlice({
      .addCase(fetchEmployeeDetail.fulfilled, (s, a) => { s.detailLoading = false; s.selected = a.payload.data; })
      .addCase(fetchEmployeeDetail.rejected, (s, a) => { s.detailLoading = false; s.error = a.payload; })
      .addCase(fetchEmployeeDashboard.fulfilled, (s, a) => { s.dashboard = a.payload.data; })
-     .addCase(fetchEmployeeTimeline.fulfilled, (s, a) => { s.timeline = a.payload.data; });
+     .addCase(fetchEmployeeTimeline.fulfilled, (s, a) => { s.timeline = a.payload.data; })
+     .addCase(fetchEmployeeDayDetail.pending, (s) => { s.detailLoading = true; s.dayDetail = null; })
+     .addCase(fetchEmployeeDayDetail.fulfilled, (s, a) => { s.detailLoading = false; s.dayDetail = a.payload.data; })
+     .addCase(fetchEmployeeDayDetail.rejected, (s, a) => { s.detailLoading = false; s.error = a.payload; });
   },
 });
 
