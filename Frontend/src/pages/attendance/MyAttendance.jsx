@@ -170,7 +170,25 @@ export default function MyAttendance() {
         )}
       </Card>
 
-      <Card title="Correction Requests">
+      {/* Today's breaks */}
+      <Card title="Today's Breaks">
+        {todayBreaks?.length ? (
+          <div className="space-y-2 text-sm">
+            {todayBreaks.map((b) => (
+              <div key={b._id} className="flex flex-col gap-1 border-b border-gray-50 py-2 sm:flex-row sm:items-center sm:justify-between">
+                <span className="font-medium">{b.reason}</span>
+                <span className="text-gray-500">{fmtTime(b.breakStart)} - {fmtTime(b.breakEnd)}</span>
+                <span>{b.duration ? `${b.duration} min` : "—"}</span>
+                <Badge status={b.status === "Active" ? "On Break" : "Checked Out"}>{b.status}</Badge>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">No breaks today.</p>
+        )}
+      </Card>
+
+      <Card title=" Attendance Correction Requests">
         {myCorrections?.length ? (
           <div className="space-y-2 text-sm">
             {myCorrections.map((item) => (
@@ -191,24 +209,6 @@ export default function MyAttendance() {
           </div>
         ) : (
           <p className="text-sm text-gray-500">No correction requests yet.</p>
-        )}
-      </Card>
-
-      {/* Today's breaks */}
-      <Card title="Today's Breaks">
-        {todayBreaks?.length ? (
-          <div className="space-y-2 text-sm">
-            {todayBreaks.map((b) => (
-              <div key={b._id} className="flex flex-col gap-1 border-b border-gray-50 py-2 sm:flex-row sm:items-center sm:justify-between">
-                <span className="font-medium">{b.reason}</span>
-                <span className="text-gray-500">{fmtTime(b.breakStart)} - {fmtTime(b.breakEnd)}</span>
-                <span>{b.duration ? `${b.duration} min` : "—"}</span>
-                <Badge status={b.status === "Active" ? "On Break" : "Checked Out"}>{b.status}</Badge>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500">No breaks today.</p>
         )}
       </Card>
 
