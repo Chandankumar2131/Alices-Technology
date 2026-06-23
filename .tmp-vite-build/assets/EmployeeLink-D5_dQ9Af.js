@@ -1,1 +1,0 @@
-import{t as e}from"./jsx-runtime-Dw_czukf.js";import{i as t}from"./index-DiCzzvWE.js";import{s as n}from"./helpers-BCfu5yiQ.js";var r=e();function i({employee:e}){return e?(0,r.jsx)(t,{to:`/employees/${e._id||e.id}`,className:`font-medium text-cyan-400 hover:text-cyan-300 hover:underline`,children:n(e)}):(0,r.jsx)(`span`,{children:`—`})}export{i as t};

@@ -205,10 +205,82 @@ th {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
+.theme-modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.theme-modal-panel {
+  background: rgba(2, 6, 23, 0.95);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  --tw-ring-color: rgba(255, 255, 255, 0.04);
+}
+
+.theme-modal-header,
+.theme-modal-footer {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.theme-modal-close {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.theme-modal-close:hover {
+  border-color: rgba(103, 232, 249, 0.35);
+  color: #f8fafc;
+}
+
 .theme-light .theme-table {
   background: rgba(232, 242, 248, 0.58);
   border-color: rgba(30, 64, 93, 0.2);
   backdrop-filter: blur(14px) saturate(1.12);
+}
+
+.theme-light .theme-modal-overlay {
+  background: rgba(15, 23, 42, 0.34) !important;
+}
+
+.theme-light .theme-modal-panel {
+  background:
+    linear-gradient(135deg, rgba(238, 247, 252, 0.94), rgba(213, 231, 241, 0.88)),
+    rgba(229, 240, 247, 0.92);
+  border-color: rgba(30, 64, 93, 0.24);
+  color: #0f172a;
+  box-shadow: 0 28px 90px rgba(30, 64, 93, 0.28);
+  --tw-ring-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(18px) saturate(1.12);
+}
+
+.theme-light .theme-modal-header,
+.theme-light .theme-modal-footer {
+  background: rgba(255, 255, 255, 0.36);
+  border-color: rgba(30, 64, 93, 0.16);
+}
+
+.theme-light .theme-modal-body,
+.theme-light .theme-modal-panel .text-slate-100,
+.theme-light .theme-modal-panel .text-slate-200,
+.theme-light .theme-modal-panel .text-slate-300 {
+  color: #0f172a !important;
+}
+
+.theme-light .theme-modal-panel .text-slate-400,
+.theme-light .theme-modal-panel .text-slate-500 {
+  color: #52637c !important;
+}
+
+.theme-light .theme-modal-close {
+  background: rgba(255, 255, 255, 0.42);
+  border-color: rgba(30, 64, 93, 0.18);
+  color: #40546f;
+}
+
+.theme-light .theme-modal-close:hover {
+  background: rgba(255, 255, 255, 0.68);
+  border-color: rgba(8, 104, 138, 0.34);
+  color: #0f172a;
 }
 
 .theme-toggle {
