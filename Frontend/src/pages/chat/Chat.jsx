@@ -154,9 +154,17 @@ export default function Chat() {
 
     const handleConnect = () => setSocketStatus("connected");
     const handleDisconnect = () => setSocketStatus("disconnected");
-    const handleConnectError = () => setSocketStatus("error");
+    const handleConnectError = () => {
+      if (!socket.connected) {
+        setSocketStatus("error");
+      }
+    };
 
     const handleMessage = (message) => {
+      if (socket.connected) {
+        setSocketStatus("connected");
+      }
+
       const conversationId = getId(message.conversation);
       const selectedConversationId = getId(selectedConversation);
       const senderId = getId(message.sender);
