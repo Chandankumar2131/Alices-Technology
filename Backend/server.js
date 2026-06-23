@@ -39,7 +39,9 @@ app.use(helmet());
 app.use(compression());
 app.use(requestMetrics);
 
-const allowedOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(",") : "*";
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(",").map((origin) => origin.trim()).filter(Boolean)
+  : "*";
 app.use(
   cors({
     origin: allowedOrigins,

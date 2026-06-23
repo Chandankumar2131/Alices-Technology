@@ -7,6 +7,7 @@ const {
   getConversationMessages,
   sendMessage,
   markConversationRead,
+  markGroupRead,
   createGroup,
 } = require("../controller/chatController");
 
@@ -20,5 +21,6 @@ router.get("/messages/direct/:userId", getDirectMessages);
 router.get("/messages/conversation/:conversationId", getConversationMessages);
 router.post("/messages", sendMessage);
 router.patch("/messages/:userId/read", markConversationRead);
+router.patch("/conversations/:conversationId/read", markGroupRead);
 
 module.exports = router;

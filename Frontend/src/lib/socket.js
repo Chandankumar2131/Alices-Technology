@@ -10,6 +10,7 @@ export const getSocket = () => {
     socket = io(socketUrl, {
       withCredentials: true,
       autoConnect: false,
+      transports: ["websocket", "polling"],
     });
   }
 

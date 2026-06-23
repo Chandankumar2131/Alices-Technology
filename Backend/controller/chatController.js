@@ -23,9 +23,9 @@ const findOrCreateConversation = async (userId, otherUserId) => {
   );
 
   let conversation = await Conversation.findOne({
-    type: "direct",
+    $or: [{ type: "direct" }, { type: { $exists: false } }],
     participants: { $all: participantIds, $size: 2 },
-  });
+  }).sort({ lastMessageAt: -1, updatedAt: -1 });
 
   if (!conversation) {
     conversation = await Conversation.create({
@@ -148,14 +148,99 @@ exports.listConversations = async (req, res) => {
       })
       .sort({ lastMessageAt: -1, updatedAt: -1 });
 
+    const conversationsWithUnread = await Promise.all(
+      conversations.map(async (conversation) => {
+        const conversationObject = conversation.toObject();
+        const isGroup = conversationObject.type === "group";
+        const unreadFilter = isGroup
+          ? {
+              conversation: conversation._id,
+              sender: { $ne: req.user.id },
+              receivers: req.user.id,
+              readBy: {
+                $not: {
+                  $elemMatch: { user: new mongoose.Types.ObjectId(req.user.id) },
+                },
+              },
+            }
+          : {
+              conversation: conversation._id,
+              sender: { $ne: req.user.id },
+              receiver: req.user.id,
+              readAt: { $exists: false },
+            };
+
+        conversationObject.unreadCount = await Message.countDocuments(unreadFilter);
+        return conversationObject;
+      })
+    );
+
     return res.status(200).json({
       success: true,
-      data: conversations,
+      data: conversationsWithUnread,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch conversations",
+      error: error.message,
+    });
+  }
+};
+
+exports.markGroupRead = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      type: "group",
+      participants: req.user.id,
+    });
+
+    if (!conversation) {
+      return res.status(404).json({
+        success: false,
+        message: "Conversation not found",
+      });
+    }
+
+    const readAt = new Date();
+    const unreadMessages = await Message.find({
+      conversation: conversation._id,
+      sender: { $ne: req.user.id },
+      receivers: req.user.id,
+      readBy: {
+        $not: {
+          $elemMatch: { user: new mongoose.Types.ObjectId(req.user.id) },
+        },
+      },
+    }).select("_id");
+
+    const messageIds = unreadMessages.map((message) => message._id);
+    const result = await Message.updateMany(
+      { _id: { $in: messageIds } },
+      {
+        $push: {
+          readBy: {
+            user: req.user.id,
+            readAt,
+          },
+        },
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        modifiedCount: result.modifiedCount,
+        messageIds: messageIds.map(String),
+        readAt,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to mark group messages as read",
       error: error.message,
     });
   }
@@ -174,9 +259,21 @@ exports.getDirectMessages = async (req, res) => {
     }
 
     const conversation = await findOrCreateConversation(req.user.id, userId);
-    const messages = await Message.find({ conversation: conversation._id })
+    const conversations = await Conversation.find({
+      $or: [{ type: "direct" }, { type: { $exists: false } }],
+      participants: {
+        $all: [
+          new mongoose.Types.ObjectId(req.user.id),
+          new mongoose.Types.ObjectId(userId),
+        ],
+        $size: 2,
+      },
+    }).select("_id");
+    const conversationIds = conversations.map((item) => item._id);
+    const messages = await Message.find({ conversation: { $in: conversationIds } })
       .populate("sender", userSelect)
       .populate("receiver", userSelect)
+      .populate("receivers", userSelect)
       .sort({ createdAt: 1 })
       .limit(100);
 
@@ -322,7 +419,7 @@ exports.sendMessage = async (req, res) => {
 exports.markConversationRead = async (req, res) => {
   try {
     const { userId } = req.params;
-    const conversation = await Conversation.findOne({
+    const conversations = await Conversation.find({
       participants: {
         $all: [
           new mongoose.Types.ObjectId(req.user.id),
@@ -330,16 +427,17 @@ exports.markConversationRead = async (req, res) => {
         ],
         $size: 2,
       },
-      type: "direct",
-    });
+      $or: [{ type: "direct" }, { type: { $exists: false } }],
+    }).select("_id");
 
-    if (!conversation) {
+    if (conversations.length === 0) {
       return res.status(200).json({ success: true, data: { modifiedCount: 0 } });
     }
 
+    const conversationIds = conversations.map((conversation) => conversation._id);
     const readAt = new Date();
     const unreadMessages = await Message.find({
-      conversation: conversation._id,
+      conversation: { $in: conversationIds },
       sender: userId,
       receiver: req.user.id,
       readAt: { $exists: false },
@@ -347,7 +445,7 @@ exports.markConversationRead = async (req, res) => {
 
     const result = await Message.updateMany(
       {
-        conversation: conversation._id,
+        conversation: { $in: conversationIds },
         sender: userId,
         receiver: req.user.id,
         readAt: { $exists: false },
@@ -359,7 +457,7 @@ exports.markConversationRead = async (req, res) => {
     const io = req.app.get("io");
     if (io && messageIds.length > 0) {
       io.to(`user:${userId}`).to(`user:${req.user.id}`).emit("chat:seen", {
-        conversationId: String(conversation._id),
+        conversationId: String(conversationIds[0]),
         readerId: String(req.user.id),
         senderId: String(userId),
         messageIds,

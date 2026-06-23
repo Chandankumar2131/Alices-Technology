@@ -12,4 +12,6 @@ export const chatService = {
   sendMessage: async ({ receiverId, conversationId, text }) =>
     unwrap(await api.post("/chat/messages", { receiverId, conversationId, text })),
   markRead: async (userId) => unwrap(await api.patch(`/chat/messages/${userId}/read`)),
+  markGroupRead: async (conversationId) =>
+    unwrap(await api.patch(`/chat/conversations/${conversationId}/read`)),
 };

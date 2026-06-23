@@ -8,7 +8,7 @@ import { chatService } from "../../service/chatService";
 import { fullName } from "../../utils/helpers";
 import notify from "../../utils/toast";
 
-const getId = (value) => String(value?._id || value || "");
+const getId = (value) => String(value?._id || value?.id || value || "");
 
 const formatTime = (date) =>
   new Intl.DateTimeFormat("en", {
@@ -25,6 +25,8 @@ const mergeSeenMessages = (items, messageIds, readAt) => {
 
 const targetId = (target) => `${target?.type || ""}:${getId(target?.data)}`;
 
+const formatUnreadCount = (count = 0) => (count > 9 ? "9+" : String(count));
+
 export default function Chat() {
   const currentUser = useSelector(selectUser);
   const canCreateGroup = useSelector(selectIsAdmin);
@@ -40,12 +42,22 @@ export default function Chat() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [creatingGroup, setCreatingGroup] = useState(false);
-  const bottomRef = useRef(null);
+  const [socketStatus, setSocketStatus] = useState("connecting");
+  const messagesContainerRef = useRef(null);
 
   const currentUserId = getId(currentUser);
 
   const groups = useMemo(
-    () => conversations.filter((conversation) => conversation.type === "group"),
+    () =>
+      conversations
+        .filter((conversation) => conversation.type === "group")
+        .sort((a, b) => {
+          const aTime =
+            a.lastMessage?.createdAt || a.lastMessageAt || a.updatedAt || "";
+          const bTime =
+            b.lastMessage?.createdAt || b.lastMessageAt || b.updatedAt || "";
+          return String(bTime).localeCompare(String(aTime));
+        }),
     [conversations]
   );
 
@@ -58,7 +70,24 @@ export default function Chat() {
         const other = conversation.participants?.find(
           (participant) => getId(participant) !== currentUserId
         );
-        if (other) map.set(getId(other), conversation);
+        if (!other) return;
+
+        const otherId = getId(other);
+        const existing = map.get(otherId);
+        const existingTime =
+          existing?.lastMessage?.createdAt ||
+          existing?.lastMessageAt ||
+          existing?.updatedAt ||
+          "";
+        const nextTime =
+          conversation?.lastMessage?.createdAt ||
+          conversation?.lastMessageAt ||
+          conversation?.updatedAt ||
+          "";
+
+        if (!existing || String(nextTime).localeCompare(String(existingTime)) > 0) {
+          map.set(otherId, conversation);
+        }
       });
 
     return map;
@@ -66,9 +95,20 @@ export default function Chat() {
 
   const orderedUsers = useMemo(() => {
     return [...users].sort((a, b) => {
-      const aTime = conversationByUser.get(getId(a))?.lastMessageAt || "";
-      const bTime = conversationByUser.get(getId(b))?.lastMessageAt || "";
-      return String(bTime).localeCompare(String(aTime));
+      const aConversation = conversationByUser.get(getId(a));
+      const bConversation = conversationByUser.get(getId(b));
+      const aTime =
+        aConversation?.lastMessage?.createdAt ||
+        aConversation?.lastMessageAt ||
+        aConversation?.updatedAt ||
+        "";
+      const bTime =
+        bConversation?.lastMessage?.createdAt ||
+        bConversation?.lastMessageAt ||
+        bConversation?.updatedAt ||
+        "";
+      if (aTime || bTime) return String(bTime).localeCompare(String(aTime));
+      return fullName(a).localeCompare(fullName(b));
     });
   }, [conversationByUser, users]);
 
@@ -110,20 +150,33 @@ export default function Chat() {
     const socket = getSocket();
 
     if (!socket.connected) socket.connect();
+    setSocketStatus(socket.connected ? "connected" : "connecting");
+
+    const handleConnect = () => setSocketStatus("connected");
+    const handleDisconnect = () => setSocketStatus("disconnected");
+    const handleConnectError = () => setSocketStatus("error");
 
     const handleMessage = (message) => {
       const conversationId = getId(message.conversation);
       const selectedConversationId = getId(selectedConversation);
       const senderId = getId(message.sender);
       const receiverId = getId(message.receiver);
+      const receiverIds = [
+        receiverId,
+        ...(message.receivers || []).map((receiver) => getId(receiver)),
+      ].filter(Boolean);
       const selectedUserId =
         selectedTarget?.type === "direct" ? getId(selectedTarget.data) : "";
+      const isMine = senderId === currentUserId;
+      const isOpenDirect =
+        selectedTarget?.type === "direct" &&
+        ((senderId === selectedUserId && receiverIds.includes(currentUserId)) ||
+          (senderId === currentUserId && receiverIds.includes(selectedUserId)));
+      const isOpenGroup =
+        selectedTarget?.type === "group" && conversationId === selectedConversationId;
+      const isOpen = isOpenDirect || isOpenGroup;
 
-      if (
-        conversationId === selectedConversationId ||
-        senderId === selectedUserId ||
-        receiverId === selectedUserId
-      ) {
+      if (isOpen) {
         setMessages((prev) => {
           if (prev.some((item) => getId(item) === getId(message))) return prev;
           return [...prev, message];
@@ -142,10 +195,22 @@ export default function Chat() {
 
         return prev.map((conversation) =>
           getId(conversation) === conversationId
-            ? { ...conversation, lastMessage: message, lastMessageAt: message.createdAt }
+            ? {
+                ...conversation,
+                lastMessage: message,
+                lastMessageAt: message.createdAt,
+                unreadCount:
+                  isMine || isOpen
+                    ? conversation.unreadCount || 0
+                    : (conversation.unreadCount || 0) + 1,
+              }
             : conversation
         );
       });
+
+      if (!isMine && !isOpen) {
+        refreshConversations().catch(() => {});
+      }
     };
 
     const handleSeen = ({ messageIds = [], readAt }) => {
@@ -173,11 +238,17 @@ export default function Chat() {
       });
     };
 
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
     socket.on("chat:message", handleMessage);
     socket.on("chat:seen", handleSeen);
     socket.on("chat:group_created", handleGroupCreated);
 
     return () => {
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", handleConnectError);
       socket.off("chat:message", handleMessage);
       socket.off("chat:seen", handleSeen);
       socket.off("chat:group_created", handleGroupCreated);
@@ -199,6 +270,14 @@ export default function Chat() {
             getId(selectedTarget.data)
           );
           setMessages(res.data?.messages || []);
+          await chatService.markGroupRead(getId(selectedTarget.data));
+          setConversations((prev) =>
+            prev.map((conversation) =>
+              getId(conversation) === getId(selectedTarget.data)
+                ? { ...conversation, unreadCount: 0 }
+                : conversation
+            )
+          );
           return;
         }
 
@@ -206,6 +285,17 @@ export default function Chat() {
         const res = await chatService.getDirectMessages(userId);
         setMessages(res.data?.messages || []);
         const readRes = await chatService.markRead(userId);
+        setConversations((prev) =>
+          prev.map((conversation) => {
+            const other = conversation.participants?.find(
+              (participant) => getId(participant) !== currentUserId
+            );
+
+            return getId(other) === userId
+              ? { ...conversation, unreadCount: 0 }
+              : conversation;
+          })
+        );
 
         if (readRes.data?.messageIds?.length) {
           setMessages((prev) =>
@@ -224,7 +314,10 @@ export default function Chat() {
   }, [selectedTarget]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [messages]);
 
   const handleSubmit = async (event) => {
@@ -247,6 +340,23 @@ export default function Chat() {
         if (prev.some((item) => getId(item) === getId(res.data))) return prev;
         return [...prev, res.data];
       });
+      setConversations((prev) =>
+        prev.map((conversation) => {
+          if (selectedTarget.type === "group") {
+            return getId(conversation) === getId(selectedTarget.data)
+              ? { ...conversation, unreadCount: 0 }
+              : conversation;
+          }
+
+          const other = conversation.participants?.find(
+            (participant) => getId(participant) !== currentUserId
+          );
+
+          return getId(other) === getId(selectedTarget.data)
+            ? { ...conversation, unreadCount: 0 }
+            : conversation;
+        })
+      );
       refreshConversations().catch(() => {});
     } catch (error) {
       setDraft(text);
@@ -311,6 +421,21 @@ export default function Chat() {
           <div>
             <h1 className="text-xl font-bold text-slate-50">Chat</h1>
             <p className="mt-1 text-sm text-slate-400">Direct messages and groups.</p>
+            <p
+              className={`mt-1 text-xs font-semibold ${
+                socketStatus === "connected"
+                  ? "text-lime-300"
+                  : socketStatus === "error"
+                    ? "text-rose-300"
+                    : "text-amber-300"
+              }`}
+            >
+              {socketStatus === "connected"
+                ? "Realtime connected"
+                : socketStatus === "error"
+                  ? "Realtime connection failed"
+                  : "Realtime connecting"}
+            </p>
           </div>
           {canCreateGroup && (
             <button
@@ -379,6 +504,7 @@ export default function Chat() {
               ) : (
                 groups.map((conversation) => {
                   const active = targetId(selectedTarget) === `group:${getId(conversation)}`;
+                  const unreadCount = conversation.unreadCount || 0;
                   return (
                     <button
                       type="button"
@@ -401,6 +527,11 @@ export default function Chat() {
                           {conversation.lastMessage?.text || "Group chat"}
                         </span>
                       </span>
+                      {unreadCount > 0 && (
+                        <span className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-cyan-300 px-2 text-xs font-bold text-slate-950">
+                          {formatUnreadCount(unreadCount)}
+                        </span>
+                      )}
                     </button>
                   );
                 })
@@ -420,7 +551,9 @@ export default function Chat() {
               ) : (
                 orderedUsers.map((user) => {
                   const active = targetId(selectedTarget) === `direct:${getId(user)}`;
-                  const lastMessage = conversationByUser.get(getId(user))?.lastMessage;
+                  const conversation = conversationByUser.get(getId(user));
+                  const lastMessage = conversation?.lastMessage;
+                  const unreadCount = conversation?.unreadCount || 0;
 
                   return (
                     <button
@@ -446,6 +579,11 @@ export default function Chat() {
                           {lastMessage?.text || user.accountType}
                         </span>
                       </span>
+                      {unreadCount > 0 && (
+                        <span className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-cyan-300 px-2 text-xs font-bold text-slate-950">
+                          {formatUnreadCount(unreadCount)}
+                        </span>
+                      )}
                     </button>
                   );
                 })
@@ -478,7 +616,10 @@ export default function Chat() {
               </div>
             </header>
 
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+            <div
+              ref={messagesContainerRef}
+              className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4"
+            >
               {loadingMessages ? (
                 <Spinner />
               ) : messages.length === 0 ? (
@@ -529,7 +670,6 @@ export default function Chat() {
                   );
                 })
               )}
-              <div ref={bottomRef} />
             </div>
 
             <form onSubmit={handleSubmit} className="flex shrink-0 gap-3 border-t border-white/10 bg-slate-950/80 p-3">
