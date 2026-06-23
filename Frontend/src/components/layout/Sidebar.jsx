@@ -67,6 +67,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
           </>
         )}
         <NavLink to="/profile" onClick={onMobileClose} className={linkClass}>Profile</NavLink>
+        <NavLink to="/chat" onClick={onMobileClose} className={linkClass}>Chat</NavLink>
 
         {isAdmin && (
           <>

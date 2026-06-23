@@ -17,6 +17,7 @@
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",
     "compression": "^1.8.1",
+    "cookie": "^1.1.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -29,6 +30,7 @@
     "mongoose": "^9.6.3",
     "nodemailer": "^9.0.1",
     "nodemon": "^3.1.14",
-    "pdfkit": "^0.18.0"
+    "pdfkit": "^0.18.0",
+    "socket.io": "^4.8.3"
   }
 }

@@ -1,5 +1,6 @@
 
 const express = require("express");
+const http = require("http");
 const authRoutes = require("./routes/authRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const breakRoutes = require("./routes/breakRoutes");
@@ -8,7 +9,9 @@ const salaryRoutes = require("./routes/salaryRoutes");
 const payrollRoutes = require("./routes/payrollRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const holidayRoutes = require("./routes/holidayRoutes");
+const chatRoutes = require("./routes/chatRoutes");
 const { startAutoCheckoutJob } = require("./utils/autoCheckout");
+const { initSocket } = require("./utils/socket");
 
 
 require("dotenv").config();
@@ -64,6 +67,7 @@ app.use("/api/v1/salary", salaryRoutes);
 app.use("/api/v1/payroll",payrollRoutes);
 app.use("/api/v1/dashboard",dashboardRoutes);
 app.use("/api/v1/holiday", holidayRoutes);
+app.use("/api/v1/chat", chatRoutes);
 // ================================
 // Default Route
 // ================================
@@ -96,10 +100,13 @@ app.get("/metrics", (req, res) => {
 // ================================
 
 const PORT = process.env.PORT || 4000;
+const server = http.createServer(app);
+const io = initSocket(server, allowedOrigins);
+app.set("io", io);
 
 startAutoCheckoutJob();
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(
     `🚀 Server Started Successfully on PORT ${PORT}`
   );
