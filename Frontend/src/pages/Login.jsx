@@ -11,6 +11,7 @@ import logo from "../assets/1ch.png";
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -96,14 +97,37 @@ export default function Login() {
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-300">Password</label>
+                <div className="relative">
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   value={form.password}
                   onChange={handleChange}
                   placeholder="••••••••"
-                  className="w-full rounded-lg border border-white/5 bg-slate-800/40 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/40"
+                  className="w-full rounded-lg border border-white/5 bg-slate-800/40 py-2.5 pl-3 pr-11 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/40"
                 />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((current) => !current)}
+                    className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-slate-400 transition hover:bg-white/5 hover:text-cyan-200"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 3l18 18" />
+                        <path d="M10.6 10.6A2 2 0 0 0 13.4 13.4" />
+                        <path d="M9.9 4.2A10.7 10.7 0 0 1 12 4c5 0 9 5 10 8a13.2 13.2 0 0 1-2.4 3.8" />
+                        <path d="M6.6 6.6A13.4 13.4 0 0 0 2 12c1 3 5 8 10 8a10.9 10.9 0 0 0 4.3-.9" />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M2 12s4-8 10-8 10 8 10 8-4 8-10 8S2 12 2 12Z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {errors.password && <p className="mt-1 text-xs text-rose-300">{errors.password}</p>}
               </div>
 

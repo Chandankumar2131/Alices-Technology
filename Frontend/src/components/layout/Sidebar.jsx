@@ -36,13 +36,13 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
 
   const content = (
     <>
-      <div className="mb-6 flex items-center justify-between gap-3 px-2">
+      <div className="mb-6 flex shrink-0 items-center justify-between gap-3 px-2">
         <div className="min-w-0">
           <div className="truncate text-lg font-bold tracking-tight text-slate-50">
-            Alice's Tech HRM
+            Alice's Tech Solutions
           </div>
           <div className="mt-0.5 text-xs font-medium text-cyan-200/80">
-            Workforce Portal
+           HRM - Workforce Portal
           </div>
         </div>
         <button
@@ -55,7 +55,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
         </button>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
         <p className={sectionLabel}>Main</p>
         <NavLink to="/dashboard" onClick={onMobileClose} className={linkClass}>Dashboard</NavLink>
         <NavLink to="/attendance" onClick={onMobileClose} className={linkClass}>My Attendance</NavLink>
@@ -98,7 +98,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
         )}
       </nav>
 
-      <div className="mt-6 border-t border-slate-800 pt-4">
+      <div className="mt-6 shrink-0 border-t border-slate-800 pt-4">
         <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3 shadow-inner shadow-black/10">
           {user?.image ? (
             <img
@@ -129,7 +129,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
 
   return (
     <>
-      <aside className="theme-sidebar hidden w-64 shrink-0 border-r p-4 shadow-[12px_0_40px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-col">
+      <aside className="theme-sidebar hidden h-dvh w-64 shrink-0 border-r p-4 shadow-[12px_0_40px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-col">
         {content}
       </aside>
 

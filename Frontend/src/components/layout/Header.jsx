@@ -26,7 +26,7 @@ export default function Header({ onMenuClick }) {
         <p className="mt-0.5 text-xs leading-snug text-slate-400 sm:text-sm">{subtitle}</p>
       </div>
       <ThemeToggle />
-      <div className="theme-role-pill hidden items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] sm:flex">
+      <div className="theme-role-pill hidden min-h-11 items-center gap-2 rounded-lg border px-4 py-2 text-sm font-bold uppercase tracking-[0.08em] shadow-lg sm:flex">
         {roleLabel}
       </div>
     </header>

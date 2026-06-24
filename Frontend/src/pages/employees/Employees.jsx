@@ -104,7 +104,7 @@ export default function Employees() {
       render: (r) => (
         <button
           onClick={() => navigate(`/employees/${r._id}`)}
-          className="text-left font-semibold text-cyan-300 hover:text-cyan-200 hover:underline"
+          className="cursor-pointer text-left font-semibold text-cyan-300 hover:text-cyan-200 hover:underline"
         >
           <span>{fullName(r)}</span>
           <span className="mt-0.5 block text-xs font-normal text-slate-500">{r.email}</span>

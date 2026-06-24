@@ -81,7 +81,7 @@ export default function EmployeeDetail() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium transition ${
+            className={`cursor-pointer px-4 py-2 text-sm font-medium transition ${
               tab === t
                 ? "border-b-2 border-cyan-400 text-cyan-300"
                 : "text-slate-500 hover:text-slate-300"
@@ -203,7 +203,7 @@ function AttendanceTab({ timeline, employeeId }) {
       render: (r) => (
         <Link
           to={`/employees/${employeeId}/attendance/${r.attendanceDate}`}
-          className="font-semibold text-cyan-300 transition hover:text-cyan-200"
+          className="cursor-pointer font-semibold text-cyan-300 transition hover:text-cyan-200"
         >
           {fmtDate(r.date)}
         </Link>
