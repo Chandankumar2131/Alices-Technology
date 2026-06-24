@@ -23,7 +23,12 @@ const createAdminLinkClass = ({ isActive }) =>
 const sectionLabel =
   "px-3 pt-5 pb-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-600";
 
-export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }) {
+export default function Sidebar({
+  chatUnreadCount = 0,
+  mobileOpen = false,
+  onChatClick = () => {},
+  onMobileClose = () => {},
+}) {
   const { user, role, isAdmin, isSuperAdmin } = useAuth();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -67,7 +72,21 @@ export default function Sidebar({ mobileOpen = false, onMobileClose = () => {} }
           </>
         )}
         <NavLink to="/profile" onClick={onMobileClose} className={linkClass}>Profile</NavLink>
-        <NavLink to="/chat" onClick={onMobileClose} className={linkClass}>Chat</NavLink>
+        <NavLink
+          to="/chat"
+          onClick={() => {
+            onChatClick();
+            onMobileClose();
+          }}
+          className={linkClass}
+        >
+          <span className="min-w-0 flex-1">Chat</span>
+          {chatUnreadCount > 0 && (
+            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-cyan-300 px-1.5 text-[0.65rem] font-bold text-slate-950">
+              {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+            </span>
+          )}
+        </NavLink>
 
         {isAdmin && (
           <>
