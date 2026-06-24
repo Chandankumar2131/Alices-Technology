@@ -37,6 +37,7 @@ export default function MyAttendance() {
   const [correctionOpen, setCorrectionOpen] = useState(false);
   const [correctionForm, setCorrectionForm] = useState({ requestedCheckIn: "", reason: "" });
   const [correctionBusy, setCorrectionBusy] = useState(false);
+  const [breakBusy, setBreakBusy] = useState(false);
 
   const { calendar, summary, myCorrections, loading } = useSelector(selectAttendance);
   const { today: todayBreaks, activeBreak } = useSelector(selectBreak);
@@ -81,13 +82,19 @@ export default function MyAttendance() {
   };
 
   const handleStartBreak = async () => {
+    if (breakBusy) return;
+    setBreakBusy(true);
     const res = await dispatch(startBreak(breakReason));
+    setBreakBusy(false);
     if (startBreak.fulfilled.match(res)) { notify.success("Break started"); dispatch(fetchTodayBreaks()); }
     else notify.error(res.payload);
   };
 
   const handleEndBreak = async () => {
+    if (breakBusy) return;
+    setBreakBusy(true);
     const res = await dispatch(endBreak());
+    setBreakBusy(false);
     if (endBreak.fulfilled.match(res)) { notify.success("Break ended"); refreshToday(); }
     else notify.error(res.payload);
   };
@@ -157,13 +164,13 @@ export default function MyAttendance() {
         {isCheckedIn && !isCheckedOut && (
           <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-gray-100 pt-4">
             {activeBreak ? (
-              <Button onClick={handleEndBreak} variant="primary">End Break</Button>
+              <Button onClick={handleEndBreak} loading={breakBusy} disabled={breakBusy} variant="primary">End Break</Button>
             ) : (
               <>
                 <div className="w-48">
                   <Select label="Break Reason" options={BREAK_REASONS} value={breakReason} onChange={(e) => setBreakReason(e.target.value)} />
                 </div>
-                <Button onClick={handleStartBreak} variant="secondary">Start Break</Button>
+                <Button onClick={handleStartBreak} loading={breakBusy} disabled={breakBusy} variant="secondary">Start Break</Button>
               </>
             )}
           </div>

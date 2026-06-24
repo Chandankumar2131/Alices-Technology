@@ -66,6 +66,13 @@ exports.startBreak = async (req, res) => {
   } catch (error) {
     console.log(error);
 
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "You already have an active break",
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: error.message,
