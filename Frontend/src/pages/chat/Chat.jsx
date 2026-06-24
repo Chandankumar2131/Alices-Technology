@@ -44,6 +44,8 @@ export default function Chat() {
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [socketStatus, setSocketStatus] = useState("connecting");
   const messagesContainerRef = useRef(null);
+  const refreshInFlightRef = useRef(false);
+  const lastRefreshAtRef = useRef(0);
 
   const currentUserId = getId(currentUser);
 
@@ -117,9 +119,19 @@ export default function Chat() {
       ? selectedTarget.data
       : conversationByUser.get(getId(selectedTarget?.data));
 
-  const refreshConversations = async () => {
-    const res = await chatService.getConversations();
-    setConversations(res.data || []);
+  const refreshConversations = async ({ force = false } = {}) => {
+    const now = Date.now();
+    if (!force && now - lastRefreshAtRef.current < 2500) return;
+    if (refreshInFlightRef.current) return;
+
+    refreshInFlightRef.current = true;
+    lastRefreshAtRef.current = now;
+    try {
+      const res = await chatService.getConversations();
+      setConversations(res.data || []);
+    } finally {
+      refreshInFlightRef.current = false;
+    }
   };
 
   useEffect(() => {
@@ -391,7 +403,7 @@ export default function Chat() {
       setGroupName("");
       setSelectedMembers([]);
       setGroupComposerOpen(false);
-      await refreshConversations();
+      await refreshConversations({ force: true });
       setSelectedTarget({ type: "group", data: res.data });
       notify.success("Group created");
     } catch (error) {
