@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const cloudinary = require("../config/cloudinary");
 const Conversation = require("../model/Conversation");
 const Message = require("../model/Message");
 const User = require("../model/User");
@@ -7,6 +8,56 @@ const userSelect =
   "firstName lastName email accountType image department designation employeeId isActive";
 
 const normalizeMessageText = (text) => String(text || "").trim();
+const allowedAttachmentTypes = new Set([
+  "application/pdf",
+  "image/gif",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+const maxAttachmentSizeBytes = 5 * 1024 * 1024;
+
+const sanitizeFileName = (fileName) =>
+  String(fileName || "attachment")
+    .replace(/[^\w.\- ()]/g, "")
+    .trim()
+    .slice(0, 160) || "attachment";
+
+const buildCloudinaryPublicId = (fileName, mimeType) => {
+  const safeName = sanitizeFileName(fileName).replace(/\s+/g, "-");
+  const withoutExtension = safeName.replace(/\.[^.]+$/, "");
+  const suffix = `${Date.now()}-${withoutExtension}`;
+
+  return mimeType === "application/pdf"
+    ? `hrm-chat/${suffix}.pdf`
+    : `hrm-chat/${suffix}`;
+};
+
+const isValidDataUrl = (value, mimeType) =>
+  typeof value === "string" &&
+  value.startsWith(`data:${mimeType};base64,`) &&
+  value.length > 0;
+
+const normalizeAttachments = (attachments) =>
+  (Array.isArray(attachments) ? attachments : [])
+    .slice(0, 1)
+    .map((attachment) => ({
+      url: String(attachment.url || ""),
+      publicId: String(attachment.publicId || ""),
+      resourceType: String(attachment.resourceType || "raw"),
+      format: String(attachment.format || ""),
+      fileName: sanitizeFileName(attachment.fileName),
+      mimeType: String(attachment.mimeType || ""),
+      size: Number(attachment.size || 0),
+    }))
+    .filter(
+      (attachment) =>
+        attachment.url &&
+        attachment.publicId &&
+        allowedAttachmentTypes.has(attachment.mimeType) &&
+        attachment.size > 0 &&
+        attachment.size <= maxAttachmentSizeBytes
+    );
 
 const canChatWith = (currentUser, otherUser) => {
   if (!otherUser || !otherUser.isActive) return false;
@@ -44,6 +95,57 @@ const populateMessage = (message) =>
     { path: "receiver", select: userSelect },
     { path: "receivers", select: userSelect },
   ]);
+
+exports.uploadAttachment = async (req, res) => {
+  try {
+    const { dataUrl, fileName, mimeType, size } = req.body;
+    const fileSize = Number(size || 0);
+
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return res.status(500).json({
+        success: false,
+        message: "Cloudinary is not configured",
+      });
+    }
+
+    if (
+      !allowedAttachmentTypes.has(mimeType) ||
+      !fileSize ||
+      fileSize > maxAttachmentSizeBytes ||
+      !isValidDataUrl(dataUrl, mimeType)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Upload an image or PDF up to 5 MB",
+      });
+    }
+
+    const uploadResult = await cloudinary.uploader.upload(dataUrl, {
+      public_id: buildCloudinaryPublicId(fileName, mimeType),
+      resource_type: mimeType === "application/pdf" ? "raw" : "image",
+      unique_filename: true,
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
+        resourceType: uploadResult.resource_type,
+        format: uploadResult.format,
+        fileName: sanitizeFileName(fileName),
+        mimeType,
+        size: fileSize,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload attachment",
+      error: error.message,
+    });
+  }
+};
 
 exports.listChatUsers = async (req, res) => {
   try {
@@ -144,7 +246,7 @@ exports.listConversations = async (req, res) => {
       .populate("createdBy", userSelect)
       .populate({
         path: "lastMessage",
-        select: "text sender receiver receivers createdAt readAt",
+        select: "text attachments sender receiver receivers createdAt readAt",
       })
       .sort({ lastMessageAt: -1, updatedAt: -1 });
 
@@ -334,13 +436,14 @@ exports.getConversationMessages = async (req, res) => {
 
 exports.sendMessage = async (req, res) => {
   try {
-    const { receiverId, conversationId, text } = req.body;
+    const { receiverId, conversationId, text, attachments } = req.body;
     const messageText = normalizeMessageText(text);
+    const messageAttachments = normalizeAttachments(attachments);
 
-    if ((!receiverId && !conversationId) || !messageText) {
+    if ((!receiverId && !conversationId) || (!messageText && messageAttachments.length === 0)) {
       return res.status(400).json({
         success: false,
-        message: "Receiver or conversation and message are required",
+        message: "Receiver or conversation and message or attachment are required",
       });
     }
 
@@ -382,6 +485,7 @@ exports.sendMessage = async (req, res) => {
       sender: req.user.id,
       receivers,
       text: messageText,
+      attachments: messageAttachments,
     };
 
     if (receiverId) {

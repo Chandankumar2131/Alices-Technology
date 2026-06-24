@@ -24,10 +24,43 @@ const messageSchema = new mongoose.Schema(
     ],
     text: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
       maxlength: 2000,
     },
+    attachments: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+        publicId: {
+          type: String,
+          required: true,
+        },
+        resourceType: {
+          type: String,
+          enum: ["image", "raw", "video", "auto"],
+          default: "raw",
+        },
+        format: {
+          type: String,
+        },
+        fileName: {
+          type: String,
+          required: true,
+          maxlength: 160,
+        },
+        mimeType: {
+          type: String,
+          required: true,
+        },
+        size: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
     readAt: {
       type: Date,
     },

@@ -6,6 +6,7 @@ const {
   getDirectMessages,
   getConversationMessages,
   sendMessage,
+  uploadAttachment,
   markConversationRead,
   markGroupRead,
   createGroup,
@@ -19,6 +20,7 @@ router.get("/conversations", listConversations);
 router.post("/groups", createGroup);
 router.get("/messages/direct/:userId", getDirectMessages);
 router.get("/messages/conversation/:conversationId", getConversationMessages);
+router.post("/attachments", uploadAttachment);
 router.post("/messages", sendMessage);
 router.patch("/messages/:userId/read", markConversationRead);
 router.patch("/conversations/:conversationId/read", markGroupRead);

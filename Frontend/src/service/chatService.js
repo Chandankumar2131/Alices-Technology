@@ -9,8 +9,17 @@ export const chatService = {
     unwrap(await api.get(`/chat/messages/direct/${userId}`)),
   getConversationMessages: async (conversationId) =>
     unwrap(await api.get(`/chat/messages/conversation/${conversationId}`)),
-  sendMessage: async ({ receiverId, conversationId, text }) =>
-    unwrap(await api.post("/chat/messages", { receiverId, conversationId, text })),
+  uploadAttachment: async ({ dataUrl, fileName, mimeType, size }) =>
+    unwrap(await api.post("/chat/attachments", { dataUrl, fileName, mimeType, size })),
+  sendMessage: async ({ receiverId, conversationId, text, attachments }) =>
+    unwrap(
+      await api.post("/chat/messages", {
+        receiverId,
+        conversationId,
+        text,
+        attachments,
+      })
+    ),
   markRead: async (userId) => unwrap(await api.patch(`/chat/messages/${userId}/read`)),
   markGroupRead: async (conversationId) =>
     unwrap(await api.patch(`/chat/conversations/${conversationId}/read`)),

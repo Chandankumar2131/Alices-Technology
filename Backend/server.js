@@ -1,4 +1,5 @@
-
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 const express = require("express");
 const http = require("http");
 const authRoutes = require("./routes/authRoutes");
@@ -13,8 +14,6 @@ const chatRoutes = require("./routes/chatRoutes");
 const { startAutoCheckoutJob } = require("./utils/autoCheckout");
 const { initSocket } = require("./utils/socket");
 
-
-require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const compression = require("compression");
@@ -33,7 +32,7 @@ const app = express();
 // Middleware
 // ================================
 
-app.use(express.json());
+app.use(express.json({ limit: "12mb" }));
 app.use(cookieParser());
 app.use(helmet());
 app.use(compression());
