@@ -13,7 +13,6 @@ const holidayRoutes = require("./routes/holidayRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const { startAutoCheckoutJob } = require("./utils/autoCheckout");
 const { initSocket } = require("./utils/socket");
-
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const compression = require("compression");
@@ -59,7 +58,6 @@ dbConnection();
 // ================================
 // Routes
 // ================================
-
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/attendance", attendanceRoutes);
 app.use("/api/v1/break", breakRoutes);
@@ -72,7 +70,6 @@ app.use("/api/v1/chat", chatRoutes);
 // ================================
 // Default Route
 // ================================
-
 app.get("/", (req, res) => {
   return res.json({
     success: true,

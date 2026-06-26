@@ -70,7 +70,7 @@ export default function Login() {
               </div>
 
               <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-200 to-slate-400 bg-clip-text text-transparent sm:text-3xl">
-                Alice's Tech Solutions
+                ALICE'S TECH SOLUTIONS
               </h1>
               <RotatingSubtitle />
             </div>
