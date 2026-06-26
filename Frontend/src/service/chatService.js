@@ -5,6 +5,10 @@ export const chatService = {
   getConversations: async () => unwrap(await api.get("/chat/conversations")),
   createGroup: async ({ name, memberIds }) =>
     unwrap(await api.post("/chat/groups", { name, memberIds })),
+  updateGroupMembers: async (conversationId, memberIds) =>
+    unwrap(await api.patch(`/chat/groups/${conversationId}/members`, { memberIds })),
+  deleteGroup: async (conversationId) =>
+    unwrap(await api.delete(`/chat/groups/${conversationId}`)),
   getDirectMessages: async (userId) =>
     unwrap(await api.get(`/chat/messages/direct/${userId}`)),
   getConversationMessages: async (conversationId) =>

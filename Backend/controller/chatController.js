@@ -96,6 +96,15 @@ const populateMessage = (message) =>
     { path: "receivers", select: userSelect },
   ]);
 
+const populateConversation = (conversationId) =>
+  Conversation.findById(conversationId)
+    .populate("participants", userSelect)
+    .populate("createdBy", userSelect)
+    .populate({
+      path: "lastMessage",
+      select: "text attachments sender receiver receivers createdAt readAt",
+    });
+
 exports.uploadAttachment = async (req, res) => {
   try {
     const { dataUrl, fileName, mimeType, size } = req.body;
@@ -215,9 +224,7 @@ exports.createGroup = async (req, res) => {
       lastMessageAt: new Date(),
     });
 
-    const populated = await Conversation.findById(conversation._id)
-      .populate("participants", userSelect)
-      .populate("createdBy", userSelect);
+    const populated = await populateConversation(conversation._id);
 
     const io = req.app.get("io");
     if (io) {
@@ -234,6 +241,129 @@ exports.createGroup = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to create group",
+      error: error.message,
+    });
+  }
+};
+
+exports.updateGroupMembers = async (req, res) => {
+  try {
+    if (!isAdminUser(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only admin can manage groups",
+      });
+    }
+
+    const { conversationId } = req.params;
+    const memberIds = Array.isArray(req.body.memberIds) ? req.body.memberIds : [];
+    const uniqueMemberIds = [...new Set(memberIds.map(String))].filter(
+      (id) => id && id !== String(req.user.id)
+    );
+
+    if (uniqueMemberIds.length < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Select at least one member",
+      });
+    }
+
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      type: "group",
+    });
+
+    if (!conversation) {
+      return res.status(404).json({
+        success: false,
+        message: "Group not found",
+      });
+    }
+
+    const members = await User.find({
+      _id: { $in: uniqueMemberIds },
+      isActive: true,
+    }).select("_id");
+
+    if (members.length !== uniqueMemberIds.length) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more selected members are invalid",
+      });
+    }
+
+    const previousParticipantIds = conversation.participants.map(String);
+    const participantIds = [String(req.user.id), ...uniqueMemberIds];
+
+    conversation.participants = participantIds;
+    await conversation.save();
+
+    const populated = await populateConversation(conversation._id);
+    const notifyUserIds = [...new Set([...previousParticipantIds, ...participantIds])];
+    const io = req.app.get("io");
+
+    if (io) {
+      notifyUserIds.forEach((userId) => {
+        io.to(`user:${userId}`).emit("chat:group_updated", populated);
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: populated,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update group members",
+      error: error.message,
+    });
+  }
+};
+
+exports.deleteGroup = async (req, res) => {
+  try {
+    if (!isAdminUser(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only admin can delete groups",
+      });
+    }
+
+    const { conversationId } = req.params;
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      type: "group",
+    });
+
+    if (!conversation) {
+      return res.status(404).json({
+        success: false,
+        message: "Group not found",
+      });
+    }
+
+    const participantIds = conversation.participants.map(String);
+    await Message.deleteMany({ conversation: conversation._id });
+    await Conversation.deleteOne({ _id: conversation._id });
+
+    const io = req.app.get("io");
+    if (io) {
+      participantIds.forEach((userId) => {
+        io.to(`user:${userId}`).emit("chat:group_deleted", {
+          conversationId: String(conversation._id),
+        });
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: { conversationId: String(conversation._id) },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete group",
       error: error.message,
     });
   }

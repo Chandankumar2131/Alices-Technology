@@ -125,10 +125,14 @@ export default function Chat() {
   const [groupName, setGroupName] = useState("");
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [groupComposerOpen, setGroupComposerOpen] = useState(false);
+  const [groupManagerOpen, setGroupManagerOpen] = useState(false);
+  const [editingMembers, setEditingMembers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [creatingGroup, setCreatingGroup] = useState(false);
+  const [savingGroupMembers, setSavingGroupMembers] = useState(false);
+  const [deletingGroup, setDeletingGroup] = useState(false);
   const [socketStatus, setSocketStatus] = useState("connecting");
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState(null);
@@ -212,6 +216,8 @@ export default function Chat() {
     selectedTarget?.type === "group"
       ? selectedTarget.data
       : conversationByUser.get(getId(selectedTarget?.data));
+
+  const selectedTargetKey = targetId(selectedTarget);
 
   const refreshConversations = async ({ force = false } = {}) => {
     const now = Date.now();
@@ -354,12 +360,75 @@ export default function Chat() {
       });
     };
 
+    const handleGroupUpdated = (conversation) => {
+      const conversationId = getId(conversation);
+      const isParticipant = conversation.participants?.some(
+        (participant) => getId(participant) === currentUserId
+      );
+
+      setConversations((prev) => {
+        if (!isParticipant) {
+          return prev.filter((item) => getId(item) !== conversationId);
+        }
+
+        const exists = prev.some((item) => getId(item) === conversationId);
+        if (!exists) return [conversation, ...prev];
+
+        return prev.map((item) =>
+          getId(item) === conversationId
+            ? {
+                ...item,
+                ...conversation,
+                unreadCount: item.unreadCount || conversation.unreadCount || 0,
+              }
+            : item
+        );
+      });
+
+      setSelectedTarget((prev) => {
+        if (prev?.type !== "group" || getId(prev.data) !== conversationId) {
+          return prev;
+        }
+
+        return isParticipant ? { type: "group", data: conversation } : null;
+      });
+
+      if (
+        !isParticipant &&
+        selectedTarget?.type === "group" &&
+        getId(selectedTarget.data) === conversationId
+      ) {
+        setMessages([]);
+        setGroupManagerOpen(false);
+      }
+    };
+
+    const handleGroupDeleted = ({ conversationId }) => {
+      const deletedId = String(conversationId || "");
+      setConversations((prev) =>
+        prev.filter((conversation) => getId(conversation) !== deletedId)
+      );
+      setSelectedTarget((prev) =>
+        prev?.type === "group" && getId(prev.data) === deletedId ? null : prev
+      );
+
+      if (
+        selectedTarget?.type === "group" &&
+        getId(selectedTarget.data) === deletedId
+      ) {
+        setMessages([]);
+        setGroupManagerOpen(false);
+      }
+    };
+
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on("connect_error", handleConnectError);
     socket.on("chat:message", handleMessage);
     socket.on("chat:seen", handleSeen);
     socket.on("chat:group_created", handleGroupCreated);
+    socket.on("chat:group_updated", handleGroupUpdated);
+    socket.on("chat:group_deleted", handleGroupDeleted);
 
     return () => {
       socket.off("connect", handleConnect);
@@ -368,6 +437,8 @@ export default function Chat() {
       socket.off("chat:message", handleMessage);
       socket.off("chat:seen", handleSeen);
       socket.off("chat:group_created", handleGroupCreated);
+      socket.off("chat:group_updated", handleGroupUpdated);
+      socket.off("chat:group_deleted", handleGroupDeleted);
     };
   }, [currentUserId, selectedConversation, selectedTarget]);
 
@@ -428,6 +499,11 @@ export default function Chat() {
 
     loadMessages();
   }, [currentUserId, selectedTarget]);
+
+  useEffect(() => {
+    setGroupManagerOpen(false);
+    setEditingMembers([]);
+  }, [selectedTargetKey]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -596,6 +672,88 @@ export default function Chat() {
         ? prev.filter((id) => id !== userId)
         : [...prev, userId]
     );
+  };
+
+  const openGroupManager = () => {
+    const participantIds =
+      selectedTarget?.data?.participants
+        ?.map((participant) => getId(participant))
+        .filter((id) => id && id !== currentUserId) || [];
+
+    setEditingMembers(participantIds);
+    setGroupManagerOpen((open) => !open);
+  };
+
+  const toggleEditingMember = (userId) => {
+    setEditingMembers((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleUpdateGroupMembers = async (event) => {
+    event.preventDefault();
+
+    if (!selectedTarget || selectedTarget.type !== "group") return;
+
+    if (editingMembers.length === 0) {
+      notify.error("Select at least one member");
+      return;
+    }
+
+    try {
+      setSavingGroupMembers(true);
+      const res = await chatService.updateGroupMembers(
+        getId(selectedTarget.data),
+        editingMembers
+      );
+      setConversations((prev) =>
+        prev.map((conversation) =>
+          getId(conversation) === getId(res.data)
+            ? {
+                ...conversation,
+                ...res.data,
+                unreadCount: conversation.unreadCount || 0,
+              }
+            : conversation
+        )
+      );
+      setSelectedTarget({ type: "group", data: res.data });
+      setGroupManagerOpen(false);
+      notify.success("Group members updated");
+    } catch (error) {
+      notify.error(error?.response?.data?.message || "Failed to update group");
+    } finally {
+      setSavingGroupMembers(false);
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!selectedTarget || selectedTarget.type !== "group") return;
+
+    const groupNameToDelete = selectedTarget.data.name || "this group";
+    const confirmed = window.confirm(
+      `Delete "${groupNameToDelete}" group? This will remove all group messages.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingGroup(true);
+      const conversationId = getId(selectedTarget.data);
+      await chatService.deleteGroup(conversationId);
+      setConversations((prev) =>
+        prev.filter((conversation) => getId(conversation) !== conversationId)
+      );
+      setSelectedTarget(null);
+      setMessages([]);
+      setGroupManagerOpen(false);
+      notify.success("Group deleted");
+    } catch (error) {
+      notify.error(error?.response?.data?.message || "Failed to delete group");
+    } finally {
+      setDeletingGroup(false);
+    }
   };
 
   const selectedTitle =
@@ -815,13 +973,112 @@ export default function Chat() {
                   className="h-11 w-11 rounded-lg border border-white/10 object-cover"
                 />
               )}
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h2 className="truncate text-base font-bold text-slate-50">
                   {selectedTitle}
                 </h2>
                 <p className="text-sm text-cyan-200/80">{selectedSubtitle}</p>
               </div>
+              {canCreateGroup && selectedTarget.type === "group" && (
+                <button
+                  type="button"
+                  onClick={openGroupManager}
+                  className={`min-h-10 shrink-0 rounded-lg border px-3 text-sm font-semibold transition ${
+                    groupManagerOpen
+                      ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                      : "border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/18"
+                  }`}
+                >
+                  Manage
+                </button>
+              )}
             </header>
+
+            {canCreateGroup && selectedTarget.type === "group" && groupManagerOpen && (
+              <form
+                onSubmit={handleUpdateGroupMembers}
+                className="border-b border-white/10 bg-slate-950/70 p-4"
+              >
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-100">
+                      Group members
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Add or remove employees from this group.
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">
+                    {editingMembers.length + 1} selected
+                  </span>
+                </div>
+
+                <div className="grid max-h-44 gap-2 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
+                  {users.map((user) => {
+                    const userId = getId(user);
+                    const selected = editingMembers.includes(userId);
+
+                    return (
+                      <label
+                        key={userId}
+                        className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
+                          selected
+                            ? "border-cyan-300/45 bg-cyan-300/12 text-slate-100"
+                            : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => toggleEditingMember(userId)}
+                          className="shrink-0"
+                        />
+                        <img
+                          src={user.image}
+                          alt=""
+                          className="h-8 w-8 rounded-md border border-white/10 object-cover"
+                        />
+                        <span className="min-w-0">
+                          <span className="block truncate font-semibold">
+                            {fullName(user)}
+                          </span>
+                          <span className="block truncate text-xs text-slate-400">
+                            {user.accountType}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  <Button
+                    type="button"
+                    variant="danger"
+                    loading={deletingGroup}
+                    onClick={handleDeleteGroup}
+                  >
+                    Delete Group
+                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setGroupManagerOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      loading={savingGroupMembers}
+                      disabled={editingMembers.length === 0}
+                    >
+                      Save Members
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            )}
 
             <div
               ref={messagesContainerRef}
