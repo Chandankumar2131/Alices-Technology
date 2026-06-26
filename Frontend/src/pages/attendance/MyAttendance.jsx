@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   checkIn,
@@ -16,6 +16,7 @@ import {
   selectBreak,
 } from "../../features/break/breakSlice";
 import { fetchMyDashboard, selectDashboard } from "../../features/dashboard/dashboardSlice";
+import { selectUser } from "../../features/auth/authSlice";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
@@ -27,6 +28,7 @@ import AttendanceCalendar from "./AttendanceCalendar";
 import { BREAK_REASONS } from "../../constants/enums";
 import { fmtHours, fmtTime, toOfficeDateTimeInputValue } from "../../utils/helpers";
 import notify from "../../utils/toast";
+import { useAttendanceRealtime } from "../../hooks/useAttendanceRealtime";
 
 export default function MyAttendance() {
   const dispatch = useDispatch();
@@ -42,6 +44,8 @@ export default function MyAttendance() {
   const { calendar, summary, myCorrections, loading } = useSelector(selectAttendance);
   const { today: todayBreaks, activeBreak } = useSelector(selectBreak);
   const { myDashboard } = useSelector(selectDashboard);
+  const currentUser = useSelector(selectUser);
+  const currentUserId = currentUser?._id || currentUser?.id;
   const todayAtt = myDashboard?.attendance;
 
   useEffect(() => {
@@ -55,11 +59,19 @@ export default function MyAttendance() {
     dispatch(fetchAttendanceByMonth({ month, year }));
   }, [dispatch, month, year]);
 
-  const refreshToday = () => {
+  const refreshToday = useCallback(() => {
     dispatch(fetchMyDashboard());
     dispatch(fetchTodayBreaks());
     dispatch(fetchAttendanceByMonth({ month, year }));
-  };
+  }, [dispatch, month, year]);
+
+  const refreshAttendancePage = useCallback(() => {
+    refreshToday();
+    dispatch(fetchAttendanceSummary());
+    dispatch(fetchMyCorrections());
+  }, [dispatch, refreshToday]);
+
+  useAttendanceRealtime(refreshAttendancePage, { employeeId: currentUserId });
 
   const handleCheckIn = async () => {
     const res = await dispatch(checkIn());

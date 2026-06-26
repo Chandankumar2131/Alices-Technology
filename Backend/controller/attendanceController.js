@@ -17,6 +17,7 @@ const {
   getCalculatedAttendanceStatus,
 } = require("../utils/autoCheckout");
 const { getPagination, paginatedResponse } = require("../utils/pagination");
+const { emitAttendanceUpdate } = require("../utils/attendanceEvents");
 
 const parseOfficeDateTime = (value) => {
   const text = String(value || "").trim();
@@ -110,6 +111,13 @@ exports.checkIn = async (req, res) => {
       });
     }
 
+    emitAttendanceUpdate(req, {
+      type: "check-in",
+      employeeId,
+      attendanceId: attendance._id,
+      attendanceDate,
+    });
+
     return res.status(201).json({
       success: true,
       message: "Check In successful",
@@ -186,6 +194,13 @@ exports.checkOut = async (req, res) => {
     attendance.earlyLogout = nowMoment.isBefore(checkoutTime);
 
     await attendance.save();
+
+    emitAttendanceUpdate(req, {
+      type: "check-out",
+      employeeId,
+      attendanceId: attendance._id,
+      attendanceDate,
+    });
 
     return res.status(200).json({
       success: true,
@@ -570,6 +585,13 @@ exports.markHalfDayAsPresent = async (req, res) => {
 
     await attendance.save();
 
+    emitAttendanceUpdate(req, {
+      type: "attendance-override",
+      employeeId: attendance.employee,
+      attendanceId: attendance._id,
+      attendanceDate: attendance.attendanceDate,
+    });
+
     return res.status(200).json({
       success: true,
       message: "Half day marked as present",
@@ -642,6 +664,13 @@ exports.requestCheckInCorrection = async (req, res) => {
       currentCheckIn: attendance.checkIn,
       requestedCheckIn: requestedMoment.toDate(),
       reason,
+    });
+
+    emitAttendanceUpdate(req, {
+      type: "correction-requested",
+      employeeId,
+      attendanceId: attendance._id,
+      attendanceDate: attendance.attendanceDate,
     });
 
     return res.status(201).json({
@@ -781,6 +810,13 @@ exports.approveCorrectionRequest = async (req, res) => {
     await attendance.save();
     await correction.save();
 
+    emitAttendanceUpdate(req, {
+      type: "correction-approved",
+      employeeId: attendance.employee,
+      attendanceId: attendance._id,
+      attendanceDate: attendance.attendanceDate,
+    });
+
     const updatedCorrection = await AttendanceCorrection.findById(correction._id)
       .populate("employee", "firstName lastName email employeeId department designation")
       .populate("attendance")
@@ -828,6 +864,12 @@ exports.rejectCorrectionRequest = async (req, res) => {
     correction.approvedAt = new Date();
     correction.adminRemarks = adminRemarks || "";
     await correction.save();
+
+    emitAttendanceUpdate(req, {
+      type: "correction-rejected",
+      employeeId: correction.employee,
+      attendanceId: correction.attendance,
+    });
 
     const updatedCorrection = await AttendanceCorrection.findById(correction._id)
       .populate("employee", "firstName lastName email employeeId department designation")

@@ -1,23 +1,31 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMyDashboard, selectDashboard } from "../../features/dashboard/dashboardSlice";
+import { selectUser } from "../../features/auth/authSlice";
 import StatCard from "../../components/ui/StatCard";
 import Card from "../../components/common/Card";
 import Badge from "../../components/common/Badge";
 import Table from "../../components/common/Table";
 import Spinner from "../../components/common/Spinner";
 import { fmtTime, fmtMoney, fmtDate, fmtHours } from "../../utils/helpers";
+import { useAttendanceRealtime } from "../../hooks/useAttendanceRealtime";
 
 export default function EmployeeDashboard() {
   const dispatch = useDispatch();
   const { myDashboard, loading } = useSelector(selectDashboard);
+  const currentUser = useSelector(selectUser);
+  const currentUserId = currentUser?._id || currentUser?.id;
+
+  const refreshDashboard = useCallback(() => {
+    dispatch(fetchMyDashboard());
+  }, [dispatch]);
 
   useEffect(() => {
-    dispatch(fetchMyDashboard());
-    const id = setInterval(() => dispatch(fetchMyDashboard()), 30000);
-    return () => clearInterval(id);
-  }, [dispatch]);
+    refreshDashboard();
+  }, [refreshDashboard]);
+
+  useAttendanceRealtime(refreshDashboard, { employeeId: currentUserId });
 
   if (loading && !myDashboard) return <Spinner full />;
 

@@ -1,6 +1,7 @@
 const Attendance = require("../model/Attendance");
 const BreakLog = require("../model/BreakLog");
 const { getShiftDate } = require("../utils/attendanceShift");
+const { emitAttendanceUpdate } = require("../utils/attendanceEvents");
 
 // ==========================================
 // START BREAK
@@ -57,6 +58,13 @@ exports.startBreak = async (req, res) => {
     attendance.breakLogs.push(breakLog._id);
 
     await attendance.save();
+
+    emitAttendanceUpdate(req, {
+      type: "break-started",
+      employeeId,
+      attendanceId: attendance._id,
+      attendanceDate,
+    });
 
     return res.status(201).json({
       success: true,
@@ -136,6 +144,13 @@ exports.endBreak = async (req, res) => {
     }
 
     await attendance.save();
+
+    emitAttendanceUpdate(req, {
+      type: "break-ended",
+      employeeId,
+      attendanceId: attendance._id,
+      attendanceDate: attendance.attendanceDate,
+    });
 
     return res.status(200).json({
       success: true,

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchAdminDashboard,
@@ -12,17 +12,22 @@ import Badge from "../../components/common/Badge";
 import EmployeeLink from "../../components/ui/EmployeeLink";
 import Spinner from "../../components/common/Spinner";
 import { fmtTime, fmtMoney, fmtHours } from "../../utils/helpers";
+import { useAttendanceRealtime } from "../../hooks/useAttendanceRealtime";
 
 export default function AdminDashboard() {
   const dispatch = useDispatch();
   const { adminStats, liveEmployees, loading } = useSelector(selectDashboard);
 
-  useEffect(() => {
+  const refreshDashboard = useCallback(() => {
     dispatch(fetchAdminDashboard());
     dispatch(fetchLiveEmployees());
-    const id = setInterval(() => dispatch(fetchLiveEmployees()), 30000); // poll live
-    return () => clearInterval(id);
   }, [dispatch]);
+
+  useEffect(() => {
+    refreshDashboard();
+  }, [refreshDashboard]);
+
+  useAttendanceRealtime(refreshDashboard);
 
   if (loading && !adminStats) return <Spinner full />;
 

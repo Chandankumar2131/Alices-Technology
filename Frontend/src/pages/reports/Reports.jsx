@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchDeptAnalytics,
@@ -12,17 +12,24 @@ import Table from "../../components/common/Table";
 import Badge from "../../components/common/Badge";
 import EmployeeLink from "../../components/ui/EmployeeLink";
 import { fmtHours, fmtTime } from "../../utils/helpers";
+import { useAttendanceRealtime } from "../../hooks/useAttendanceRealtime";
 
 export default function Reports() {
   const dispatch = useDispatch();
   const { deptAnalytics, lateEmployees, onBreak, liveEmployees } = useSelector(selectDashboard);
 
-  useEffect(() => {
+  const refreshReports = useCallback(() => {
     dispatch(fetchDeptAnalytics());
     dispatch(fetchLateEmployees());
     dispatch(fetchOnBreak());
     dispatch(fetchLiveEmployees());
   }, [dispatch]);
+
+  useEffect(() => {
+    refreshReports();
+  }, [refreshReports]);
+
+  useAttendanceRealtime(refreshReports);
 
   const lateCols = [
     { key: "employee", header: "Employee", render: (r) => <EmployeeLink employee={r.employee} /> },

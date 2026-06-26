@@ -40,6 +40,9 @@ const initSocket = (server, allowedOrigins) => {
 
   io.on("connection", (socket) => {
     socket.join(`user:${socket.user.id}`);
+    if (["Admin", "SuperAdmin"].includes(socket.user.accountType)) {
+      socket.join("role:admin");
+    }
     socket.emit("chat:connected", { userId: socket.user.id });
   });
 
