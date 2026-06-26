@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const HEADLINE = "Welcome back ! Let's make today productive.";
+const HEADLINE = "Welcome to HRM Dashboard ! Let's make today productive.";
 
 const FEATURES = [
   { icon: "👥", text: "Manage your team in one place" },
