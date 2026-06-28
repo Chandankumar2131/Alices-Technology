@@ -19,12 +19,28 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+
           script: |
             cd ${{ secrets.EC2_APP_DIR }}
-            git pull origin main
+
+            git fetch origin
+            git reset --hard origin/main
+
             cd Backend
-            npm install
+
+            npm ci || npm install
+
             pm2 restart ${{ secrets.PM2_APP_NAME }} --update-env
             pm2 save
             pm2 status
-            curl -f https://api.alicestechsolutions.com/health
+
+            echo "Waiting for backend..."
+
+            for i in {1..10}; do
+              curl -f http://localhost:4000/health && break
+              sleep 5
+            done
+
+            curl -f http://localhost:4000/health
+
+            echo "Backend deployed successfully."
