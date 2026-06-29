@@ -51,7 +51,7 @@ app.use("/api/v1/auth/login", authLimiter);
 app.use(["/api/v1/attendance/checkin", "/api/v1/attendance/checkout"], writeLimiter);
 
 // ================================
-// Database Connection
+// Database Connection function
 // ================================
 dbConnection();
 
