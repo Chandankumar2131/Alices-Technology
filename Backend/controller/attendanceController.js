@@ -632,6 +632,13 @@ exports.requestCheckInCorrection = async (req, res) => {
       });
     }
 
+    if (attendance.checkOut) {
+      return res.status(400).json({
+        success: false,
+        message: "Attendance correction is not allowed after check-out",
+      });
+    }
+
     const requestedMoment = parseOfficeDateTime(requestedCheckIn);
 
     if (!requestedMoment.isValid()) {
@@ -648,13 +655,6 @@ exports.requestCheckInCorrection = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Requested check-in must be within the attendance shift",
-      });
-    }
-
-    if (attendance.checkOut && requestedMoment.isAfter(moment(attendance.checkOut))) {
-      return res.status(400).json({
-        success: false,
-        message: "Requested check-in cannot be after check-out",
       });
     }
 

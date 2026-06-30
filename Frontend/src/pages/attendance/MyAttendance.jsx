@@ -111,7 +111,20 @@ export default function MyAttendance() {
     else notify.error(res.payload);
   };
 
+  const isCheckedIn = !!todayAtt?.checkIn;
+  const isCheckedOut = !!todayAtt?.checkOut;
+  const canRequestCorrection = isCheckedIn && !isCheckedOut;
+
   const openCorrection = () => {
+    if (!canRequestCorrection) {
+      notify.error(
+        isCheckedOut
+          ? "Attendance correction is not allowed after check-out"
+          : "Please check in before requesting a correction"
+      );
+      return;
+    }
+
     const current = todayAtt?.checkIn || new Date();
     setCorrectionForm({ requestedCheckIn: toOfficeDateTimeInputValue(current), reason: "" });
     setCorrectionOpen(true);
@@ -119,6 +132,12 @@ export default function MyAttendance() {
 
   const handleCorrectionSubmit = async (e) => {
     e.preventDefault();
+    if (!canRequestCorrection) {
+      notify.error("Attendance correction is not allowed after check-out");
+      setCorrectionOpen(false);
+      return;
+    }
+
     if (!correctionForm.requestedCheckIn || !correctionForm.reason) {
       notify.error("Requested time and reason are required");
       return;
@@ -140,9 +159,6 @@ export default function MyAttendance() {
       dispatch(fetchMyCorrections());
     } else notify.error(res.payload);
   };
-
-  const isCheckedIn = !!todayAtt?.checkIn;
-  const isCheckedOut = !!todayAtt?.checkOut;
 
   const months = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: new Date(0, i).toLocaleString("en", { month: "long" }) }));
   const years = Array.from({ length: 5 }, (_, i) => ({ value: now.getFullYear() - i, label: String(now.getFullYear() - i) }));
@@ -167,7 +183,7 @@ export default function MyAttendance() {
 
           <div className="flex w-full flex-wrap gap-2 sm:ml-auto sm:w-auto">
             <Button onClick={handleCheckIn} disabled={isCheckedIn} variant="primary">Check In</Button>
-            <Button onClick={openCorrection} disabled={!isCheckedIn} variant="secondary">Request Correction</Button>
+            <Button onClick={openCorrection} disabled={!canRequestCorrection} variant="secondary">Request Correction</Button>
             <Button onClick={handleCheckOut} disabled={!isCheckedIn || isCheckedOut} variant="danger">Check Out</Button>
           </div>
         </div>
