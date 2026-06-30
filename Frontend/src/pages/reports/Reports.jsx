@@ -103,7 +103,7 @@ export default function Reports() {
                     <p className="text-sm font-medium text-slate-200">
                       {dept._id || "No Department"}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">{percentage}% of team</p>
+                    <p className="mt-1 text-xs text-slate-400">{percentage}% of team</p>
                   </div>
                   <p className="text-2xl font-bold text-cyan-300">{count}</p>
                 </div>
@@ -115,7 +115,7 @@ export default function Reports() {
                 </div>
               </div>
             );
-          }) : <p className="text-sm text-slate-500">No department data yet.</p>}
+          }) : <p className="text-sm text-slate-400">No department data yet.</p>}
         </div>
       </Card>
 
@@ -138,13 +138,13 @@ export default function Reports() {
                 >
                   <div>
                     <EmployeeLink employee={item.employee} />
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-slate-400">
                       {item.employee?.department || "No Department"}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="theme-late-time text-sm font-semibold text-amber-300">{fmtTime(item.checkIn)}</p>
-                    <p className="text-xs text-slate-500">Check in</p>
+                    <p className="text-xs text-slate-400">Check in</p>
                   </div>
                 </div>
               ))}
@@ -171,7 +171,7 @@ const metricTone = {
 function ReportMetric({ label, value, tone }) {
   return (
     <div className="theme-report-metric rounded-xl border border-slate-800 bg-slate-900/70 p-4 shadow-xl shadow-black/20">
-      <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
+      <p className="text-xs font-medium uppercase text-slate-400">{label}</p>
       <div className="mt-3 flex items-end justify-between">
         <p className="text-3xl font-bold text-slate-100">{value}</p>
         <span className={`rounded-full border px-2 py-1 text-xs ${metricTone[tone]}`}>

@@ -47,6 +47,8 @@ export default function EmployeeDayAttendance() {
           <img
             src={employee.image}
             alt=""
+            width="56"
+            height="56"
             className="h-14 w-14 rounded-lg border border-white/10 object-cover"
           />
           <div>

@@ -100,7 +100,7 @@ export default function PayrollAdmin() {
             <Select label="Month" options={monthOptions} value={form.month} onChange={(e) => setForm({ ...form, month: Number(e.target.value) })} />
             <Select label="Year" options={yearOptions} value={form.year} onChange={(e) => setForm({ ...form, year: Number(e.target.value) })} />
           </div>
-          <p className="text-xs text-gray-500">Requires a salary structure for the employee. Absent days are auto-deducted from net salary.</p>
+          <p className="text-xs text-slate-400">Requires a salary structure for the employee. Absent days are auto-deducted from net salary.</p>
         </form>
       </Modal>
     </div>

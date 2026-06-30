@@ -981,6 +981,8 @@ export default function Chat() {
                       <img
                         src={user.image}
                         alt=""
+                        width="40"
+                        height="40"
                         className="h-10 w-10 rounded-lg border border-white/10 object-cover"
                       />
                       <span className="min-w-0 flex-1">
@@ -1019,6 +1021,8 @@ export default function Chat() {
                 <img
                   src={selectedTarget.data.image}
                   alt=""
+                  width="44"
+                  height="44"
                   className="h-11 w-11 rounded-lg border border-white/10 object-cover"
                 />
               )}
@@ -1085,6 +1089,8 @@ export default function Chat() {
                         <img
                           src={user.image}
                           alt=""
+                          width="32"
+                          height="32"
                           className="h-8 w-8 rounded-md border border-white/10 object-cover"
                         />
                         <span className="min-w-0">
@@ -1179,6 +1185,9 @@ export default function Chat() {
                                   <img
                                     src={attachment.url}
                                     alt={attachment.fileName}
+                                    width="640"
+                                    height="360"
+                                    loading="lazy"
                                     className="max-h-64 w-full object-cover"
                                   />
                                   <span className="block truncate px-3 py-2 text-xs font-semibold">

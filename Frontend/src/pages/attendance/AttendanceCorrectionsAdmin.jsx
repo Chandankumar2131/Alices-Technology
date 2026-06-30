@@ -107,10 +107,11 @@ export default function AttendanceCorrectionsAdmin() {
         }
       >
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-300">
+          <label htmlFor="attendance-admin-remarks" className="mb-1 block text-sm font-medium text-slate-300">
             Admin Remarks (optional)
           </label>
           <textarea
+            id="attendance-admin-remarks"
             value={remarks}
             onChange={(e) => setRemarks(e.target.value)}
             rows={3}

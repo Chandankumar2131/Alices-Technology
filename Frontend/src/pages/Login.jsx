@@ -66,7 +66,7 @@ export default function Login() {
 
             <div className="mb-8 text-center">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 shadow-lg shadow-cyan-500/30 animate-pop overflow-hidden ring-1 ring-white/10">
-                <img src={logo} alt="Company logo" className="h-full w-full object-contain p-2" />
+                <img src={logo} alt="Company logo" width="56" height="56" className="h-full w-full object-contain p-2" />
               </div>
 
               <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-200 to-slate-400 bg-clip-text text-transparent sm:text-3xl">
@@ -83,8 +83,9 @@ export default function Login() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-300">Email</label>
+                <label htmlFor="login-email" className="mb-1 block text-sm font-medium text-slate-300">Email</label>
                 <input
+                  id="login-email"
                   type="email"
                   name="email"
                   value={form.email}
@@ -96,9 +97,10 @@ export default function Login() {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-300">Password</label>
+                <label htmlFor="login-password" className="mb-1 block text-sm font-medium text-slate-300">Password</label>
                 <div className="relative">
                 <input
+                  id="login-password"
                   type={showPassword ? "text" : "password"}
                   name="password"
                   value={form.password}

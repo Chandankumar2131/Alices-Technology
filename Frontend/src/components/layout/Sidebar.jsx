@@ -21,7 +21,7 @@ const createAdminLinkClass = ({ isActive }) =>
   }`;
 
 const sectionLabel =
-  "px-3 pt-5 pb-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-600";
+  "px-3 pt-5 pb-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400";
 
 export default function Sidebar({
   chatUnreadCount = 0,
@@ -123,6 +123,8 @@ export default function Sidebar({
             <img
               src={user.image}
               alt=""
+              width="40"
+              height="40"
               className="h-10 w-10 rounded-lg border border-white/10 object-cover"
             />
           ) : (

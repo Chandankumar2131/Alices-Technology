@@ -9,7 +9,7 @@ export default function StatCard({ label, value, icon, accent = "text-cyan-400" 
         </div>
       )}
       <div className="min-w-0">
-        <p className="truncate text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</p>
+        <p className="truncate text-xs font-semibold uppercase tracking-[0.08em] text-slate-400">{label}</p>
         <p className="mt-1 truncate text-2xl font-bold text-slate-50">{value}</p>
       </div>
     </Card>

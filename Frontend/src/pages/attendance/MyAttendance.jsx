@@ -149,18 +149,18 @@ export default function MyAttendance() {
   return (
     <div className="space-y-6">
       {/* Today controls */}
-      <Card title="Today">
+      <Card title="Today" className="min-h-[19rem] sm:min-h-[14rem]">
         <div className="flex flex-wrap items-center gap-4">
           <div className="text-sm">
-            <p className="text-gray-500">Check In</p>
+            <p className="text-slate-400">Check In</p>
             <p className="font-semibold">{fmtTime(todayAtt?.checkIn)}</p>
           </div>
           <div className="text-sm">
-            <p className="text-gray-500">Check Out</p>
+            <p className="text-slate-400">Check Out</p>
             <p className="font-semibold">{fmtTime(todayAtt?.checkOut)}</p>
           </div>
           <div className="text-sm">
-            <p className="text-gray-500">Working Hours</p>
+            <p className="text-slate-400">Working Hours</p>
             <p className="font-semibold">{fmtHours(myDashboard?.liveProductiveHours)}</p>
           </div>
           {todayAtt?.status && <Badge status={todayAtt.status} />}
@@ -174,7 +174,7 @@ export default function MyAttendance() {
 
         {/* Break controls */}
         {isCheckedIn && !isCheckedOut && (
-          <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-gray-100 pt-4">
+          <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-white/15 pt-4">
             {activeBreak ? (
               <Button onClick={handleEndBreak} loading={breakBusy} disabled={breakBusy} variant="primary">End Break</Button>
             ) : (
@@ -190,24 +190,24 @@ export default function MyAttendance() {
       </Card>
 
       {/* Today's breaks */}
-      <Card title="Today's Breaks">
+      <Card title="Today's Breaks" className="min-h-[13rem]">
         {todayBreaks?.length ? (
           <div className="space-y-2 text-sm">
             {todayBreaks.map((b) => (
-              <div key={b._id} className="flex flex-col gap-1 border-b border-gray-50 py-2 sm:flex-row sm:items-center sm:justify-between">
+              <div key={b._id} className="flex flex-col gap-1 border-b border-white/10 py-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="font-medium">{b.reason}</span>
-                <span className="text-gray-500">{fmtTime(b.breakStart)} - {fmtTime(b.breakEnd)}</span>
+                <span className="text-slate-400">{fmtTime(b.breakStart)} - {fmtTime(b.breakEnd)}</span>
                 <span>{b.duration ? `${b.duration} min` : "—"}</span>
                 <Badge status={b.status === "Active" ? "On Break" : "Checked Out"}>{b.status}</Badge>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500">No breaks today.</p>
+          <p className="text-sm text-slate-400">No breaks today.</p>
         )}
       </Card>
 
-      <Card title=" Attendance Correction Requests">
+      <Card title="Attendance Correction Requests" className="min-h-[13rem]">
         {myCorrections?.length ? (
           <div className="space-y-2 text-sm">
             {myCorrections.map((item) => (
@@ -227,7 +227,7 @@ export default function MyAttendance() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500">No correction requests yet.</p>
+          <p className="text-sm text-slate-400">No correction requests yet.</p>
         )}
       </Card>
 
@@ -248,8 +248,18 @@ export default function MyAttendance() {
         title="Monthly Calendar"
         action={
           <div className="grid grid-cols-2 gap-2 sm:flex">
-            <Select options={months} value={month} onChange={(e) => setMonth(Number(e.target.value))} />
-            <Select options={years} value={year} onChange={(e) => setYear(Number(e.target.value))} />
+            <Select
+              aria-label="Attendance calendar month"
+              options={months}
+              value={month}
+              onChange={(e) => setMonth(Number(e.target.value))}
+            />
+            <Select
+              aria-label="Attendance calendar year"
+              options={years}
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+            />
           </div>
         }
       >
@@ -275,8 +285,9 @@ export default function MyAttendance() {
             onChange={(e) => setCorrectionForm({ ...correctionForm, requestedCheckIn: e.target.value })}
           />
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-300">Reason</label>
+            <label htmlFor="correction-reason" className="mb-1 block text-sm font-medium text-slate-300">Reason</label>
             <textarea
+              id="correction-reason"
               value={correctionForm.reason}
               onChange={(e) => setCorrectionForm({ ...correctionForm, reason: e.target.value })}
               rows={3}

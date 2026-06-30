@@ -79,13 +79,14 @@ export default function MyLeaves() {
             <Input label="End Date" type="date" name="endDate" value={form.endDate} onChange={handleChange} />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Reason</label>
+            <label htmlFor="leave-reason" className="mb-1 block text-sm font-medium text-slate-300">Reason</label>
             <textarea
+              id="leave-reason"
               name="reason"
               value={form.reason}
               onChange={handleChange}
               rows={3}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/40"
             />
           </div>
         </form>

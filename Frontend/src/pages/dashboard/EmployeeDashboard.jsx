@@ -71,24 +71,24 @@ export default function EmployeeDashboard() {
       <Card title="Today's Status">
         <div className="flex flex-wrap items-center gap-6">
           <div className="text-sm">
-            <p className="text-gray-500">Check In</p>
+            <p className="text-slate-400">Check In</p>
             <p className="font-semibold">{fmtTime(todayAtt?.checkIn)}</p>
           </div>
           <div className="text-sm">
-            <p className="text-gray-500">Check Out</p>
+            <p className="text-slate-400">Check Out</p>
             <p className="font-semibold">{fmtTime(todayAtt?.checkOut)}</p>
           </div>
           <div className="text-sm">
-            <p className="text-gray-500">Today's Breaks</p>
+            <p className="text-slate-400">Today's Breaks</p>
             <p className="font-semibold">{Math.round(s.totalBreakMinutes ?? 0)} min</p>
           </div>
           <div className="text-sm">
-            <p className="text-gray-500">Working Hours</p>
+            <p className="text-slate-400">Working Hours</p>
             <p className="font-semibold">{fmtHours(s.liveProductiveHours)}</p>
           </div>
           {todayAtt?.status && <Badge status={todayAtt.status} />}
           {s.activeBreak && <Badge status="On Break" />}
-          {!todayAtt && <p className="text-sm text-gray-500">No attendance recorded today.</p>}
+          {!todayAtt && <p className="text-sm text-slate-400">No attendance recorded today.</p>}
         </div>
       </Card>
 

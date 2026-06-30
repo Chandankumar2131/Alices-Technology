@@ -57,6 +57,8 @@ export default function EmployeeDetail() {
           <img
             src={emp.image}
             alt=""
+            width="64"
+            height="64"
             className="h-16 w-16 rounded-full border border-slate-700 bg-slate-800 object-cover"
           />
           <div>
@@ -257,10 +259,11 @@ function AttendanceTab({ timeline, employeeId }) {
         }
       >
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-300">
+          <label htmlFor="mark-present-reason" className="mb-1 block text-sm font-medium text-slate-300">
             Reason (optional)
           </label>
           <textarea
+            id="mark-present-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
