@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import Button from "../../components/common/Button";
 import Spinner from "../../components/common/Spinner";
@@ -62,6 +62,10 @@ const readFileAsDataUrl = (file) =>
   });
 
 const getPastedImageFile = (clipboardData) => {
+  const files = Array.from(clipboardData?.files || []);
+  const imageFile = files.find((file) => file.type?.startsWith("image/"));
+  if (imageFile) return imageFile;
+
   const items = Array.from(clipboardData?.items || []);
   const imageItem = items.find(
     (item) => item.kind === "file" && item.type?.startsWith("image/")
@@ -562,40 +566,43 @@ export default function Chat() {
     messageInputRef.current?.focus();
   };
 
-  const clearPendingAttachment = () => {
+  const clearPendingAttachment = useCallback(() => {
     setPendingAttachment(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  };
+  }, []);
 
-  const uploadAttachmentFile = async (file, { fileName = file.name } = {}) => {
-    if (!file) return;
+  const uploadAttachmentFile = useCallback(
+    async (file, { fileName = file?.name } = {}) => {
+      if (!file) return;
 
-    if (!ALLOWED_ATTACHMENT_TYPES.has(file.type) || file.size > MAX_ATTACHMENT_SIZE) {
-      notify.error("Upload an image or PDF up to 5 MB");
-      clearPendingAttachment();
-      return;
-    }
+      if (!ALLOWED_ATTACHMENT_TYPES.has(file.type) || file.size > MAX_ATTACHMENT_SIZE) {
+        notify.error("Upload an image or PDF up to 5 MB");
+        clearPendingAttachment();
+        return;
+      }
 
-    try {
-      setUploadingAttachment(true);
-      const dataUrl = await readFileAsDataUrl(file);
-      const res = await chatService.uploadAttachment({
-        dataUrl,
-        fileName,
-        mimeType: file.type,
-        size: file.size,
-      });
-      setPendingAttachment(res.data);
-    } catch (error) {
-      notify.error(error?.response?.data?.message || "Failed to upload file");
-      clearPendingAttachment();
-    } finally {
-      setUploadingAttachment(false);
-      messageInputRef.current?.focus();
-    }
-  };
+      try {
+        setUploadingAttachment(true);
+        const dataUrl = await readFileAsDataUrl(file);
+        const res = await chatService.uploadAttachment({
+          dataUrl,
+          fileName,
+          mimeType: file.type,
+          size: file.size,
+        });
+        setPendingAttachment(res.data);
+      } catch (error) {
+        notify.error(error?.response?.data?.message || "Failed to upload file");
+        clearPendingAttachment();
+      } finally {
+        setUploadingAttachment(false);
+        messageInputRef.current?.focus();
+      }
+    },
+    [clearPendingAttachment]
+  );
 
   const handleAttachmentChange = async (event) => {
     await uploadAttachmentFile(event.target.files?.[0]);
@@ -610,6 +617,26 @@ export default function Chat() {
       fileName: pastedImage.name || buildPastedImageName(pastedImage),
     });
   };
+
+  useEffect(() => {
+    const handleDocumentPaste = (event) => {
+      if (document.activeElement !== messageInputRef.current) return;
+
+      const pastedImage = getPastedImageFile(event.clipboardData);
+      if (!pastedImage) return;
+
+      event.preventDefault();
+      uploadAttachmentFile(pastedImage, {
+        fileName: pastedImage.name || buildPastedImageName(pastedImage),
+      });
+    };
+
+    document.addEventListener("paste", handleDocumentPaste);
+
+    return () => {
+      document.removeEventListener("paste", handleDocumentPaste);
+    };
+  }, [uploadAttachmentFile]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
