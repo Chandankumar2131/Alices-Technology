@@ -61,6 +61,20 @@ const readFileAsDataUrl = (file) =>
     reader.readAsDataURL(file);
   });
 
+const getPastedImageFile = (clipboardData) => {
+  const items = Array.from(clipboardData?.items || []);
+  const imageItem = items.find(
+    (item) => item.kind === "file" && item.type?.startsWith("image/")
+  );
+
+  return imageItem?.getAsFile() || null;
+};
+
+const buildPastedImageName = (file) => {
+  const extension = file.type?.split("/")[1]?.replace("jpeg", "jpg") || "png";
+  return `pasted-image-${Date.now()}.${extension}`;
+};
+
 const CHAT_EMOJI_OPTIONS = [
   "\u{1F600}",
   "\u{1F602}",
@@ -217,7 +231,12 @@ export default function Chat() {
       ? selectedTarget.data
       : conversationByUser.get(getId(selectedTarget?.data));
 
-  const selectedTargetKey = targetId(selectedTarget);
+  const selectChatTarget = (nextTarget) => {
+    setEmojiPickerOpen(false);
+    setGroupManagerOpen(false);
+    setEditingMembers([]);
+    setSelectedTarget(nextTarget);
+  };
 
   const refreshConversations = async ({ force = false } = {}) => {
     const now = Date.now();
@@ -501,11 +520,6 @@ export default function Chat() {
   }, [currentUserId, selectedTarget]);
 
   useEffect(() => {
-    setGroupManagerOpen(false);
-    setEditingMembers([]);
-  }, [selectedTargetKey]);
-
-  useEffect(() => {
     const container = messagesContainerRef.current;
     if (container) {
       container.scrollTop = container.scrollHeight;
@@ -555,8 +569,7 @@ export default function Chat() {
     }
   };
 
-  const handleAttachmentChange = async (event) => {
-    const file = event.target.files?.[0];
+  const uploadAttachmentFile = async (file, { fileName = file.name } = {}) => {
     if (!file) return;
 
     if (!ALLOWED_ATTACHMENT_TYPES.has(file.type) || file.size > MAX_ATTACHMENT_SIZE) {
@@ -570,7 +583,7 @@ export default function Chat() {
       const dataUrl = await readFileAsDataUrl(file);
       const res = await chatService.uploadAttachment({
         dataUrl,
-        fileName: file.name,
+        fileName,
         mimeType: file.type,
         size: file.size,
       });
@@ -582,6 +595,20 @@ export default function Chat() {
       setUploadingAttachment(false);
       messageInputRef.current?.focus();
     }
+  };
+
+  const handleAttachmentChange = async (event) => {
+    await uploadAttachmentFile(event.target.files?.[0]);
+  };
+
+  const handleMessagePaste = async (event) => {
+    const pastedImage = getPastedImageFile(event.clipboardData);
+    if (!pastedImage) return;
+
+    event.preventDefault();
+    await uploadAttachmentFile(pastedImage, {
+      fileName: pastedImage.name || buildPastedImageName(pastedImage),
+    });
   };
 
   const handleSubmit = async (event) => {
@@ -656,8 +683,7 @@ export default function Chat() {
       setSelectedMembers([]);
       setGroupComposerOpen(false);
       await refreshConversations({ force: true });
-      setEmojiPickerOpen(false);
-      setSelectedTarget({ type: "group", data: res.data });
+      selectChatTarget({ type: "group", data: res.data });
       notify.success("Group created");
     } catch (error) {
       notify.error(error?.response?.data?.message || "Failed to create group");
@@ -864,10 +890,9 @@ export default function Chat() {
                     <button
                       type="button"
                       key={getId(conversation)}
-                      onClick={() => {
-                        setEmojiPickerOpen(false);
-                        setSelectedTarget({ type: "group", data: conversation });
-                      }}
+                      onClick={() =>
+                        selectChatTarget({ type: "group", data: conversation })
+                      }
                       className={`flex w-full items-center gap-3 rounded-lg border px-3 py-3 text-left transition ${
                         active
                           ? "border-cyan-300/35 bg-cyan-300/12"
@@ -919,10 +944,7 @@ export default function Chat() {
                     <button
                       type="button"
                       key={getId(user)}
-                      onClick={() => {
-                        setEmojiPickerOpen(false);
-                        setSelectedTarget({ type: "direct", data: user });
-                      }}
+                      onClick={() => selectChatTarget({ type: "direct", data: user })}
                       className={`flex w-full items-center gap-3 rounded-lg border px-3 py-3 text-left transition ${
                         active
                           ? "border-cyan-300/35 bg-cyan-300/12"
@@ -1259,6 +1281,7 @@ export default function Chat() {
                 ref={messageInputRef}
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
+                onPaste={handleMessagePaste}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
