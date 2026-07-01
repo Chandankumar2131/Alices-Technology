@@ -304,6 +304,21 @@ exports.approveLeave = async (req, res) => {
         startOfDay.setHours(0, 0, 0, 0);
 
         const attendanceDate = moment(currentDate).format("YYYY-MM-DD");
+        const existingAttendance = await Attendance.findOne({
+          employee: leave.employee,
+          attendanceDate,
+        });
+
+        if (existingAttendance?.checkIn) {
+          existingAttendance.remarks = existingAttendance.remarks
+            ? `${existingAttendance.remarks} | Approved leave skipped because employee checked in`
+            : "Approved leave skipped because employee checked in";
+          await existingAttendance.save();
+          currentDate.setDate(
+            currentDate.getDate() + 1
+          );
+          continue;
+        }
 
         await Attendance.findOneAndUpdate(
           {

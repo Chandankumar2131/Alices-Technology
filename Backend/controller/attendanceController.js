@@ -2,6 +2,7 @@ const Attendance = require("../model/Attendance");
 const BreakLog = require("../model/BreakLog");
 const AttendanceCorrection = require("../model/AttendanceCorrection");
 const Holiday = require("../model/Holiday");
+const Leave = require("../model/Leave");
 const moment = require("moment-timezone");
 const {
   TZ,
@@ -34,6 +35,46 @@ const parseOfficeDateTime = (value) => {
   return moment.tz(text, TZ);
 };
 
+const hasApprovedLeaveForDate = async (employeeId, dateKey) => {
+  const startOfDay = moment.tz(dateKey, "YYYY-MM-DD", TZ).startOf("day").toDate();
+  const endOfDay = moment.tz(dateKey, "YYYY-MM-DD", TZ).endOf("day").toDate();
+
+  return !!(await Leave.exists({
+    employee: employeeId,
+    status: "Approved",
+    startDate: {
+      $lte: endOfDay,
+    },
+    endDate: {
+      $gte: startOfDay,
+    },
+  }));
+};
+
+const reconcileLeaveAttendance = async (record) => {
+  if (!record || record.status !== "Leave") return record;
+
+  const approvedLeaveExists = await hasApprovedLeaveForDate(
+    record.employee,
+    record.attendanceDate
+  );
+
+  if (approvedLeaveExists) return record;
+
+  if (!record.checkIn && record.attendanceDate > getShiftDate()) {
+    await record.deleteOne();
+    return null;
+  }
+
+  record.status = record.checkIn ? "Present" : "Absent";
+  record.remarks = record.remarks
+    ? `${record.remarks} | Leave record cleared because approved leave was not found`
+    : "Leave record cleared because approved leave was not found";
+
+  await record.save();
+  return record;
+};
+
 // ==========================================
 // CHECK IN
 // ==========================================
@@ -51,12 +92,22 @@ exports.checkIn = async (req, res) => {
       attendanceDate,
     });
 
-    // Prevent check-in if leave approved
     if (existingAttendance && existingAttendance.status === "Leave") {
-      return res.status(400).json({
-        success: false,
-        message: "You are on approved leave today",
-      });
+      const approvedLeaveExists = await hasApprovedLeaveForDate(employeeId, attendanceDate);
+
+      if (approvedLeaveExists && !existingAttendance.checkIn) {
+        return res.status(400).json({
+          success: false,
+          message: "You are on approved leave today",
+        });
+      }
+
+      if (!approvedLeaveExists) {
+        existingAttendance.status = "Present";
+        existingAttendance.remarks = existingAttendance.remarks
+          ? `${existingAttendance.remarks} | Leave cleared on check-in`
+          : "Leave cleared on check-in";
+      }
     }
 
     // Prevent duplicate check-in
@@ -93,6 +144,7 @@ exports.checkIn = async (req, res) => {
     let attendance;
     if (existingAttendance) {
       existingAttendance.checkIn = now;
+      existingAttendance.status = "Present";
       existingAttendance.lateArrival = lateArrival;
       existingAttendance.attendanceSource = "Web";
       await existingAttendance.save();
@@ -331,10 +383,14 @@ exports.getAttendanceByMonth = async (req, res) => {
 
       const holiday = holidayMap[dateKey];
 
-      const record =
+      let record =
         attendanceMap[
           dateKey
         ];
+
+      if (record) {
+        record = await reconcileLeaveAttendance(record);
+      }
 
       if (record) {
         calendar.push({
@@ -455,7 +511,11 @@ exports.getAttendanceSummary = async (req, res) => {
       overtimeHours: 0,
     };
 
-    attendance.forEach((record) => {
+    for (const item of attendance) {
+      const record = await reconcileLeaveAttendance(item);
+
+      if (!record) continue;
+
       if (record.status === "Present") summary.presentDays++;
       if (record.status === "Half Day") summary.halfDays++;
       if (record.status === "Absent") summary.absentDays++;
@@ -467,7 +527,7 @@ exports.getAttendanceSummary = async (req, res) => {
       summary.totalHours += record.totalHours || 0;
       summary.productiveHours += record.productiveHours || 0;
       summary.overtimeHours += record.overtimeHours || 0;
-    });
+    }
 
     // Clean up totals to 2 decimals
     summary.totalHours = Number(summary.totalHours.toFixed(2));

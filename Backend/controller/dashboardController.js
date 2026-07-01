@@ -35,6 +35,46 @@ const getLiveProductiveHours = (attendance, totalBreakMinutes) => {
   return getLiveAttendanceHours(attendance, totalBreakMinutes).productiveHours;
 };
 
+const hasApprovedLeaveForDate = async (employeeId, dateKey) => {
+  const startOfDay = moment.tz(dateKey, "YYYY-MM-DD", TZ).startOf("day").toDate();
+  const endOfDay = moment.tz(dateKey, "YYYY-MM-DD", TZ).endOf("day").toDate();
+
+  return !!(await Leave.exists({
+    employee: employeeId,
+    status: "Approved",
+    startDate: {
+      $lte: endOfDay,
+    },
+    endDate: {
+      $gte: startOfDay,
+    },
+  }));
+};
+
+const reconcileLeaveAttendance = async (record) => {
+  if (!record || record.status !== "Leave") return record;
+
+  const approvedLeaveExists = await hasApprovedLeaveForDate(
+    record.employee,
+    record.attendanceDate
+  );
+
+  if (approvedLeaveExists) return record;
+
+  if (!record.checkIn && record.attendanceDate > getShiftDate()) {
+    await record.deleteOne();
+    return null;
+  }
+
+  record.status = record.checkIn ? "Present" : "Absent";
+  record.remarks = record.remarks
+    ? `${record.remarks} | Leave record cleared because approved leave was not found`
+    : "Leave record cleared because approved leave was not found";
+
+  await record.save();
+  return record;
+};
+
 
 // ==========================================
 // ADMIN DASHBOARD
@@ -310,10 +350,12 @@ exports.getEmployeeDashboard = async (req, res) => {
     const today = getShiftDate();
 
     // Today's attendance
-    const attendance = await Attendance.findOne({
+    let attendance = await Attendance.findOne({
       employee: employeeId,
       attendanceDate: today,
     });
+
+    attendance = await reconcileLeaveAttendance(attendance);
 
     // Active break
     const activeBreak = await BreakLog.findOne({
@@ -387,13 +429,20 @@ exports.getEmployeeDashboard = async (req, res) => {
     });
 
     // Recent attendance history
-    const recentAttendance = await Attendance.find({
+    const recentAttendanceRecords = await Attendance.find({
       employee: employeeId,
+      attendanceDate: {
+        $lte: today,
+      },
     })
       .sort({
         attendanceDate: -1,
       })
       .limit(5);
+
+    const recentAttendance = (await Promise.all(
+      recentAttendanceRecords.map((record) => reconcileLeaveAttendance(record))
+    )).filter(Boolean);
 
     return res.status(200).json({
       success: true,
