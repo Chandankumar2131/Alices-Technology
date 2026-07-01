@@ -23,7 +23,7 @@
   --line: rgba(30, 64, 93, 0.22);
   --line-strong: rgba(8, 104, 138, 0.46);
   --text: #0f172a;
-  --muted: #64748b;
+  --muted: #475569;
   --brand: #0891b2;
   --brand-2: #4f46e5;
   --focus: rgba(8, 145, 178, 0.34);
@@ -268,7 +268,7 @@ th {
 
 .theme-light .theme-modal-panel .text-slate-400,
 .theme-light .theme-modal-panel .text-slate-500 {
-  color: #52637c !important;
+  color: #475569 !important;
 }
 
 .theme-light .theme-modal-close {
@@ -396,7 +396,7 @@ th {
 }
 
 .theme-light .theme-card:has(.theme-stat-icon) .text-slate-500 {
-  color: #64748b !important;
+  color: #475569 !important;
 }
 
 .theme-light .theme-card:has(.theme-stat-icon) .text-slate-50 {
@@ -417,7 +417,7 @@ th {
 }
 
 .theme-light .theme-report-metric .text-slate-500 {
-  color: #40546f !important;
+  color: #334155 !important;
 }
 
 .theme-light .theme-report-metric span {
@@ -456,7 +456,7 @@ th {
 }
 
 .theme-light .theme-dept-card .text-slate-500 {
-  color: #40546f !important;
+  color: #334155 !important;
 }
 
 .theme-light .theme-dept-card .text-cyan-300 {
@@ -527,7 +527,7 @@ th {
 .theme-light .text-slate-400,
 .theme-light .text-slate-500,
 .theme-light .text-gray-500 {
-  color: #64748b !important;
+  color: #475569 !important;
 }
 
 .theme-light .border-slate-800,
