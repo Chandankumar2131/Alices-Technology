@@ -1,7 +1,15 @@
 const Leave = require("../model/Leave");
 const Attendance = require("../model/Attendance");
+const User = require("../model/User");
 const moment = require("moment");
 const { getPagination, paginatedResponse } = require("../utils/pagination");
+const {
+  syncLeaveBalance,
+  consumeLeaveBalance,
+  monthsCompleted,
+  SICK_ELIGIBILITY_MONTHS,
+  CASUAL_ELIGIBILITY_MONTHS,
+} = require("../utils/leaveBucket");
 
 // ==========================================
 // APPLY LEAVE
@@ -46,6 +54,44 @@ exports.applyLeave = async (req, res) => {
           (1000 * 60 * 60 * 24)
       ) + 1;
 
+    const employee = await User.findById(employeeId);
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    const completedMonths = monthsCompleted(employee.joiningDate || employee.createdAt);
+
+    if (
+      (leaveType === "Sick Leave" || leaveType === "Emergency Leave") &&
+      completedMonths < SICK_ELIGIBILITY_MONTHS
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Sick leave is available after 3 months of service",
+      });
+    }
+
+    if (leaveType === "Casual Leave" && completedMonths < CASUAL_ELIGIBILITY_MONTHS) {
+      return res.status(400).json({
+        success: false,
+        message: "Casual leave is available after 6 months of continuous service",
+      });
+    }
+
+    if (leaveType === "Sick Leave") {
+      const hoursUntilStart = moment(start).diff(moment(), "hours", true);
+      if (hoursUntilStart > 0 && hoursUntilStart < 24) {
+        return res.status(400).json({
+          success: false,
+          message: "Planned sick leave should be informed at least 24 hours in advance",
+        });
+      }
+    }
+
     const leave = await Leave.create({
       employee: employeeId,
       leaveType,
@@ -64,6 +110,48 @@ exports.applyLeave = async (req, res) => {
 
   } catch (error) {
 
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// GET MY LEAVE BUCKET
+// ==========================================
+exports.getMyLeaveBucket = async (req, res) => {
+  try {
+    const employee = await User.findById(req.user.id);
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    const balance = await syncLeaveBalance(employee);
+    const serviceStartDate = employee.joiningDate || employee.createdAt;
+    const completedMonths = monthsCompleted(serviceStartDate);
+    const sickEligibleFrom = moment(serviceStartDate).add(SICK_ELIGIBILITY_MONTHS, "months").toDate();
+    const casualEligibleFrom = moment(serviceStartDate).add(CASUAL_ELIGIBILITY_MONTHS, "months").toDate();
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...balance.toObject(),
+        eligibility: {
+          serviceStartDate,
+          serviceMonthsCompleted: completedMonths,
+          sickEligibleFrom,
+          casualEligibleFrom,
+          sickLeaveEligible: completedMonths >= SICK_ELIGIBILITY_MONTHS,
+          casualLeaveEligible: completedMonths >= CASUAL_ELIGIBILITY_MONTHS,
+        },
+      },
+    });
+  } catch (error) {
     return res.status(500).json({
       success: false,
       message: error.message,
@@ -175,11 +263,28 @@ exports.approveLeave = async (req, res) => {
       });
     }
 
+    const employee = await User.findById(leave.employee);
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    const balance = await syncLeaveBalance(employee);
+    const { paidDays, unpaidDays } = await consumeLeaveBalance(
+      balance,
+      leave.leaveType,
+      leave.totalDays
+    );
+
     // Approve Leave
     leave.status = "Approved";
     leave.approvedBy = req.user.id;
     leave.approvedAt = new Date();
     leave.adminRemarks = adminRemarks;
+    leave.paidDays = paidDays;
+    leave.unpaidDays = unpaidDays;
 
     await leave.save();
 
@@ -198,20 +303,18 @@ exports.approveLeave = async (req, res) => {
         const startOfDay = new Date(currentDate);
         startOfDay.setHours(0, 0, 0, 0);
 
-        const endOfDay = new Date(currentDate);
-        endOfDay.setHours(23, 59, 59, 999);
+        const attendanceDate = moment(currentDate).format("YYYY-MM-DD");
 
         await Attendance.findOneAndUpdate(
           {
             employee: leave.employee,
-            date: {
-              $gte: startOfDay,
-              $lte: endOfDay,
-            },
+            attendanceDate,
           },
           {
             employee: leave.employee,
             date: startOfDay,
+            attendanceDate,
+            dayName: moment(currentDate).format("dddd"),
             status: "Leave",
             remarks: `Approved ${leave.leaveType}`,
           },

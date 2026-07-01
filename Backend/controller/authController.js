@@ -626,3 +626,62 @@ exports.changePassword = async (req, res) => {
     });
   }
 };
+
+// ==========================================//
+// SUBMIT RESIGNATION
+// ==========================================//
+exports.submitResignation = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { reason } = req.body;
+
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Resignation reason is required",
+      });
+    }
+
+    const user = await User.findById(userId).populate("additionalDetails");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (user.resignation?.status === "Submitted") {
+      return res.status(400).json({
+        success: false,
+        message: "Resignation already submitted",
+      });
+    }
+
+    const resignationDate = new Date();
+    const lastWorkingDay = new Date(resignationDate);
+    lastWorkingDay.setMonth(lastWorkingDay.getMonth() + 1);
+
+    user.resignation = {
+      status: "Submitted",
+      resignationDate,
+      lastWorkingDay,
+      reason: reason.trim(),
+      knowledgeTransferCompleted: false,
+      assetsReturned: false,
+    };
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Resignation submitted successfully",
+      data: user,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

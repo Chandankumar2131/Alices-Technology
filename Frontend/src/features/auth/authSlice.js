@@ -82,6 +82,18 @@ export const changePassword = createAsyncThunk(
   }
 );
 
+export const submitResignation = createAsyncThunk(
+  "auth/submitResignation",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const res = await authService.submitResignation(payload);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(getApiError(err));
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -136,6 +148,10 @@ const authSlice = createSlice({
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.user = { ...state.user, ...action.payload };
         localStorage.setItem("user", JSON.stringify(state.user));
+      })
+      .addCase(submitResignation.fulfilled, (state, action) => {
+        state.user = action.payload;
+        localStorage.setItem("user", JSON.stringify(action.payload));
       })
       .addCase(logout.fulfilled, (state) => {
         state.user = null;

@@ -8,6 +8,7 @@ import Select from "../../components/common/Select";
 import Table from "../../components/common/Table";
 import Badge from "../../components/common/Badge";
 import Modal from "../../components/common/Modal";
+import LeaveBucket from "./LeaveBucket";
 import { LEAVE_TYPES } from "../../constants/enums";
 import { fmtDate } from "../../utils/helpers";
 import notify from "../../utils/toast";
@@ -21,7 +22,9 @@ export default function MyLeaves() {
   const [form, setForm] = useState(empty);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => { dispatch(fetchMyLeaves()); }, [dispatch]);
+  useEffect(() => {
+    dispatch(fetchMyLeaves());
+  }, [dispatch]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -47,6 +50,8 @@ export default function MyLeaves() {
     { key: "startDate", header: "From", render: (r) => fmtDate(r.startDate) },
     { key: "endDate", header: "To", render: (r) => fmtDate(r.endDate) },
     { key: "totalDays", header: "Days" },
+    { key: "paidDays", header: "Paid", render: (r) => r.paidDays ?? 0 },
+    { key: "unpaidDays", header: "Unpaid", render: (r) => r.unpaidDays ?? 0 },
     { key: "reason", header: "Reason" },
     { key: "status", header: "Status", render: (r) => <Badge status={r.status} /> },
     { key: "adminRemarks", header: "Remarks", render: (r) => r.adminRemarks || "—" },
@@ -54,6 +59,8 @@ export default function MyLeaves() {
 
   return (
     <div className="space-y-6">
+      <LeaveBucket />
+
       <Card
         title="My Leaves"
         action={<Button onClick={() => setOpen(true)}>+ Apply Leave</Button>}

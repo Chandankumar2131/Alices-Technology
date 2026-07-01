@@ -35,6 +35,16 @@ const leaveSchema = new mongoose.Schema(
         default: 1,
     },
 
+    paidDays: {
+        type: Number,
+        default: 0,
+    },
+
+    unpaidDays: {
+        type: Number,
+        default: 0,
+    },
+
     reason: {
         type: String,
         required: true,

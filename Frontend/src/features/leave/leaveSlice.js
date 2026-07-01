@@ -8,6 +8,9 @@ export const applyLeave = createAsyncThunk("leave/apply", async (payload, { reje
 export const fetchMyLeaves = createAsyncThunk("leave/my", async (_, { rejectWithValue }) => {
   try { return await leaveService.getMyLeaves(); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
+export const fetchMyLeaveBucket = createAsyncThunk("leave/myBucket", async (_, { rejectWithValue }) => {
+  try { return await leaveService.getMyBucket(); } catch (e) { return rejectWithValue(getApiError(e)); }
+});
 export const fetchAllLeaves = createAsyncThunk("leave/all", async (_, { rejectWithValue }) => {
   try { return await leaveService.getAll(); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
@@ -20,12 +23,13 @@ export const rejectLeave = createAsyncThunk("leave/reject", async ({ leaveId, ad
 
 const slice = createSlice({
   name: "leave",
-  initialState: { myLeaves: [], allLeaves: [], loading: false, error: null },
+  initialState: { myLeaves: [], allLeaves: [], myBucket: null, loading: false, error: null },
   reducers: {},
   extraReducers: (b) => {
     b.addCase(fetchMyLeaves.pending, (s) => { s.loading = true; })
      .addCase(fetchMyLeaves.fulfilled, (s, a) => { s.loading = false; s.myLeaves = a.payload.data; })
      .addCase(fetchMyLeaves.rejected, (s, a) => { s.loading = false; s.error = a.payload; })
+     .addCase(fetchMyLeaveBucket.fulfilled, (s, a) => { s.myBucket = a.payload.data; })
      .addCase(fetchAllLeaves.pending, (s) => { s.loading = true; })
      .addCase(fetchAllLeaves.fulfilled, (s, a) => { s.loading = false; s.allLeaves = a.payload.data; })
      .addCase(fetchAllLeaves.rejected, (s, a) => { s.loading = false; s.error = a.payload; })

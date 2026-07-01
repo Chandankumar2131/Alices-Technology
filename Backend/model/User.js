@@ -92,6 +92,32 @@ const userSchema = new mongoose.Schema(
     lastLogout: {
       type: Date,
     },
+
+    resignation: {
+      status: {
+        type: String,
+        enum: ["None", "Submitted"],
+        default: "None",
+      },
+      resignationDate: {
+        type: Date,
+      },
+      lastWorkingDay: {
+        type: Date,
+      },
+      reason: {
+        type: String,
+        trim: true,
+      },
+      knowledgeTransferCompleted: {
+        type: Boolean,
+        default: false,
+      },
+      assetsReturned: {
+        type: Boolean,
+        default: false,
+      },
+    },
   },
   {
     timestamps: true,

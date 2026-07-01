@@ -54,6 +54,11 @@ const payrollSchema = new mongoose.Schema(
         default: 0,
     },
 
+    unpaidLeaveDays: {
+        type: Number,
+        default: 0,
+    },
+
     overtimeHours: {
         type: Number,
         default: 0,

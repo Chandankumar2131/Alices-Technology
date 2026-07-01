@@ -9,6 +9,7 @@ const {
   approveLeave,
   rejectLeave,
   getLeaveById,
+  getMyLeaveBucket,
 } = require("../controller/leaveController");
 
 const { auth } = require("../middleware/auth");
@@ -30,6 +31,12 @@ router.get(
   "/my-leaves",
   auth,
   getMyLeaves
+);
+
+router.get(
+  "/my-bucket",
+  auth,
+  getMyLeaveBucket
 );
 
 // ==========================================

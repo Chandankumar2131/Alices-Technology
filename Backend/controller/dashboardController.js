@@ -3,6 +3,7 @@ const Attendance = require("../model/Attendance");
 const Leave = require("../model/Leave");
 const Payroll = require("../model/Payroll");
 const BreakLog = require("../model/BreakLog");
+const { syncLeaveBalance } = require("../utils/leaveBucket");
 const moment = require("moment-timezone");
 const { TZ, getShiftDate } = require("../utils/attendanceShift");
 
@@ -343,6 +344,18 @@ exports.getEmployeeDashboard = async (req, res) => {
       totalBreakMinutes
     );
 
+    const monthStart = moment().tz(TZ).startOf("month").format("YYYY-MM-DD");
+    const monthEnd = moment().tz(TZ).endOf("month").format("YYYY-MM-DD");
+
+    const presentThisMonth = await Attendance.countDocuments({
+      employee: employeeId,
+      attendanceDate: {
+        $gte: monthStart,
+        $lte: monthEnd,
+      },
+      status: "Present",
+    });
+
     // Leave summary
     const totalLeaves = await Leave.countDocuments({
       employee: employeeId,
@@ -362,6 +375,8 @@ exports.getEmployeeDashboard = async (req, res) => {
       employee: employeeId,
       status: "Rejected",
     });
+
+    const leaveBucket = await syncLeaveBalance(employee);
 
     // Latest payroll
     const latestPayroll = await Payroll.findOne({
@@ -390,11 +405,17 @@ exports.getEmployeeDashboard = async (req, res) => {
         totalBreakMinutes,
         liveTotalHours: liveHours.totalHours,
         liveProductiveHours: liveHours.productiveHours,
+        monthlyAttendance: {
+          present: presentThisMonth,
+          monthStart,
+          monthEnd,
+        },
         leaves: {
           total: totalLeaves,
           approved: approvedLeaves,
           pending: pendingLeaves,
           rejected: rejectedLeaves,
+          bucket: leaveBucket,
         },
         latestPayroll,
         recentAttendance,

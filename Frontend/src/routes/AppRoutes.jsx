@@ -38,6 +38,7 @@ export default function AppRoutes() {
             <Route path="/attendance" element={<MyAttendance />} />
             <Route path="/attendance/:date" element={<EmployeeDayAttendance />} />
             <Route path="/leaves" element={<MyLeaves />} />
+            <Route path="/leave-bucket" element={<Navigate to="/leaves" replace />} />
             <Route path="/payroll" element={<MyPayroll />} />
             <Route path="/salary" element={<MySalary />} />
             <Route path="/profile" element={<Profile />} />

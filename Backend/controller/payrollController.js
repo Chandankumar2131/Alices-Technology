@@ -4,6 +4,7 @@ const SalaryStructure = require("../model/SalaryStructure");
 const PDFDocument = require("pdfkit");
 const User = require("../model/User");
 const Holiday = require("../model/Holiday");
+const Leave = require("../model/Leave");
 const path = require("path")
 const moment = require("moment-timezone");
 const { TZ } = require("../utils/attendanceShift");
@@ -201,6 +202,22 @@ exports.generatePayroll = async (req, res) => {
       salaryStructure.netSalary /
       workingDays;
 
+    const approvedLeaves = await Leave.find({
+      employee: employeeId,
+      status: "Approved",
+      startDate: {
+        $lte: monthEnd.toDate(),
+      },
+      endDate: {
+        $gte: monthStart.toDate(),
+      },
+    });
+
+    const unpaidLeaveDays = approvedLeaves.reduce(
+      (sum, leave) => sum + (leave.unpaidDays || 0),
+      0
+    );
+
     const paidDays =
       presentDays +
       leaveDays +
@@ -215,9 +232,14 @@ exports.generatePayroll = async (req, res) => {
       perDaySalary *
       unpaidDays;
 
+    const unpaidLeaveDeduction =
+      perDaySalary *
+      unpaidLeaveDays;
+
     const finalSalary =
       salaryStructure.netSalary -
-      absentDeduction;
+      absentDeduction -
+      unpaidLeaveDeduction;
 
     const payroll =
       await Payroll.create({
@@ -242,13 +264,15 @@ exports.generatePayroll = async (req, res) => {
 
         absentDays,
 
+        unpaidLeaveDays,
+
         overtimeHours,
 
         grossSalary:
           salaryStructure.grossSalary,
 
         deductions:
-          absentDeduction,
+          absentDeduction + unpaidLeaveDeduction,
 
         netSalary:
           Number(

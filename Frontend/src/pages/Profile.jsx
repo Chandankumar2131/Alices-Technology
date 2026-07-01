@@ -5,6 +5,7 @@ import {
   updateProfile,
   updateProfileDetails,
   changePassword,
+  submitResignation,
 } from "../features/auth/authSlice";
 import useAuth from "../hooks/useAuth";
 import Card from "../components/common/Card";
@@ -27,6 +28,7 @@ export default function Profile() {
     emergencyContactName: "", emergencyContactNumber: "",
   });
   const [pwd, setPwd] = useState({ currentPassword: "", newPassword: "" });
+  const [resignationReason, setResignationReason] = useState("");
   const [busy, setBusy] = useState("");
 
   useEffect(() => { dispatch(fetchProfile()); }, [dispatch]);
@@ -85,6 +87,24 @@ export default function Profile() {
     else notify.error(res.payload);
   };
 
+  const submitResign = async (e) => {
+    e.preventDefault();
+    if (!resignationReason.trim()) {
+      notify.error("Resignation reason is required");
+      return;
+    }
+    setBusy("resign");
+    const res = await dispatch(submitResignation({ reason: resignationReason }));
+    setBusy("");
+    if (submitResignation.fulfilled.match(res)) {
+      notify.success("Resignation submitted");
+      setResignationReason("");
+    } else notify.error(res.payload);
+  };
+
+  const resignation = user?.resignation;
+  const fmtDate = (value) => value ? new Date(value).toLocaleDateString("en-IN") : "-";
+
   return (
     <div className="space-y-6">
       <Card title="Basic Information">
@@ -125,6 +145,48 @@ export default function Profile() {
           <Input label="New Password" type="password" value={pwd.newPassword} onChange={(e) => setPwd({ ...pwd, newPassword: e.target.value })} />
           <Button type="submit" loading={busy === "pwd"}>Change Password</Button>
         </form>
+      </Card>
+
+      <Card title="Resignation">
+        {resignation?.status === "Submitted" ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+              <p className="text-sm text-slate-400">Status</p>
+              <p className="mt-2 font-semibold">{resignation.status}</p>
+            </div>
+            <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+              <p className="text-sm text-slate-400">Resignation Date</p>
+              <p className="mt-2 font-semibold">{fmtDate(resignation.resignationDate)}</p>
+            </div>
+            <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+              <p className="text-sm text-slate-400">Last Working Day</p>
+              <p className="mt-2 font-semibold">{fmtDate(resignation.lastWorkingDay)}</p>
+            </div>
+            <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+              <p className="text-sm text-slate-400">Handover</p>
+              <p className="mt-2 font-semibold">
+                {resignation.knowledgeTransferCompleted && resignation.assetsReturned ? "Completed" : "Pending"}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={submitResign} className="max-w-2xl space-y-4">
+            <div>
+              <label htmlFor="resignation-reason" className="mb-1 block text-sm font-medium text-slate-300">Reason</label>
+              <textarea
+                id="resignation-reason"
+                value={resignationReason}
+                onChange={(e) => setResignationReason(e.target.value)}
+                rows={4}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/40"
+              />
+            </div>
+            <p className="text-sm text-slate-400">
+              Notice period is 1 month. Knowledge transfer and company asset handover are expected before the last working day.
+            </p>
+            <Button type="submit" loading={busy === "resign"}>Submit Resignation</Button>
+          </form>
+        )}
       </Card>
     </div>
   );

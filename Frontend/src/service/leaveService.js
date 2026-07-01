@@ -3,6 +3,7 @@ import api, { unwrap } from "../lib/api";
 export const leaveService = {
   apply: (payload) => api.post("/leave/apply", payload).then(unwrap),
   getMyLeaves: () => api.get("/leave/my-leaves").then(unwrap),
+  getMyBucket: () => api.get("/leave/my-bucket").then(unwrap),
   // Admin
   getAll: () => api.get("/leave/all").then(unwrap),
   approve: (leaveId, adminRemarks) =>
