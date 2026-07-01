@@ -6,6 +6,7 @@ import Header from "./Header";
 import { selectUser } from "../../features/auth/authSlice";
 import { getSocket } from "../../lib/socket";
 import { chatService } from "../../service/chatService";
+import { dashboardService } from "../../service/dashboardService";
 import { fullName } from "../../utils/helpers";
 import notify from "../../utils/toast";
 
@@ -28,9 +29,11 @@ export default function AppLayout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatUnreadCount, setChatUnreadCount] = useState(0);
+  const [adminNotifications, setAdminNotifications] = useState({});
   const originalTitleRef = useRef(document.title || "Alice HRM");
   const currentUserId = getId(currentUser);
   const isChatPage = location.pathname.startsWith("/chat");
+  const isAdmin = ["Admin", "SuperAdmin"].includes(currentUser?.accountType);
 
   const requestNotificationPermission = () => {
     if (!("Notification" in window) || Notification.permission !== "default") return;
@@ -55,6 +58,30 @@ export default function AppLayout() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setAdminNotifications({});
+      return;
+    }
+
+    let mounted = true;
+
+    const loadAdminNotifications = async () => {
+      try {
+        const res = await dashboardService.getAdminNotifications();
+        if (mounted) setAdminNotifications(res.data || {});
+      } catch {
+        if (mounted) setAdminNotifications({});
+      }
+    };
+
+    loadAdminNotifications();
+
+    return () => {
+      mounted = false;
+    };
+  }, [isAdmin, location.pathname]);
 
   useEffect(() => {
     if (isChatPage) {
@@ -109,10 +136,35 @@ export default function AppLayout() {
     };
   }, [currentUserId, isChatPage]);
 
+  useEffect(() => {
+    if (!isAdmin) return undefined;
+
+    const socket = getSocket();
+    if (!socket.connected) socket.connect();
+
+    const refreshAdminNotifications = async () => {
+      try {
+        const res = await dashboardService.getAdminNotifications();
+        setAdminNotifications(res.data || {});
+      } catch {
+        setAdminNotifications({});
+      }
+    };
+
+    socket.on("attendance:updated", refreshAdminNotifications);
+    socket.on("admin:notifications", refreshAdminNotifications);
+
+    return () => {
+      socket.off("attendance:updated", refreshAdminNotifications);
+      socket.off("admin:notifications", refreshAdminNotifications);
+    };
+  }, [isAdmin]);
+
   return (
     <div className="app-shell flex h-dvh overflow-hidden text-slate-100">
       <Sidebar
         chatUnreadCount={chatUnreadCount}
+        adminNotifications={adminNotifications}
         mobileOpen={sidebarOpen}
         onChatClick={requestNotificationPermission}
         onMobileClose={() => setSidebarOpen(false)}

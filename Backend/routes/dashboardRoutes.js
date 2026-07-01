@@ -10,6 +10,7 @@ const {
   getTodayAttendance,
   getEmployeesOnBreak,
   getLateEmployees,
+  getAdminNotificationCounts,
   getEmployeeTimeline,
   getEmployeeDayDetail,
   getMyDayDetail,
@@ -24,6 +25,13 @@ router.get(
   auth,
   isAdmin,
   getAdminDashboard
+);
+
+router.get(
+  "/admin-notifications",
+  auth,
+  isAdmin,
+  getAdminNotificationCounts
 );
 
 router.get(

@@ -25,6 +25,7 @@ const sectionLabel =
 
 export default function Sidebar({
   chatUnreadCount = 0,
+  adminNotifications = {},
   mobileOpen = false,
   onChatClick = () => {},
   onMobileClose = () => {},
@@ -38,6 +39,13 @@ export default function Sidebar({
     dispatch(logout());
     navigate("/login", { replace: true });
   };
+
+  const renderCount = (count) =>
+    count > 0 ? (
+      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-cyan-300 px-1.5 text-[0.65rem] font-bold text-slate-950">
+        {count > 9 ? "9+" : count}
+      </span>
+    ) : null;
 
   const content = (
     <>
@@ -92,8 +100,14 @@ export default function Sidebar({
           <>
             <p className={sectionLabel}>Admin</p>
             <NavLink to="/employees" onClick={onMobileClose} className={linkClass}>Employees</NavLink>
-            <NavLink to="/leaves/manage" onClick={onMobileClose} className={linkClass}>Leave Approvals</NavLink>
-            <NavLink to="/attendance/corrections" onClick={onMobileClose} className={linkClass}>Attendance Corrections</NavLink>
+            <NavLink to="/leaves/manage" onClick={onMobileClose} className={linkClass}>
+              <span className="min-w-0 flex-1">Leave Approvals</span>
+              {renderCount(adminNotifications.pendingLeaves || 0)}
+            </NavLink>
+            <NavLink to="/attendance/corrections" onClick={onMobileClose} className={linkClass}>
+              <span className="min-w-0 flex-1">Attendance Corrections</span>
+              {renderCount(adminNotifications.pendingAttendanceCorrections || 0)}
+            </NavLink>
             <NavLink to="/payroll/manage" onClick={onMobileClose} className={linkClass}>Payroll Admin</NavLink>
             <NavLink to="/salary/manage" onClick={onMobileClose} className={linkClass}>Salary Admin</NavLink>
             <NavLink to="/reports" onClick={onMobileClose} className={linkClass}>Reports</NavLink>

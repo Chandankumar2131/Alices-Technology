@@ -3,6 +3,8 @@ import api, { unwrap } from "../lib/api";
 export const dashboardService = {
   // Admin
   getAdmin: () => api.get("/dashboard/admin").then(unwrap),
+  getAdminNotifications: () =>
+    api.get("/dashboard/admin-notifications").then(unwrap),
   getLiveEmployees: () => api.get("/dashboard/live-employees").then(unwrap),
   getDepartmentAnalytics: () =>
     api.get("/dashboard/department-analytics").then(unwrap),

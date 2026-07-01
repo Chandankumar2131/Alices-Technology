@@ -11,6 +11,13 @@ const {
   CASUAL_ELIGIBILITY_MONTHS,
 } = require("../utils/leaveBucket");
 
+const emitAdminNotifications = (req) => {
+  req.app?.get("io")?.to("role:admin").emit("admin:notifications", {
+    type: "leave",
+    at: new Date().toISOString(),
+  });
+};
+
 // ==========================================
 // APPLY LEAVE
 // ==========================================
@@ -100,6 +107,8 @@ exports.applyLeave = async (req, res) => {
       totalDays,
       reason,
     });
+
+    emitAdminNotifications(req);
 
     return res.status(201).json({
       success: true,
@@ -287,6 +296,7 @@ exports.approveLeave = async (req, res) => {
     leave.unpaidDays = unpaidDays;
 
     await leave.save();
+    emitAdminNotifications(req);
 
     // ==========================================
     // CREATE ATTENDANCE RECORDS FOR LEAVE DAYS
@@ -404,6 +414,7 @@ exports.rejectLeave =async (req, res) => {
         adminRemarks;
 
       await leave.save();
+      emitAdminNotifications(req);
 
       return res
         .status(200)

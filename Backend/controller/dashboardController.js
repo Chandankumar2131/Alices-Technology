@@ -3,6 +3,7 @@ const Attendance = require("../model/Attendance");
 const Leave = require("../model/Leave");
 const Payroll = require("../model/Payroll");
 const BreakLog = require("../model/BreakLog");
+const AttendanceCorrection = require("../model/AttendanceCorrection");
 const { syncLeaveBalance } = require("../utils/leaveBucket");
 const moment = require("moment-timezone");
 const { TZ, getShiftDate } = require("../utils/attendanceShift");
@@ -691,6 +692,32 @@ exports.getEmployeeTimeline = async (req, res) => {
 
   } catch (error) {
 
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// ADMIN NOTIFICATION COUNTS
+// ==========================================
+exports.getAdminNotificationCounts = async (_req, res) => {
+  try {
+    const [pendingLeaves, pendingAttendanceCorrections] = await Promise.all([
+      Leave.countDocuments({ status: "Pending" }),
+      AttendanceCorrection.countDocuments({ status: "Pending" }),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        pendingLeaves,
+        pendingAttendanceCorrections,
+        total: pendingLeaves + pendingAttendanceCorrections,
+      },
+    });
+  } catch (error) {
     return res.status(500).json({
       success: false,
       message: error.message,

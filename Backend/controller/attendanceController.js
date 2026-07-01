@@ -20,6 +20,13 @@ const {
 const { getPagination, paginatedResponse } = require("../utils/pagination");
 const { emitAttendanceUpdate } = require("../utils/attendanceEvents");
 
+const emitAdminNotifications = (req) => {
+  req.app?.get("io")?.to("role:admin").emit("admin:notifications", {
+    type: "attendance-correction",
+    at: new Date().toISOString(),
+  });
+};
+
 const parseOfficeDateTime = (value) => {
   const text = String(value || "").trim();
   const dateTimeOnly = text.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(?::(\d{2}))?$/);
@@ -726,6 +733,8 @@ exports.requestCheckInCorrection = async (req, res) => {
       reason,
     });
 
+    emitAdminNotifications(req);
+
     emitAttendanceUpdate(req, {
       type: "correction-requested",
       employeeId,
@@ -869,6 +878,7 @@ exports.approveCorrectionRequest = async (req, res) => {
 
     await attendance.save();
     await correction.save();
+    emitAdminNotifications(req);
 
     emitAttendanceUpdate(req, {
       type: "correction-approved",
@@ -924,6 +934,7 @@ exports.rejectCorrectionRequest = async (req, res) => {
     correction.approvedAt = new Date();
     correction.adminRemarks = adminRemarks || "";
     await correction.save();
+    emitAdminNotifications(req);
 
     emitAttendanceUpdate(req, {
       type: "correction-rejected",
