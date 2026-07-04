@@ -399,6 +399,19 @@ exports.getAttendanceByMonth = async (req, res) => {
         record = await reconcileLeaveAttendance(record);
       }
 
+      if (
+        holiday &&
+        record &&
+        !record.checkIn &&
+        ["Absent", "Leave"].includes(record.status)
+      ) {
+        record.status = "Holiday";
+        record.remarks = record.remarks
+          ? `${record.remarks} | Holiday override`
+          : "Holiday override";
+        await record.save();
+      }
+
       if (record) {
         calendar.push({
           _id: record._id,
@@ -410,7 +423,7 @@ exports.getAttendanceByMonth = async (req, res) => {
           dayName,
 
           status:
-            record.status,
+            holiday && record.status === "Holiday" ? "Holiday" : record.status,
 
           checkIn:
             record.checkIn,
@@ -435,6 +448,9 @@ exports.getAttendanceByMonth = async (req, res) => {
 
           remarks:
             record.remarks,
+
+          holidayName:
+            holiday?.name || "",
         });
       } else {
         calendar.push({

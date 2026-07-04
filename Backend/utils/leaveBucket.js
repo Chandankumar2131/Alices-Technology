@@ -1,5 +1,6 @@
 const moment = require("moment-timezone");
 const LeaveBalance = require("../model/LeaveBalance");
+const Leave = require("../model/Leave");
 const { TZ } = require("./attendanceShift");
 
 const CASUAL_LEAVE_PER_YEAR = 3;
@@ -39,6 +40,17 @@ const syncLeaveBalance = async (employee, asOf = new Date()) => {
     balance.carryForwardAvailable = 0;
     balance.carryForwardExpiresAt = undefined;
   }
+
+  const approvedLeaves = await Leave.find({
+    employee: employee._id,
+    status: "Approved",
+  }).select("unpaidDays");
+
+  balance.unpaidLeaveDays = Number(
+    approvedLeaves
+      .reduce((sum, leave) => sum + (leave.unpaidDays || 0), 0)
+      .toFixed(2)
+  );
 
   if (completedMonths >= SICK_ELIGIBILITY_MONTHS) {
     const eligibleAt = getCurrentYearEligibilityDate(joiningDate, SICK_ELIGIBILITY_MONTHS);
