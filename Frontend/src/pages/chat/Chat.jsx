@@ -53,6 +53,58 @@ const attachmentPreviewText = (message) => {
   return `${attachmentLabel(firstAttachment)}: ${firstAttachment.fileName}`;
 };
 
+const URL_PATTERN = /(?:https?:\/\/|www\.)[^\s<]+/gi;
+const TRAILING_URL_PUNCTUATION = /[.,!?;:)\]}]+$/;
+
+const normalizeUrlHref = (url) =>
+  url.toLowerCase().startsWith("www.") ? `https://${url}` : url;
+
+function LinkifiedText({ text, mine }) {
+  const content = String(text || "");
+  const parts = [];
+  let lastIndex = 0;
+
+  content.replace(URL_PATTERN, (match, offset) => {
+    if (offset > lastIndex) {
+      parts.push(content.slice(lastIndex, offset));
+    }
+
+    const trailing = match.match(TRAILING_URL_PUNCTUATION)?.[0] || "";
+    const urlText = trailing ? match.slice(0, -trailing.length) : match;
+
+    if (urlText) {
+      parts.push(
+        <a
+          key={`${offset}-${urlText}`}
+          href={normalizeUrlHref(urlText)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`font-semibold underline underline-offset-2 transition ${
+            mine
+              ? "text-slate-950 hover:text-slate-700"
+              : "text-cyan-200 hover:text-cyan-100"
+          }`}
+        >
+          {urlText}
+        </a>
+      );
+    }
+
+    if (trailing) {
+      parts.push(trailing);
+    }
+
+    lastIndex = offset + match.length;
+    return match;
+  });
+
+  if (lastIndex < content.length) {
+    parts.push(content.slice(lastIndex));
+  }
+
+  return parts;
+}
+
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1168,7 +1220,7 @@ export default function Chat() {
                         )}
                         {message.text && (
                           <p className="whitespace-pre-wrap break-words text-sm leading-6">
-                            {message.text}
+                            <LinkifiedText text={message.text} mine={mine} />
                           </p>
                         )}
                         {message.attachments?.length > 0 && (
