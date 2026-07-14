@@ -80,6 +80,7 @@ export default function Sidebar({
           </>
         )}
         <NavLink to="/profile" onClick={onMobileClose} className={linkClass}>Profile</NavLink>
+        <NavLink to="/interviews" onClick={onMobileClose} className={linkClass}>Interviews</NavLink>
         <NavLink
           to="/chat"
           onClick={() => {
