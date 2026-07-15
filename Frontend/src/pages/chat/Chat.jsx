@@ -875,7 +875,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="grid h-[calc(100vh-8rem)] min-h-[34rem] gap-4 lg:grid-cols-[22rem_1fr]">
+    <div className="theme-chat grid h-[calc(100vh-8rem)] min-h-[34rem] gap-4 lg:grid-cols-[22rem_1fr]">
       <aside className="flex min-h-0 flex-col rounded-lg border border-white/10 bg-slate-950/55 p-3 shadow-xl shadow-black/10">
         <div className="flex items-start justify-between gap-3 px-2 pb-3">
           <div>
@@ -901,7 +901,7 @@ export default function Chat() {
             <button
               type="button"
               onClick={() => setGroupComposerOpen((open) => !open)}
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border text-xl font-semibold transition ${
+              className={`theme-chat-accent-button flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border text-xl font-semibold transition ${
                 groupComposerOpen
                   ? "border-cyan-300/45 bg-cyan-300 text-slate-950"
                   : "border-cyan-300/25 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/18"
@@ -978,7 +978,7 @@ export default function Chat() {
                           : "border-transparent hover:border-white/10 hover:bg-white/[0.04]"
                       }`}
                     >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-cyan-300/10 text-sm font-bold text-cyan-100">
+                      <span className="theme-chat-group-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-cyan-300/10 text-sm font-bold text-cyan-100">
                         #
                       </span>
                       <span className="min-w-0 flex-1">
@@ -1066,7 +1066,7 @@ export default function Chat() {
           <>
             <header className="flex items-center gap-3 border-b border-white/10 p-4">
               {selectedTarget.type === "group" ? (
-                <span className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-cyan-300/10 text-lg font-bold text-cyan-100">
+                <span className="theme-chat-group-icon flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-cyan-300/10 text-lg font-bold text-cyan-100">
                   #
                 </span>
               ) : (
@@ -1082,13 +1082,13 @@ export default function Chat() {
                 <h2 className="truncate text-base font-bold text-slate-50">
                   {selectedTitle}
                 </h2>
-                <p className="text-sm text-cyan-200/80">{selectedSubtitle}</p>
+                <p className="theme-chat-subtitle text-sm text-cyan-200/80">{selectedSubtitle}</p>
               </div>
               {canCreateGroup && selectedTarget.type === "group" && (
                 <button
                   type="button"
                   onClick={openGroupManager}
-                  className={`min-h-10 shrink-0 rounded-lg border px-3 text-sm font-semibold transition ${
+                  className={`theme-chat-manage min-h-10 shrink-0 rounded-lg border px-3 text-sm font-semibold transition ${
                     groupManagerOpen
                       ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
                       : "border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/18"

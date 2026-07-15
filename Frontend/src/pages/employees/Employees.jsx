@@ -301,7 +301,7 @@ export default function Employees() {
 
 function EmployeeMetric({ label, value, tone = "text-cyan-300" }) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 shadow-xl shadow-black/20">
+    <div className="theme-employee-metric rounded-xl border border-slate-800 bg-slate-900/70 p-4 shadow-xl shadow-black/20">
       <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
       <p className={`mt-2 text-3xl font-bold ${tone}`}>{value}</p>
     </div>

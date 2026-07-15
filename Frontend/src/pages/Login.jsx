@@ -6,7 +6,7 @@ import useAuth from "../hooks/useAuth";
 import WelcomeCard from "../components/auth/WelcomeCard";
 import RotatingSubtitle from "../components/auth/RotatingSubtitle";
 import notify from "../utils/toast";
-import logo from "../assets/1ch.png";
+import logo from "../assets/1ch.png"; 
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -17,6 +17,7 @@ export default function Login() {
   const { isAuthenticated } = useAuth();
   const { loading, error } = useSelector(selectAuth);
 
+  
   useEffect(() => {
     if (isAuthenticated) navigate("/dashboard", { replace: true });
   }, [isAuthenticated, navigate]);
