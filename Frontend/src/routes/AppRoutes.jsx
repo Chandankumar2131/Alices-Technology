@@ -23,6 +23,7 @@ const Holidays = lazy(() => import("../pages/admin/Holidays"));
 const Reports = lazy(() => import("../pages/reports/Reports"));
 const Profile = lazy(() => import("../pages/Profile"));
 const Chat = lazy(() => import("../pages/chat/Chat"));
+const Interviews = lazy(() => import("../pages/interviews/Interviews"));
 const AppLayout = lazy(() => import("../components/layout/AppLayout"));
 
 export default function AppRoutes() {
@@ -43,6 +44,7 @@ export default function AppRoutes() {
             <Route path="/salary" element={<MySalary />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/chat" element={<Chat />} />
+            <Route path="/interviews" element={<Interviews />} />
 
             {/* Admin + SuperAdmin */}
             <Route element={<RoleRoute mode="admin" />}>

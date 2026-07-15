@@ -26,7 +26,7 @@ export default function Select({ label, options = [], error, className = "", ...
           const value = typeof opt === "string" ? opt : opt.value;
           const labelText = typeof opt === "string" ? opt : opt.label;
           return (
-            <option key={value} value={value} className="bg-slate-800 text-slate-100">
+            <option key={value} value={value}>
               {labelText || "-"}
             </option>
           );
