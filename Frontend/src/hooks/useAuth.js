@@ -7,6 +7,7 @@ import {
   selectIsAdmin,
   selectIsSuperAdmin,
   selectIsEmployee,
+  selectIsCandidate,
 } from "../features/auth/authSlice";
 
 export const useAuth = () => ({
@@ -17,6 +18,7 @@ export const useAuth = () => ({
   isAdmin: useSelector(selectIsAdmin),
   isSuperAdmin: useSelector(selectIsSuperAdmin),
   isEmployee: useSelector(selectIsEmployee),
+  isCandidate: useSelector(selectIsCandidate),
 });
 
 export default useAuth;

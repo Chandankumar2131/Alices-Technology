@@ -5,11 +5,14 @@ export default function Header({ onMenuClick }) {
   const { user, role } = useAuth();
   const name = user?.firstName || "User";
   const isEmployee = role === "Employee";
+  const isCandidate = role === "Candidate";
   const roleLabel = role === "SuperAdmin" ? "Super Admin" : role || "User";
-  const title = isEmployee ? `Welcome back, ${name}` : `${roleLabel} Workspace`;
-  const subtitle = isEmployee
-    ? "Your attendance, leaves, and payroll are ready."
-    : "Track today's records, approvals, and team activity from one place.";
+  const title = isEmployee || isCandidate ? `Welcome back, ${name}` : `${roleLabel} Workspace`;
+  const subtitle = isCandidate
+    ? "Track your recruiter, resume progress, and daily job applications."
+    : isEmployee
+      ? "Your attendance, leaves, candidates, and payroll are ready."
+      : "Track today's records, approvals, and team activity from one place.";
 
   return (
     <header className="theme-header sticky top-0 z-30 flex min-h-16 items-center gap-3 border-b px-3 py-3 shadow-[0_10px_35px_rgba(0,0,0,0.18)] backdrop-blur-xl sm:px-5 md:px-6">
@@ -26,9 +29,9 @@ export default function Header({ onMenuClick }) {
         <p className="mt-0.5 text-xs leading-snug text-slate-400 sm:text-sm">{subtitle}</p>
       </div>
       <ThemeToggle />
-      <div className="theme-role-pill hidden min-h-11 items-center gap-2 rounded-lg border px-4 py-2 text-sm font-bold uppercase tracking-[0.08em] shadow-lg sm:flex">
+      {!isCandidate && <div className="theme-role-pill hidden min-h-11 items-center gap-2 rounded-lg border px-4 py-2 text-sm font-bold uppercase tracking-[0.08em] shadow-lg sm:flex">
         {roleLabel}
-      </div>
+      </div>}
     </header>
   );
 }

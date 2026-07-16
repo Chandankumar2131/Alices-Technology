@@ -26,6 +26,18 @@ exports.auth = async (req, res, next) => {
       // Attach User To Request
       req.user = decoded;
 
+      if (decoded.accountType === "Candidate") {
+        const candidateApi = req.baseUrl === "/api/v1/candidates";
+        const allowedAuthApi = req.baseUrl === "/api/v1/auth" &&
+          ["/profile", "/change-password"].includes(req.path);
+        if (!candidateApi && !allowedAuthApi) {
+          return res.status(403).json({
+            success: false,
+            message: "Candidate accounts cannot access internal HRM resources",
+          });
+        }
+      }
+
     } catch (error) {
 
       return res.status(401).json({

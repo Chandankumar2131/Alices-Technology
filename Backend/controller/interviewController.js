@@ -1,11 +1,19 @@
 const mongoose = require("mongoose");
 const Interview = require("../model/Interview");
 const User = require("../model/User");
+const Candidate = require("../model/Candidate");
 const { getPagination, paginatedResponse } = require("../utils/pagination");
 
 const isAdmin = (user) => ["Admin", "SuperAdmin"].includes(user.accountType);
 const populateRecruiter = (query) =>
-  query.populate("recruiter", "firstName lastName email employeeId department designation");
+  query.populate("recruiter", "firstName lastName email employeeId department designation").populate({ path: "candidate", populate: { path: "user", select: "firstName lastName email" } });
+
+const resolveCandidate = async (candidateId, user) => {
+  if (!candidateId || !mongoose.isValidObjectId(candidateId)) return null;
+  const filter = { _id: candidateId };
+  if (user.accountType === "Employee") filter.assignedRecruiter = user.id;
+  return Candidate.findOne(filter).populate("user", "firstName lastName email");
+};
 
 const validateDates = (emailReceivedDate, scheduledAt) => {
   const received = new Date(emailReceivedDate);
@@ -28,10 +36,16 @@ exports.createInterview = async (req, res) => {
       interviewRound,
       status,
       notes,
+      candidateId,
     } = req.body;
 
-    if (![candidateName, emailReceivedDate, jobTitle, companyName, interviewEmail, scheduledAt].every(Boolean)) {
+    if (![emailReceivedDate, jobTitle, companyName, interviewEmail, scheduledAt].every(Boolean)) {
       return res.status(400).json({ success: false, message: "All required fields must be filled" });
+    }
+
+    const linkedCandidate = await resolveCandidate(candidateId, req.user);
+    if (req.user.accountType === "Employee" && !linkedCandidate) {
+      return res.status(403).json({ success: false, message: "Select a candidate assigned to you" });
     }
 
     const dateError = validateDates(emailReceivedDate, scheduledAt);
@@ -44,7 +58,8 @@ exports.createInterview = async (req, res) => {
 
     const interview = await Interview.create({
       recruiter: req.user.id,
-      candidateName,
+      candidate: linkedCandidate?._id || null,
+      candidateName: linkedCandidate ? `${linkedCandidate.user.firstName} ${linkedCandidate.user.lastName}`.trim() : candidateName,
       emailReceivedDate,
       jobTitle,
       companyName,
@@ -55,7 +70,7 @@ exports.createInterview = async (req, res) => {
       notes,
     });
 
-    await interview.populate("recruiter", "firstName lastName email employeeId department designation");
+    await interview.populate([{"path":"recruiter","select":"firstName lastName email employeeId department designation"},{"path":"candidate","populate":{"path":"user","select":"firstName lastName email"}}]);
     return res.status(201).json({ success: true, message: "Interview added successfully", data: interview });
   } catch (error) {
     if (error.name === "ValidationError") {
@@ -123,13 +138,19 @@ exports.updateInterview = async (req, res) => {
     editable.forEach((field) => {
       if (req.body[field] !== undefined) interview[field] = req.body[field];
     });
+    if (req.body.candidateId !== undefined) {
+      const linkedCandidate = await resolveCandidate(req.body.candidateId, req.user);
+      if (!linkedCandidate) return res.status(403).json({ success: false, message: "Candidate is not available to you" });
+      interview.candidate = linkedCandidate._id;
+      interview.candidateName = `${linkedCandidate.user.firstName} ${linkedCandidate.user.lastName}`.trim();
+    }
     if (req.body.emailReceivedDate !== undefined || req.body.scheduledAt !== undefined) {
       const dateError = validateDates(interview.emailReceivedDate, interview.scheduledAt);
       if (dateError) return res.status(400).json({ success: false, message: dateError });
     }
 
     await interview.save();
-    await interview.populate("recruiter", "firstName lastName email employeeId department designation");
+    await interview.populate([{"path":"recruiter","select":"firstName lastName email employeeId department designation"},{"path":"candidate","populate":{"path":"user","select":"firstName lastName email"}}]);
     return res.status(200).json({ success: true, message: "Interview updated successfully", data: interview });
   } catch (error) {
     if (error.name === "ValidationError") {

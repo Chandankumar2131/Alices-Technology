@@ -185,5 +185,7 @@ export const selectIsAdmin = (s) =>
   s.auth.user?.accountType === ROLES.SUPER_ADMIN; // mirrors backend isAdmin
 export const selectIsEmployee = (s) =>
   s.auth.user?.accountType === ROLES.EMPLOYEE;
+export const selectIsCandidate = (s) =>
+  s.auth.user?.accountType === ROLES.CANDIDATE;
 
 export default authSlice.reducer;

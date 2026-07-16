@@ -30,10 +30,10 @@ export default function Sidebar({
   onChatClick = () => {},
   onMobileClose = () => {},
 }) {
-  const { user, role, isAdmin, isSuperAdmin } = useAuth();
+  const { user, role, isAdmin, isSuperAdmin, isCandidate } = useAuth();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const isEmployee = !isAdmin && !isSuperAdmin;
+  const isEmployee = role === "Employee";
 
   const handleLogout = () => {
     dispatch(logout());
@@ -71,7 +71,8 @@ export default function Sidebar({
       <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
         <p className={sectionLabel}>Main</p>
         <NavLink to="/dashboard" onClick={onMobileClose} className={linkClass}>Dashboard</NavLink>
-        <NavLink to="/attendance" onClick={onMobileClose} className={linkClass}>My Attendance</NavLink>
+        {isCandidate && <NavLink to="/my-applications" onClick={onMobileClose} className={linkClass}>My Applications</NavLink>}
+        {!isCandidate && <NavLink to="/attendance" onClick={onMobileClose} className={linkClass}>My Attendance</NavLink>}
         {isEmployee && <NavLink to="/leaves" onClick={onMobileClose} className={linkClass}>Leaves</NavLink>}
         {isEmployee && (
           <>
@@ -79,9 +80,10 @@ export default function Sidebar({
             <NavLink to="/salary" onClick={onMobileClose} className={linkClass}>Salary</NavLink>
           </>
         )}
-        <NavLink to="/profile" onClick={onMobileClose} className={linkClass}>Profile</NavLink>
-        <NavLink to="/interviews" onClick={onMobileClose} className={linkClass}>Interviews</NavLink>
-        <NavLink
+        {isEmployee && <NavLink to="/my-candidates" onClick={onMobileClose} className={linkClass}>My Candidates</NavLink>}
+        {!isCandidate && <NavLink to="/profile" onClick={onMobileClose} className={linkClass}>Profile</NavLink>}
+        {!isCandidate && <NavLink to="/interviews" onClick={onMobileClose} className={linkClass}>Interviews</NavLink>}
+        {!isCandidate && <NavLink
           to="/chat"
           onClick={() => {
             onChatClick();
@@ -95,12 +97,13 @@ export default function Sidebar({
               {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
             </span>
           )}
-        </NavLink>
+        </NavLink>}
 
         {isAdmin && (
           <>
             <p className={sectionLabel}>Admin</p>
             <NavLink to="/employees" onClick={onMobileClose} className={linkClass}>Employees</NavLink>
+            <NavLink to="/candidates" onClick={onMobileClose} className={linkClass}>Candidates</NavLink>
             <NavLink to="/leaves/manage" onClick={onMobileClose} className={linkClass}>
               <span className="min-w-0 flex-1">Leave Approvals</span>
               {renderCount(adminNotifications.pendingLeaves || 0)}
@@ -149,7 +152,7 @@ export default function Sidebar({
           )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-slate-100">{fullName(user)}</p>
-            <p className="text-xs text-cyan-300/85">{role}</p>
+            {!isCandidate && <p className="text-xs text-cyan-300/85">{role}</p>}
           </div>
         </div>
         <button

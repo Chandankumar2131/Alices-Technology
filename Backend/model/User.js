@@ -34,6 +34,7 @@ const userSchema = new mongoose.Schema(
     "SuperAdmin",
     "Admin",
     "Employee",
+    "Candidate",
   ],
   required: true,
 },

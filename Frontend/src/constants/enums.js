@@ -30,7 +30,13 @@ export const ROLES = {
   SUPER_ADMIN: "SuperAdmin",
   ADMIN: "Admin",
   EMPLOYEE: "Employee",
+  CANDIDATE: "Candidate",
 };
+
+export const SUBSCRIPTION_STATUSES = ["Trial", "Active", "Expiring Soon", "Expired", "Paused", "Cancelled"];
+export const RESUME_STATUSES = ["Details Pending", "Resume In Progress", "Ready", "Revision Requested", "Approved"];
+export const JOB_PORTALS = ["LinkedIn", "Naukri", "Indeed", "Dice", "Monster", "ZipRecruiter", "Company Website", "Other"];
+export const JOB_APPLICATION_STATUSES = ["Applied", "Recruiter Response", "Interview Scheduled", "Rejected", "Selected", "Withdrawn"];
 
 // Profile enums
 export const GENDERS = ["Male", "Female", "Other"];
@@ -53,6 +59,16 @@ export const STATUS_COLORS = {
   // Payroll
   Paid: "bg-green-100 text-green-700",
   Selected: "bg-green-100 text-green-700",
+  Active: "bg-green-100 text-green-700",
+  Trial: "bg-blue-100 text-blue-700",
+  "Expiring Soon": "bg-amber-100 text-amber-700",
+  Expired: "bg-red-100 text-red-700",
+  Paused: "bg-gray-100 text-gray-600",
+  Cancelled: "bg-red-100 text-red-700",
+  Applied: "bg-blue-100 text-blue-700",
+  "Recruiter Response": "bg-violet-100 text-violet-700",
+  "Interview Scheduled": "bg-amber-100 text-amber-700",
+  Withdrawn: "bg-gray-100 text-gray-600",
   // Live status
   Working: "bg-green-100 text-green-700",
   "On Break": "bg-amber-100 text-amber-700",

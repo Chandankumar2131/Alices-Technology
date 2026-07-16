@@ -46,12 +46,12 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total Employees" value={s.totalEmployees ?? 0} icon="👥" />
+        <StatCard label="Total Candidates" value={s.totalCandidates ?? 0} icon="🎯" accent="text-cyan-600" />
         <StatCard label="Present Today" value={s.presentToday ?? 0} icon="✅" accent="text-green-600" />
         <StatCard label="Absent Today" value={s.absentToday ?? 0} icon="❌" accent="text-red-600" />
         <StatCard label="On Leave" value={s.leaveToday ?? 0} icon="🌴" accent="text-blue-600" />
         <StatCard label="Active Breaks" value={s.activeBreaks ?? 0} icon="☕" accent="text-amber-600" />
         <StatCard label="Late Today" value={s.lateEmployees ?? 0} icon="⏰" accent="text-orange-600" />
-        <StatCard label="Checked Out" value={s.checkedOut ?? 0} icon="🚪" accent="text-gray-600" />
         <StatCard label="Monthly Payroll" value={fmtMoney(s.monthlyPayroll)} icon="💰" accent="text-emerald-600" />
       </div>
 

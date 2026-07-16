@@ -9,13 +9,14 @@ import Modal from "../../components/common/Modal";
 import StatCard from "../../components/ui/StatCard";
 import useAuth from "../../hooks/useAuth";
 import { interviewService } from "../../service/interviewService";
+import { candidateService } from "../../service/candidateService";
 import { fmtDate, fmtDateTime, fullName, toOfficeDateTimeInputValue } from "../../utils/helpers";
 import notify from "../../utils/toast";
 
 const ROUNDS = ["Screening", "First Round", "Second Round", "Third Round", "Final Round"];
 const STATUSES = ["Scheduled", "Completed", "Rescheduled", "Selected", "Rejected", "Cancelled"];
 const blankForm = {
-  candidateName: "",
+  candidateId: "",
   emailReceivedDate: "",
   jobTitle: "",
   companyName: "",
@@ -38,6 +39,7 @@ export default function Interviews() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(blankForm);
   const [filters, setFilters] = useState({ search: "", status: "", round: "" });
+  const [candidates, setCandidates] = useState([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,6 +58,10 @@ export default function Interviews() {
     return () => clearTimeout(timer);
   }, [load, filters.search]);
 
+  useEffect(() => {
+    candidateService.getAll({ limit: 100 }).then((response) => setCandidates(response.data || [])).catch(() => setCandidates([]));
+  }, []);
+
   const stats = useMemo(() => ({
     total: rows.length,
     scheduled: rows.filter((row) => ["Scheduled", "Rescheduled"].includes(row.status)).length,
@@ -72,7 +78,7 @@ export default function Interviews() {
   const startEdit = (row) => {
     setEditing(row);
     setForm({
-      candidateName: row.candidateName || "",
+      candidateId: row.candidate?._id || "",
       emailReceivedDate: row.emailReceivedDate ? String(row.emailReceivedDate).slice(0, 10) : "",
       jobTitle: row.jobTitle || "",
       companyName: row.companyName || "",
@@ -96,7 +102,7 @@ export default function Interviews() {
 
   const submit = async (event) => {
     event.preventDefault();
-    const required = ["candidateName", "emailReceivedDate", "jobTitle", "companyName", "interviewEmail", "scheduledAt"];
+    const required = ["candidateId", "emailReceivedDate", "jobTitle", "companyName", "interviewEmail", "scheduledAt"];
     if (required.some((field) => !form[field]?.trim())) {
       notify.error("Please fill all required fields");
       return;
@@ -163,7 +169,7 @@ export default function Interviews() {
         <form onSubmit={submit} className="space-y-4">
           <Input label="Recruiter (automatically assigned)" value={editing ? fullName(editing.recruiter) : fullName(user)} disabled />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Input label="Candidate Name *" name="candidateName" value={form.candidateName} onChange={change} />
+            <Select label="Assigned Candidate *" name="candidateId" value={form.candidateId} onChange={change} options={[{ value: "", label: candidates.length ? "Select assigned candidate" : "No candidates assigned" }, ...candidates.map((candidate) => ({ value: candidate._id, label: fullName(candidate.user) }))]} disabled={!candidates.length} />
             <Input label="Email Received Date *" type="date" name="emailReceivedDate" value={form.emailReceivedDate} onChange={change} />
             <Input label="Job Title *" name="jobTitle" value={form.jobTitle} onChange={change} />
             <Input label="Company Name *" name="companyName" value={form.companyName} onChange={change} />

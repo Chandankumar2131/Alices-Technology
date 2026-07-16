@@ -34,6 +34,7 @@ export default function AppLayout() {
   const currentUserId = getId(currentUser);
   const isChatPage = location.pathname.startsWith("/chat");
   const isAdmin = ["Admin", "SuperAdmin"].includes(currentUser?.accountType);
+  const isCandidate = currentUser?.accountType === "Candidate";
 
   const requestNotificationPermission = () => {
     if (!("Notification" in window) || Notification.permission !== "default") return;
@@ -41,6 +42,7 @@ export default function AppLayout() {
   };
 
   useEffect(() => {
+    if (isCandidate) return undefined;
     let mounted = true;
 
     const loadUnreadCount = async () => {
@@ -57,7 +59,7 @@ export default function AppLayout() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [isCandidate]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -105,6 +107,7 @@ export default function AppLayout() {
   }, [chatUnreadCount]);
 
   useEffect(() => {
+    if (isCandidate) return undefined;
     const socket = getSocket();
 
     if (!socket.connected) socket.connect();
@@ -134,7 +137,7 @@ export default function AppLayout() {
     return () => {
       socket.off("chat:message", handleMessage);
     };
-  }, [currentUserId, isChatPage]);
+  }, [currentUserId, isCandidate, isChatPage]);
 
   useEffect(() => {
     if (!isAdmin) return undefined;

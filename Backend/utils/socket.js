@@ -27,6 +27,10 @@ const initSocket = (server, allowedOrigins) => {
         return next(new Error("Invalid user"));
       }
 
+      if (user.accountType === "Candidate") {
+        return next(new Error("Candidate accounts cannot access internal realtime services"));
+      }
+
       socket.user = {
         id: String(user._id),
         accountType: user.accountType,
