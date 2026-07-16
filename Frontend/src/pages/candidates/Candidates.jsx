@@ -20,10 +20,6 @@ const empty = {
   subscriptionStatus: "Active", notes: "",
 };
 const errorText = (error) => error?.response?.data?.message || error?.message || "Something went wrong";
-const localDateKey = (value = new Date()) => {
-  const date = new Date(value);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-};
 
 export default function Candidates() {
   const { isSuperAdmin } = useAuth();
@@ -40,7 +36,8 @@ export default function Candidates() {
   const [createResume, setCreateResume] = useState(null);
   const [allApplications, setAllApplications] = useState([]);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
-  const [analyticsDate, setAnalyticsDate] = useState(localDateKey());
+  const [analyticsDate, setAnalyticsDate] = useState("");
+  const [currentWorkDate, setCurrentWorkDate] = useState("");
   const [analyticsRecruiter, setAnalyticsRecruiter] = useState("");
   const [analyticsCandidate, setAnalyticsCandidate] = useState("");
   const [form, setForm] = useState(empty);
@@ -69,6 +66,8 @@ export default function Candidates() {
     try {
       const response = await candidateService.getAllApplications();
       setAllApplications(response.data || []);
+      setCurrentWorkDate(response.currentWorkDate || "");
+      setAnalyticsDate((current) => current || response.currentWorkDate || "");
     } catch (error) { notify.error(errorText(error)); }
     finally { setAnalyticsLoading(false); }
   }, []);
@@ -76,7 +75,7 @@ export default function Candidates() {
   useEffect(() => { const timer = setTimeout(loadAnalytics, 0); return () => clearTimeout(timer); }, [loadAnalytics]);
 
   const dailyApplications = useMemo(() => allApplications.filter((application) =>
-    (!analyticsDate || localDateKey(application.appliedAt) === analyticsDate) &&
+    (!analyticsDate || application.workDate === analyticsDate) &&
     (!analyticsRecruiter || application.submittedBy?._id === analyticsRecruiter) &&
     (!analyticsCandidate || application.candidate?._id === analyticsCandidate)
   ), [allApplications, analyticsCandidate, analyticsDate, analyticsRecruiter]);
@@ -158,7 +157,7 @@ export default function Candidates() {
   const dailyColumns = [
     { key: "candidate", header: "Candidate", render: (row) => fullName(row.candidate?.user) },
     { key: "recruiter", header: "Employee", render: (row) => fullName(row.submittedBy) },
-    { key: "appliedAt", header: "Applied", render: (row) => fmtDate(row.appliedAt) },
+    { key: "workDate", header: "Applied", render: (row) => fmtDate(row.workDate || row.appliedAt) },
     { key: "url", header: "Applied Job URL", render: (row) => <a href={row.appliedUrl} target="_blank" rel="noreferrer" className="font-semibold text-cyan-500 hover:underline">Open job</a> },
   ];
 
@@ -173,7 +172,7 @@ export default function Candidates() {
       <Input className="mb-4" placeholder="Search candidate, ID, role or location" value={search} onChange={(event) => setSearch(event.target.value)} />
       <Table columns={columns} data={rows} loading={loading} emptyText="No candidates found" />
     </Card>
-    <Card title="Daily Application Analytics" action={<div className="flex gap-2"><Button variant="secondary" onClick={() => { setAnalyticsDate(localDateKey()); setAnalyticsRecruiter(""); setAnalyticsCandidate(""); }}>Today · All</Button><Button variant="outline" onClick={loadAnalytics}>Refresh</Button></div>}>
+    <Card title="Daily Application Analytics" action={<div className="flex gap-2"><Button variant="secondary" onClick={() => { setAnalyticsDate(currentWorkDate); setAnalyticsRecruiter(""); setAnalyticsCandidate(""); }}>Today · All</Button><Button variant="outline" onClick={loadAnalytics}>Refresh</Button></div>}>
       <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3"><Input label="Applied Date" type="date" value={analyticsDate} onChange={(event) => setAnalyticsDate(event.target.value)} /><Select label="Employee / Recruiter" value={analyticsRecruiter} onChange={(event) => setAnalyticsRecruiter(event.target.value)} options={[{ value: "", label: "All employees" }, ...employees.map((employee) => ({ value: employee._id, label: fullName(employee) }))]} /><Select label="Candidate" value={analyticsCandidate} onChange={(event) => setAnalyticsCandidate(event.target.value)} options={[{ value: "", label: "All candidates" }, ...rows.map((candidate) => ({ value: candidate._id, label: fullName(candidate.user) }))]} /></div>
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3"><StatCard label="Jobs Applied" value={dailyApplications.length} /><StatCard label="Employees Active" value={new Set(dailyApplications.map((item) => item.submittedBy?._id).filter(Boolean)).size} /><StatCard label="Candidates Marketed" value={new Set(dailyApplications.map((item) => item.candidate?._id).filter(Boolean)).size} /></div>
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2"><div><h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.08em] text-slate-300">Employee Analysis</h3><Table columns={employeeColumns} data={employeeAnalytics} loading={analyticsLoading} emptyText="No employee application activity for this date" /></div><div><h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.08em] text-slate-300">Applied Job Details</h3><Table columns={dailyColumns} data={dailyApplications} loading={analyticsLoading} emptyText="No applied jobs found for this date" /></div></div>

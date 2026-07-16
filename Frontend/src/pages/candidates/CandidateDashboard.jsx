@@ -17,6 +17,7 @@ export default function CandidateDashboard() {
   const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState("");
+  const [currentWorkDate, setCurrentWorkDate] = useState("");
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -24,20 +25,20 @@ export default function CandidateDashboard() {
         candidateService.getMe(), candidateService.getAllApplications(), candidateService.getMyInterviews(),
       ]);
       setCandidate(profileRes.data); setApplications(appsRes.data || []); setInterviews(interviewRes.data || []);
+      setCurrentWorkDate(appsRes.currentWorkDate || "");
     } catch (error) { notify.error(error?.response?.data?.message || "Failed to load candidate portal"); }
     finally { setLoading(false); }
   }, []);
   useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer); }, [load]);
 
-  const todayCount = useMemo(() => applications.filter((item) => new Date(item.appliedAt).toDateString() === new Date().toDateString()).length, [applications]);
+  const todayCount = useMemo(() => applications.filter((item) => item.workDate === currentWorkDate).length, [applications, currentWorkDate]);
   const visibleApplications = useMemo(() => applications.filter((item) => {
     if (!selectedDate) return true;
-    const date = new Date(item.appliedAt);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}` === selectedDate;
+    return item.workDate === selectedDate;
   }), [applications, selectedDate]);
   const upcomingInterviews = interviews.filter((item) => ["Scheduled", "Rescheduled"].includes(item.status) && new Date(item.scheduledAt) >= new Date()).sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
   const applicationColumns = [
-    { key: "appliedAt", header: "Applied", render: (row) => fmtDate(row.appliedAt) },
+    { key: "workDate", header: "Applied", render: (row) => fmtDate(row.workDate || row.appliedAt) },
     { key: "url", header: "Applied Job URL", render: (row) => <a href={row.appliedUrl} target="_blank" rel="noreferrer" className="font-semibold text-cyan-500 hover:underline">Open job</a> },
   ];
   const interviewColumns = [

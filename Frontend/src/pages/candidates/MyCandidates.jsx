@@ -12,21 +12,13 @@ import notify from "../../utils/toast";
 
 const emptyApplication = { candidateId: "", urls: "" };
 const errorText = (error) => error?.response?.data?.message || error?.message || "Something went wrong";
-const todayKey = () => new Date().toDateString();
-const dateInputKey = (value) => {
-  if (!value) return "";
-  const date = new Date(value);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
 
 export default function MyCandidates() {
   const [candidates, setCandidates] = useState([]);
   const [applications, setApplications] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
+  const [currentWorkDate, setCurrentWorkDate] = useState("");
   const [form, setForm] = useState(emptyApplication);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -39,6 +31,7 @@ export default function MyCandidates() {
         candidateService.getAll({ limit: 100 }), candidateService.getAllApplications(),
       ]);
       setCandidates(candidateRes.data || []); setApplications(applicationRes.data || []);
+      setCurrentWorkDate(applicationRes.currentWorkDate || "");
     } catch (error) { notify.error(errorText(error)); }
     finally { setLoading(false); }
   }, []);
@@ -50,7 +43,7 @@ export default function MyCandidates() {
 
   const visibleApplications = useMemo(() => applications.filter((item) =>
     (!selectedId || item.candidate?._id === selectedId) &&
-    (!selectedDate || dateInputKey(item.appliedAt) === selectedDate)
+    (!selectedDate || item.workDate === selectedDate)
   ), [applications, selectedDate, selectedId]);
   const parsedUrls = useMemo(() => form.urls.split(/\r?\n/).map((url) => url.trim()).filter(Boolean), [form.urls]);
 
@@ -77,7 +70,7 @@ export default function MyCandidates() {
 
   const columns = [
     { key: "candidate", header: "Candidate", render: (row) => fullName(row.candidate?.user) },
-    { key: "appliedAt", header: "Applied", render: (row) => fmtDate(row.appliedAt) },
+    { key: "workDate", header: "Applied", render: (row) => fmtDate(row.workDate || row.appliedAt) },
     { key: "url", header: "Applied Job URL", render: (row) => <a className="font-semibold text-cyan-500 hover:underline" href={row.appliedUrl} target="_blank" rel="noreferrer">Open job</a> },
   ];
 
@@ -86,7 +79,7 @@ export default function MyCandidates() {
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       {candidates.map((candidate) => {
         const candidateApps = applications.filter((item) => item.candidate?._id === candidate._id);
-        const todayCount = candidateApps.filter((item) => new Date(item.appliedAt).toDateString() === todayKey()).length;
+        const todayCount = candidateApps.filter((item) => item.workDate === currentWorkDate).length;
         return <Card key={candidate._id} title={fullName(candidate.user)} action={<Badge status={candidate.subscriptionStatus} />}>
           <p className="font-semibold text-slate-200">{candidate.primaryJobRole}</p>
           <div className="mt-3 grid grid-cols-2 gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm"><div><p className="text-slate-500">Today</p><p className="mt-1 text-xl font-bold text-cyan-400">{todayCount}</p></div><div><p className="text-slate-500">Total</p><p className="mt-1 text-xl font-bold text-slate-100">{candidateApps.length}</p></div></div>

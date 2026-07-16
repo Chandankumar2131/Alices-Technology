@@ -9,6 +9,7 @@ const User = require("../model/User");
 const Interview = require("../model/Interview");
 const cloudinary = require("../config/cloudinary");
 const { getPagination, paginatedResponse } = require("../utils/pagination");
+const { getShiftDate } = require("../utils/attendanceShift");
 
 const isAdmin = (user) => ["Admin", "SuperAdmin"].includes(user.accountType);
 const candidatePopulate = [
@@ -34,6 +35,14 @@ const validUrl = (value) => {
   } catch {
     return false;
   }
+};
+
+const backfillApplicationWorkDates = async () => {
+  const records = await JobApplication.find({ $or: [{ workDate: { $exists: false } }, { workDate: null }, { workDate: "" }] }).select("_id appliedAt").lean();
+  if (!records.length) return;
+  await JobApplication.bulkWrite(records.map((record) => ({
+    updateOne: { filter: { _id: record._id }, update: { $set: { workDate: getShiftDate(record.appliedAt) } } },
+  })), { ordered: false });
 };
 
 exports.createCandidate = async (req, res) => {
@@ -282,10 +291,12 @@ exports.createJobApplication = async (req, res) => {
 
     const batchId = crypto.randomUUID();
     const appliedAt = new Date();
+    const workDate = getShiftDate(appliedAt);
     const applications = await JobApplication.insertMany(newUrls.map((appliedUrl) => ({
       candidate: candidate._id,
       submittedBy: req.user.id,
       appliedAt,
+      workDate,
       appliedUrl,
       batchId,
     })));
@@ -307,6 +318,7 @@ exports.createJobApplication = async (req, res) => {
 
 exports.getJobApplications = async (req, res) => {
   try {
+    await backfillApplicationWorkDates();
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 100, 1), 2000);
     const skip = (page - 1) * limit;
@@ -335,7 +347,7 @@ exports.getJobApplications = async (req, res) => {
         .sort({ appliedAt: -1 }).skip(skip).limit(limit),
       JobApplication.countDocuments(filter),
     ]);
-    return res.status(200).json({ success: true, ...paginatedResponse({ page, limit, total, data }) });
+    return res.status(200).json({ success: true, currentWorkDate: getShiftDate(), ...paginatedResponse({ page, limit, total, data }) });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
