@@ -4,6 +4,7 @@ const Leave = require("../model/Leave");
 const Payroll = require("../model/Payroll");
 const BreakLog = require("../model/BreakLog");
 const AttendanceCorrection = require("../model/AttendanceCorrection");
+const Candidate = require("../model/Candidate");
 const { syncLeaveBalance } = require("../utils/leaveBucket");
 const moment = require("moment-timezone");
 const { TZ, getShiftDate } = require("../utils/attendanceShift");
@@ -92,6 +93,7 @@ exports.getAdminDashboard = async (req, res) => {
     });
 
     const totalEmployees = employeeIds.length;
+    const totalCandidates = await Candidate.countDocuments();
 
     const presentToday =
       await Attendance.countDocuments({
@@ -133,17 +135,6 @@ exports.getAdminDashboard = async (req, res) => {
           $in: employeeIds,
         },
         status: "Active",
-      });
-
-    const checkedOut =
-      await Attendance.countDocuments({
-        employee: {
-          $in: employeeIds,
-        },
-        attendanceDate: today,
-        checkOut: {
-          $ne: null,
-        },
       });
 
     const lateEmployees =
@@ -189,12 +180,12 @@ exports.getAdminDashboard = async (req, res) => {
       success: true,
       data: {
         totalEmployees,
+        totalCandidates,
         presentToday,
         absentToday,
         leaveToday,
         weekendToday,
         activeBreaks,
-        checkedOut,
         lateEmployees,
         monthlyPayroll: Number(
           monthlyPayroll.toFixed(2)

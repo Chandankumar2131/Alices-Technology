@@ -12,6 +12,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const holidayRoutes = require("./routes/holidayRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const interviewRoutes = require("./routes/interviewRoutes");
+const candidateRoutes = require("./routes/candidateRoutes");
 const { startAutoCheckoutJob } = require("./utils/autoCheckout");
 const { initSocket } = require("./utils/socket");
 const cookieParser = require("cookie-parser");
@@ -69,6 +70,7 @@ app.use("/api/v1/dashboard",dashboardRoutes);
 app.use("/api/v1/holiday", holidayRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/interviews", interviewRoutes);
+app.use("/api/v1/candidates", candidateRoutes);
 // ================================
 // Default Route
 // ================================

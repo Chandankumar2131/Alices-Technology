@@ -24,6 +24,9 @@ const Reports = lazy(() => import("../pages/reports/Reports"));
 const Profile = lazy(() => import("../pages/Profile"));
 const Chat = lazy(() => import("../pages/chat/Chat"));
 const Interviews = lazy(() => import("../pages/interviews/Interviews"));
+const Candidates = lazy(() => import("../pages/candidates/Candidates"));
+const MyCandidates = lazy(() => import("../pages/candidates/MyCandidates"));
+const CandidateDashboard = lazy(() => import("../pages/candidates/CandidateDashboard"));
 const AppLayout = lazy(() => import("../components/layout/AppLayout"));
 
 export default function AppRoutes() {
@@ -36,15 +39,24 @@ export default function AppRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/attendance" element={<MyAttendance />} />
-            <Route path="/attendance/:date" element={<EmployeeDayAttendance />} />
-            <Route path="/leaves" element={<MyLeaves />} />
-            <Route path="/leave-bucket" element={<Navigate to="/leaves" replace />} />
-            <Route path="/payroll" element={<MyPayroll />} />
-            <Route path="/salary" element={<MySalary />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/interviews" element={<Interviews />} />
+            <Route element={<RoleRoute mode="workforce" />}>
+              <Route path="/attendance" element={<MyAttendance />} />
+              <Route path="/attendance/:date" element={<EmployeeDayAttendance />} />
+              <Route path="/leaves" element={<MyLeaves />} />
+              <Route path="/leave-bucket" element={<Navigate to="/leaves" replace />} />
+              <Route path="/payroll" element={<MyPayroll />} />
+              <Route path="/salary" element={<MySalary />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/interviews" element={<Interviews />} />
+            </Route>
+
+            <Route element={<RoleRoute mode="employee" />}>
+              <Route path="/my-candidates" element={<MyCandidates />} />
+            </Route>
+            <Route element={<RoleRoute mode="candidate" />}>
+              <Route path="/my-applications" element={<CandidateDashboard />} />
+            </Route>
 
             {/* Admin + SuperAdmin */}
             <Route element={<RoleRoute mode="admin" />}>
@@ -57,6 +69,7 @@ export default function AppRoutes() {
               <Route path="/salary/manage" element={<SalaryAdmin />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/holidays" element={<Holidays />} />
+              <Route path="/candidates" element={<Candidates />} />
             </Route>
 
             {/* SuperAdmin only */}

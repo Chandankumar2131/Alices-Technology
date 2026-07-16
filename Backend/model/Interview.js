@@ -25,6 +25,7 @@ const interviewSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    candidate: { type: mongoose.Schema.Types.ObjectId, ref: "Candidate", default: null, index: true },
     candidateName: { type: String, required: true, trim: true },
     emailReceivedDate: { type: Date, required: true },
     jobTitle: { type: String, required: true, trim: true },
