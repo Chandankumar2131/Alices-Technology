@@ -14,6 +14,7 @@ import Input from "../components/common/Input";
 import Select from "../components/common/Select";
 import { GENDERS, BLOOD_GROUPS, MARITAL_STATUS } from "../constants/enums";
 import notify from "../utils/toast";
+import EmployeeDocuments from "../components/documents/EmployeeDocuments";
 
 /* eslint-disable react-hooks/set-state-in-effect */
 
@@ -138,6 +139,8 @@ export default function Profile() {
           <Button type="submit" loading={busy === "details"}>Save Details</Button>
         </form>
       </Card>
+
+      {user?.accountType === "Employee" && <EmployeeDocuments />}
 
       <Card title="Change Password">
         <form onSubmit={savePassword} className="max-w-md space-y-4">

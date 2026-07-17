@@ -20,8 +20,9 @@ import Spinner from "../../components/common/Spinner";
 import EmptyState from "../../components/ui/EmptyState";
 import { fmtDate, fmtTime, fmtMoney, fmtHours, fullName, monthName } from "../../utils/helpers";
 import notify from "../../utils/toast";
+import EmployeeDocuments from "../../components/documents/EmployeeDocuments";
 
-const TABS = ["Overview", "Attendance", "Leaves", "Payroll", "Salary"];
+const TABS = ["Overview", "Attendance", "Leaves", "Payroll", "Salary", "Documents"];
 
 export default function EmployeeDetail() {
   const { id } = useParams();
@@ -99,6 +100,7 @@ export default function EmployeeDetail() {
       {tab === "Leaves" && <LeavesTab dashboard={dashboard} />}
       {tab === "Payroll" && <PayrollTab payroll={payroll} />}
       {tab === "Salary" && <SalaryTab salary={salary} />}
+      {tab === "Documents" && <EmployeeDocuments admin employeeId={id} />}
     </div>
   );
 }

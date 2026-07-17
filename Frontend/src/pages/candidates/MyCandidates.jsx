@@ -67,7 +67,6 @@ export default function MyCandidates() {
       notify.error(summary ? `${errorText(error)} · ${summary.duplicates || 0} duplicates · ${summary.invalid || 0} invalid` : errorText(error));
     } finally { setBusy(false); }
   };
-
   const columns = [
     { key: "candidate", header: "Candidate", render: (row) => fullName(row.candidate?.user) },
     { key: "workDate", header: "Applied", render: (row) => fmtDate(row.workDate || row.appliedAt) },

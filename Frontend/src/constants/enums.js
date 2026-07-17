@@ -49,6 +49,9 @@ export const STATUS_COLORS = {
   Pending: "bg-amber-100 text-amber-700",
   Approved: "bg-green-100 text-green-700",
   Rejected: "bg-red-100 text-red-700",
+  "Pending Review": "bg-amber-100 text-amber-700",
+  Verified: "bg-green-100 text-green-700",
+  "Replacement Requested": "bg-violet-100 text-violet-700",
   // Attendance
   Present: "bg-green-100 text-green-700",
   Absent: "bg-red-100 text-red-700",
