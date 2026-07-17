@@ -80,6 +80,11 @@ export default function Candidates() {
     (!analyticsCandidate || application.candidate?._id === analyticsCandidate)
   ), [allApplications, analyticsCandidate, analyticsDate, analyticsRecruiter]);
 
+  const analyticsCandidates = useMemo(() => {
+    if (!analyticsRecruiter) return rows;
+    return rows.filter((candidate) => candidate.assignedRecruiter?._id === analyticsRecruiter);
+  }, [analyticsRecruiter, rows]);
+
   const employeeAnalytics = useMemo(() => employees.map((employee) => {
     const employeeApps = dailyApplications.filter((application) => application.submittedBy?._id === employee._id);
     return { _id: employee._id, employee, applications: employeeApps.length };
@@ -173,7 +178,7 @@ export default function Candidates() {
       <Table columns={columns} data={rows} loading={loading} emptyText="No candidates found" />
     </Card>
     <Card title="Daily Application Analytics" action={<div className="flex gap-2"><Button variant="secondary" onClick={() => { setAnalyticsDate(currentWorkDate); setAnalyticsRecruiter(""); setAnalyticsCandidate(""); }}>Today · All</Button><Button variant="outline" onClick={loadAnalytics}>Refresh</Button></div>}>
-      <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3"><Input label="Applied Date" type="date" value={analyticsDate} onChange={(event) => setAnalyticsDate(event.target.value)} /><Select label="Employee / Recruiter" value={analyticsRecruiter} onChange={(event) => setAnalyticsRecruiter(event.target.value)} options={[{ value: "", label: "All employees" }, ...employees.map((employee) => ({ value: employee._id, label: fullName(employee) }))]} /><Select label="Candidate" value={analyticsCandidate} onChange={(event) => setAnalyticsCandidate(event.target.value)} options={[{ value: "", label: "All candidates" }, ...rows.map((candidate) => ({ value: candidate._id, label: fullName(candidate.user) }))]} /></div>
+      <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3"><Input label="Applied Date" type="date" value={analyticsDate} onChange={(event) => setAnalyticsDate(event.target.value)} /><Select label="Employee / Recruiter" value={analyticsRecruiter} onChange={(event) => { setAnalyticsRecruiter(event.target.value); setAnalyticsCandidate(""); }} options={[{ value: "", label: "All employees" }, ...employees.map((employee) => ({ value: employee._id, label: fullName(employee) }))]} /><Select label="Candidate" value={analyticsCandidate} onChange={(event) => setAnalyticsCandidate(event.target.value)} options={[{ value: "", label: analyticsRecruiter ? "All assigned candidates" : "All candidates" }, ...analyticsCandidates.map((candidate) => ({ value: candidate._id, label: fullName(candidate.user) }))]} /></div>
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3"><StatCard label="Jobs Applied" value={dailyApplications.length} /><StatCard label="Employees Active" value={new Set(dailyApplications.map((item) => item.submittedBy?._id).filter(Boolean)).size} /><StatCard label="Candidates Marketed" value={new Set(dailyApplications.map((item) => item.candidate?._id).filter(Boolean)).size} /></div>
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2"><div><h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.08em] text-slate-300">Employee Analysis</h3><Table columns={employeeColumns} data={employeeAnalytics} loading={analyticsLoading} emptyText="No employee application activity for this date" /></div><div><h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.08em] text-slate-300">Applied Job Details</h3><Table columns={dailyColumns} data={dailyApplications} loading={analyticsLoading} emptyText="No applied jobs found for this date" /></div></div>
     </Card>
