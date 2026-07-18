@@ -1,8 +1,7 @@
 const mongoose = require("mongoose");
 
 const DOCUMENT_TYPES = [
-  "Aadhaar Card", "PAN Card", "Passport", "Driving Licence", "Educational Certificate",
-  "Experience Letter", "Offer / Appointment Letter", "Relieving Letter", "Address Proof", "Other",
+  "Aadhaar Card", "PAN Card", "Passport", "Photo", "10th", "12th", "Graduation Degree", "PG Degree",
 ];
 const DOCUMENT_STATUSES = ["Pending Review", "Verified", "Rejected", "Replacement Requested"];
 
@@ -22,7 +21,7 @@ const employeeDocumentSchema = new mongoose.Schema({
   reviewedAt: { type: Date, default: null },
 }, { timestamps: true });
 
-employeeDocumentSchema.index({ employee: 1, documentType: 1, createdAt: -1 });
+employeeDocumentSchema.index({ employee: 1, documentType: 1 }, { unique: true });
 
 module.exports = mongoose.model("EmployeeDocument", employeeDocumentSchema);
 module.exports.DOCUMENT_TYPES = DOCUMENT_TYPES;

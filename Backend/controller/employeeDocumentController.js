@@ -48,10 +48,14 @@ exports.uploadDocument = async (req, res) => {
     if (req.user.accountType !== "Employee") return res.status(403).json({ success: false, message: "Employee access only" });
     const { documentId, documentType, documentNumber, dataUrl, fileName, mimeType, size } = req.body;
     if (!documentType) return res.status(400).json({ success: false, message: "Document type is required" });
+    if (!EmployeeDocument.DOCUMENT_TYPES.includes(documentType)) return res.status(400).json({ success: false, message: "Select a valid document type" });
     let document = null;
     if (documentId) document = await EmployeeDocument.findOne({ _id: documentId, employee: req.user.id });
     if (documentId && !document) return res.status(404).json({ success: false, message: "Document not found" });
     if (document?.status === "Verified") return res.status(400).json({ success: false, message: "Verified documents cannot be replaced without an admin request" });
+    if (!documentId && await EmployeeDocument.exists({ employee: req.user.id, documentType })) {
+      return res.status(409).json({ success: false, message: `${documentType} has already been uploaded. Use Replace to update it.` });
+    }
     const file = await uploadFile({ dataUrl, fileName, mimeType, size, employeeId: req.user.id });
     const oldPublicId = document?.file?.publicId;
     if (document) {
@@ -66,6 +70,7 @@ exports.uploadDocument = async (req, res) => {
     if (oldPublicId) cloudinary.uploader.destroy(oldPublicId, { resource_type: "raw", type: "authenticated" }).catch(() => {});
     return res.status(documentId ? 200 : 201).json({ success: true, message: documentId ? "Document replaced" : "Document uploaded", data: serialize(document) });
   } catch (error) {
+    if (error?.code === 11000) return res.status(409).json({ success: false, message: "This document type has already been uploaded. Use Replace to update it." });
     return res.status(error.status || 500).json({ success: false, message: error.message || "Document upload failed" });
   }
 };
