@@ -1,5 +1,6 @@
 const express = require("express");
 const { auth } = require("../middleware/auth");
+const { getMyCandidateAssessments } = require("../controller/assessmentController");
 const isAdmin = require("../middleware/isAdmin");
 const isSuperAdmin = require("../middleware/isSuperAdmin");
 const {
@@ -20,6 +21,7 @@ const router = express.Router();
 router.get("/me", auth, getMyCandidateProfile);
 router.get("/applications", auth, getJobApplications);
 router.get("/interviews", auth, getMyInterviews);
+router.get("/assessments", auth, getMyCandidateAssessments);
 router.post("/applications", auth, createJobApplication);
 router.get("/", auth, getCandidates);
 router.post("/", auth, isSuperAdmin, createCandidate);

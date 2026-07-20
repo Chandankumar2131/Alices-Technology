@@ -15,16 +15,17 @@ export default function CandidateDashboard() {
   const [candidate, setCandidate] = useState(null);
   const [applications, setApplications] = useState([]);
   const [interviews, setInterviews] = useState([]);
+  const [assessments, setAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState("");
   const [currentWorkDate, setCurrentWorkDate] = useState("");
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [profileRes, appsRes, interviewRes] = await Promise.all([
-        candidateService.getMe(), candidateService.getAllApplications(), candidateService.getMyInterviews(),
+      const [profileRes, appsRes, interviewRes, assessmentRes] = await Promise.all([
+        candidateService.getMe(), candidateService.getAllApplications(), candidateService.getMyInterviews(), candidateService.getMyAssessments(),
       ]);
-      setCandidate(profileRes.data); setApplications(appsRes.data || []); setInterviews(interviewRes.data || []);
+      setCandidate(profileRes.data); setApplications(appsRes.data || []); setInterviews(interviewRes.data || []); setAssessments(assessmentRes.data || []);
       setCurrentWorkDate(appsRes.currentWorkDate || "");
     } catch (error) { notify.error(error?.response?.data?.message || "Failed to load candidate portal"); }
     finally { setLoading(false); }
@@ -49,10 +50,18 @@ export default function CandidateDashboard() {
     { key: "status", header: "Status", render: (row) => <Badge status={row.status} /> },
     { key: "recruiter", header: "Recruiter", render: (row) => fullName(row.recruiter) },
   ];
+  const assessmentColumns = [
+    { key: "receivedDate", header: "Assessment Mail Received", render: (row) => fmtDate(row.receivedDate) },
+    { key: "companyName", header: "Company", render: (row) => row.companyName || "—" },
+    { key: "interviewerEmail", header: "Interviewer Email" },
+    { key: "recruiter", header: "Recruiter", render: (row) => fullName(row.recruiter) },
+    { key: "notes", header: "Notes", render: (row) => row.notes || "—" },
+  ];
 
   if (activityPage) return <div className="space-y-6">
     <div><h1 className="text-2xl font-bold text-slate-50">My Applications</h1><p className="mt-1 text-sm text-slate-400">View applied jobs and your upcoming interview schedule.</p></div>
     <Card title="Upcoming Interviews"><Table columns={interviewColumns} data={upcomingInterviews} loading={loading} emptyText="No upcoming interviews scheduled" /></Card>
+    <Card title="My Assessment Records"><Table columns={assessmentColumns} data={assessments} loading={loading} emptyText="No assessment records received yet" /></Card>
     <Card title="Applied Job History"><div className="mb-4 max-w-sm"><Input label="Filter by Applied Date" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />{selectedDate && <button type="button" onClick={() => setSelectedDate("")} className="mt-2 text-xs font-semibold text-cyan-500 hover:underline">Clear date filter</button>}</div><Table columns={applicationColumns} data={visibleApplications} loading={loading} emptyText={selectedDate ? "No applications found for this date" : "No applications have been recorded yet"} /></Card>
   </div>;
 

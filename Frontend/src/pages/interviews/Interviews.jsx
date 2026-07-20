@@ -9,6 +9,7 @@ import Modal from "../../components/common/Modal";
 import StatCard from "../../components/ui/StatCard";
 import useAuth from "../../hooks/useAuth";
 import { interviewService } from "../../service/interviewService";
+import { assessmentService } from "../../service/assessmentService";
 import { candidateService } from "../../service/candidateService";
 import { fmtDate, fmtDateTime, fullName, toOfficeDateTimeInputValue } from "../../utils/helpers";
 import notify from "../../utils/toast";
@@ -28,6 +29,7 @@ const blankForm = {
 };
 
 const errorMessage = (error) => error?.response?.data?.message || error?.message || "Something went wrong";
+const blankAssessment = { candidateId: "", receivedDate: "", companyName: "", interviewerEmail: "", notes: "" };
 
 export default function Interviews() {
   const { user, isAdmin, isSuperAdmin } = useAuth();
@@ -40,6 +42,12 @@ export default function Interviews() {
   const [form, setForm] = useState(blankForm);
   const [filters, setFilters] = useState({ search: "", status: "", round: "" });
   const [candidates, setCandidates] = useState([]);
+  const [assessments, setAssessments] = useState([]);
+  const [assessmentLoading, setAssessmentLoading] = useState(true);
+  const [assessmentOpen, setAssessmentOpen] = useState(false);
+  const [assessmentEditing, setAssessmentEditing] = useState(null);
+  const [assessmentSubmitting, setAssessmentSubmitting] = useState(false);
+  const [assessmentForm, setAssessmentForm] = useState(blankAssessment);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,6 +69,17 @@ export default function Interviews() {
   useEffect(() => {
     candidateService.getAll({ limit: 100 }).then((response) => setCandidates(response.data || [])).catch(() => setCandidates([]));
   }, []);
+
+  const loadAssessments = useCallback(async () => {
+    setAssessmentLoading(true);
+    try {
+      const response = await assessmentService.getAll();
+      setAssessments(response.data || []);
+    } catch (error) { notify.error(errorMessage(error)); }
+    finally { setAssessmentLoading(false); }
+  }, []);
+
+  useEffect(() => { const timer = setTimeout(loadAssessments, 0); return () => clearTimeout(timer); }, [loadAssessments]);
 
   const stats = useMemo(() => ({
     total: rows.length,
@@ -135,6 +154,46 @@ export default function Interviews() {
     { key: "actions", header: "Action", render: (row) => <Button variant="outline" className="min-h-8 px-3 py-1 text-xs" onClick={() => startEdit(row)}>Edit</Button> },
   ];
 
+  const startAssessment = (row = null) => {
+    setAssessmentEditing(row);
+    setAssessmentForm(row ? {
+      candidateId: row.candidate?._id || "",
+      receivedDate: row.receivedDate ? String(row.receivedDate).slice(0, 10) : "",
+      companyName: row.companyName || "",
+      interviewerEmail: row.interviewerEmail || "",
+      notes: row.notes || "",
+    } : blankAssessment);
+    setAssessmentOpen(true);
+  };
+
+  const closeAssessment = () => {
+    if (assessmentSubmitting) return;
+    setAssessmentOpen(false); setAssessmentEditing(null); setAssessmentForm(blankAssessment);
+  };
+
+  const submitAssessment = async (event) => {
+    event.preventDefault();
+    if (!assessmentForm.candidateId || !assessmentForm.receivedDate || !assessmentForm.companyName.trim() || !assessmentForm.interviewerEmail.trim()) return notify.error("Please fill all required assessment fields");
+    setAssessmentSubmitting(true);
+    try {
+      if (assessmentEditing) await assessmentService.update(assessmentEditing._id, assessmentForm);
+      else await assessmentService.create(assessmentForm);
+      notify.success(assessmentEditing ? "Assessment updated" : "Assessment added");
+      setAssessmentSubmitting(false); closeAssessment(); await loadAssessments();
+    } catch (error) { notify.error(errorMessage(error)); }
+    finally { setAssessmentSubmitting(false); }
+  };
+
+  const assessmentColumns = [
+    { key: "candidate", header: "Candidate", render: (row) => <span className="font-semibold text-slate-100">{fullName(row.candidate?.user)}</span> },
+    ...(canViewAll ? [{ key: "recruiter", header: "Recruiter", render: (row) => fullName(row.recruiter) }] : []),
+    { key: "receivedDate", header: "Assessment Mail Received", render: (row) => fmtDate(row.receivedDate) },
+    { key: "companyName", header: "Company", render: (row) => row.companyName || "—" },
+    { key: "interviewerEmail", header: "Interviewer Email" },
+    { key: "notes", header: "Notes", render: (row) => row.notes || "—" },
+    { key: "actions", header: "Action", render: (row) => <Button variant="outline" className="min-h-8 px-3 py-1 text-xs" onClick={() => startAssessment(row)}>Edit</Button> },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -160,6 +219,10 @@ export default function Interviews() {
         <Table columns={columns} data={rows} loading={loading} emptyText="No interview records found" />
       </Card>
 
+      <Card title={canViewAll ? "All Assessment Records" : "My Assessment Records"} action={<Button onClick={() => startAssessment()}>+ Add Assessment</Button>}>
+        <Table columns={assessmentColumns} data={assessments} loading={assessmentLoading} emptyText="No assessment records found" />
+      </Card>
+
       <Modal
         open={open}
         onClose={close}
@@ -181,6 +244,27 @@ export default function Interviews() {
           <div>
             <label htmlFor="interview-notes" className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-300">Notes</label>
             <textarea id="interview-notes" name="notes" rows={3} maxLength={2000} value={form.notes} onChange={change} className="theme-field w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-inner shadow-black/10 outline-none transition focus:ring-2" />
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        open={assessmentOpen}
+        onClose={closeAssessment}
+        title={assessmentEditing ? "Update Assessment" : "Add Assessment"}
+        footer={<><Button variant="secondary" onClick={closeAssessment}>Cancel</Button><Button onClick={submitAssessment} loading={assessmentSubmitting}>{assessmentEditing ? "Save Changes" : "Add Assessment"}</Button></>}
+      >
+        <form onSubmit={submitAssessment} className="space-y-4">
+          <Input label="Recruiter (automatically assigned)" value={assessmentEditing ? fullName(assessmentEditing.recruiter) : fullName(user)} disabled />
+          <Select label="Assigned Candidate *" value={assessmentForm.candidateId} onChange={(event) => setAssessmentForm((formValue) => ({ ...formValue, candidateId: event.target.value }))} options={[{ value: "", label: candidates.length ? "Select assigned candidate" : "No candidates assigned" }, ...candidates.map((candidate) => ({ value: candidate._id, label: fullName(candidate.user) }))]} disabled={!candidates.length} />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Input label="Assessment Mail Received Date *" type="date" value={assessmentForm.receivedDate} onChange={(event) => setAssessmentForm((formValue) => ({ ...formValue, receivedDate: event.target.value }))} />
+            <Input label="Company Name *" value={assessmentForm.companyName} onChange={(event) => setAssessmentForm((formValue) => ({ ...formValue, companyName: event.target.value }))} />
+            <Input label="Interviewer Email *" type="email" value={assessmentForm.interviewerEmail} onChange={(event) => setAssessmentForm((formValue) => ({ ...formValue, interviewerEmail: event.target.value }))} />
+          </div>
+          <div>
+            <label htmlFor="assessment-notes" className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-300">Notes</label>
+            <textarea id="assessment-notes" rows={3} maxLength={2000} value={assessmentForm.notes} onChange={(event) => setAssessmentForm((formValue) => ({ ...formValue, notes: event.target.value }))} className="theme-field w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-inner shadow-black/10 outline-none transition focus:ring-2" />
           </div>
         </form>
       </Modal>

@@ -12,6 +12,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const holidayRoutes = require("./routes/holidayRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const interviewRoutes = require("./routes/interviewRoutes");
+const assessmentRoutes = require("./routes/assessmentRoutes");
 const candidateRoutes = require("./routes/candidateRoutes");
 const employeeDocumentRoutes = require("./routes/employeeDocumentRoutes");
 const { startAutoCheckoutJob } = require("./utils/autoCheckout");
@@ -71,6 +72,7 @@ app.use("/api/v1/dashboard",dashboardRoutes);
 app.use("/api/v1/holiday", holidayRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/interviews", interviewRoutes);
+app.use("/api/v1/assessments", assessmentRoutes);
 app.use("/api/v1/candidates", candidateRoutes);
 app.use("/api/v1/documents", employeeDocumentRoutes);
 // ================================

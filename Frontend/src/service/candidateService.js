@@ -21,4 +21,5 @@ export const candidateService = {
   createApplication: (payload) => api.post("/candidates/applications", payload).then(unwrap),
   uploadResume: (id, payload) => api.post(`/candidates/${id}/resume`, payload).then(unwrap),
   getMyInterviews: () => api.get("/candidates/interviews").then(unwrap),
+  getMyAssessments: () => api.get("/candidates/assessments").then(unwrap),
 };
