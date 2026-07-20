@@ -61,6 +61,7 @@ const normalizeAttachments = (attachments) =>
 
 const canChatWith = (currentUser, otherUser) => {
   if (!otherUser || !otherUser.isActive) return false;
+  if (currentUser.accountType === "Candidate" || otherUser.accountType === "Candidate") return false;
   if (String(currentUser.id) === String(otherUser._id)) return false;
   return true;
 };
@@ -158,10 +159,11 @@ exports.uploadAttachment = async (req, res) => {
 
 exports.listChatUsers = async (req, res) => {
   try {
-    const filter =
-      req.user.accountType === "Employee"
-        ? { _id: { $ne: req.user.id }, isActive: true }
-        : { _id: { $ne: req.user.id }, isActive: true };
+    const filter = {
+      _id: { $ne: req.user.id },
+      isActive: true,
+      accountType: { $ne: "Candidate" },
+    };
 
     const users = await User.find(filter).select(userSelect).sort({
       accountType: 1,
@@ -207,6 +209,7 @@ exports.createGroup = async (req, res) => {
     const members = await User.find({
       _id: { $in: uniqueMemberIds },
       isActive: true,
+      accountType: { $ne: "Candidate" },
     }).select("_id");
 
     if (members.length !== uniqueMemberIds.length) {
@@ -283,6 +286,7 @@ exports.updateGroupMembers = async (req, res) => {
     const members = await User.find({
       _id: { $in: uniqueMemberIds },
       isActive: true,
+      accountType: { $ne: "Candidate" },
     }).select("_id");
 
     if (members.length !== uniqueMemberIds.length) {
@@ -380,8 +384,12 @@ exports.listConversations = async (req, res) => {
       })
       .sort({ lastMessageAt: -1, updatedAt: -1 });
 
+    const visibleConversations = conversations.filter((conversation) =>
+      conversation.type === "group" || !conversation.participants.some((participant) => participant?.accountType === "Candidate")
+    );
+
     const conversationsWithUnread = await Promise.all(
-      conversations.map(async (conversation) => {
+      visibleConversations.map(async (conversation) => {
         const conversationObject = conversation.toObject();
         const isGroup = conversationObject.type === "group";
         const unreadFilter = isGroup
@@ -592,6 +600,16 @@ exports.sendMessage = async (req, res) => {
           success: false,
           message: "Conversation not found",
         });
+      }
+
+      if (conversation.type !== "group") {
+        const otherParticipantId = conversation.participants.find(
+          (participantId) => String(participantId) !== String(req.user.id)
+        );
+        const otherParticipant = await User.findById(otherParticipantId).select(userSelect);
+        if (!canChatWith(req.user, otherParticipant)) {
+          return res.status(403).json({ success: false, message: "You cannot chat with this user" });
+        }
       }
 
       receivers = conversation.participants.filter(

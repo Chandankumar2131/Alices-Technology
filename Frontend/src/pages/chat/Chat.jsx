@@ -317,8 +317,10 @@ export default function Chat() {
           chatService.getUsers(),
           chatService.getConversations(),
         ]);
-        const nextUsers = usersRes.data || [];
-        const nextConversations = conversationsRes.data || [];
+        const nextUsers = (usersRes.data || []).filter((user) => user.accountType !== "Candidate");
+        const nextConversations = (conversationsRes.data || []).filter((conversation) =>
+          conversation.type === "group" || !conversation.participants?.some((participant) => participant?.accountType === "Candidate")
+        );
 
         setUsers(nextUsers);
         setConversations(nextConversations);
