@@ -12,6 +12,20 @@ import notify from "../../utils/toast";
 
 const emptyApplication = { candidateId: "", urls: "" };
 const errorText = (error) => error?.response?.data?.message || error?.message || "Something went wrong";
+const parsePastedUrls = (value) => {
+  const urls = [];
+  String(value || "").replace(/\r/g, "").split("\n").forEach((row) => {
+    row.split("\t").map((part) => part.trim()).filter(Boolean).forEach((part) => {
+      const urlStart = part.search(/https?:\/\//i);
+      if (urlStart >= 0) {
+        urls.push(part.slice(urlStart).trim());
+      } else if (urls.length && !/\s/.test(part)) {
+        urls[urls.length - 1] += part;
+      }
+    });
+  });
+  return urls;
+};
 
 export default function MyCandidates() {
   const [candidates, setCandidates] = useState([]);
@@ -45,7 +59,7 @@ export default function MyCandidates() {
     (!selectedId || item.candidate?._id === selectedId) &&
     (!selectedDate || item.workDate === selectedDate)
   ), [applications, selectedDate, selectedId]);
-  const parsedUrls = useMemo(() => form.urls.split(/\r?\n/).map((url) => url.trim()).filter(Boolean), [form.urls]);
+  const parsedUrls = useMemo(() => parsePastedUrls(form.urls), [form.urls]);
 
   const startApplication = (candidate = null) => {
     setForm({ candidateId: candidate?._id || selectedId || candidates[0]?._id || "", urls: "" });
@@ -92,11 +106,11 @@ export default function MyCandidates() {
       {selectedDate && <button type="button" onClick={() => setSelectedDate("")} className="mb-3 text-xs font-semibold text-cyan-500 hover:underline">Clear date filter</button>}
       <Table columns={columns} data={visibleApplications} loading={loading} emptyText="No job applications recorded" />
     </Card>
-    <Modal open={open} onClose={() => setOpen(false)} title="Paste Applied Job URLs" footer={<><Button variant="secondary" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={submit} loading={busy}>Save {parsedUrls.length || ""} Application{parsedUrls.length === 1 ? "" : "s"}</Button></>}>
+    <Modal size="xl" open={open} onClose={() => setOpen(false)} title="Paste Applied Job URLs" footer={<><Button variant="secondary" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={submit} loading={busy}>Save {parsedUrls.length || ""} Application{parsedUrls.length === 1 ? "" : "s"}</Button></>}>
       <form onSubmit={submit} className="space-y-4">
         <Select label="Candidate *" value={form.candidateId} onChange={(event) => setForm((current) => ({ ...current, candidateId: event.target.value }))} options={candidates.map((candidate) => ({ value: candidate._id, label: `${fullName(candidate.user)} · ${candidate.candidateId}` }))} />
-        <div><div className="mb-1.5 flex items-center justify-between gap-3"><label htmlFor="job-urls" className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-300">Applied Job URLs *</label><span className="text-xs font-semibold text-cyan-500">{parsedUrls.length} detected</span></div><textarea id="job-urls" rows={12} autoFocus value={form.urls} onChange={(event) => setForm((current) => ({ ...current, urls: event.target.value }))} placeholder={"Paste one URL per line\nhttps://linkedin.com/jobs/view/...\nhttps://www.indeed.com/viewjob?..."} className="theme-field w-full resize-y rounded-lg border px-3.5 py-3 font-mono text-sm leading-6 outline-none" /></div>
-        <p className="text-xs leading-5 text-slate-400">Each valid URL becomes a separate application with the current date and time. Empty lines, invalid URLs and duplicates are skipped.</p>
+        <div><div className="mb-1.5 flex items-center justify-between gap-3"><label htmlFor="job-urls" className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-300">Applied Job URLs *</label><span className="text-xs font-semibold text-cyan-500">{parsedUrls.length} detected</span></div><textarea id="job-urls" rows={14} wrap="off" autoFocus value={form.urls} onChange={(event) => setForm((current) => ({ ...current, urls: event.target.value }))} placeholder={"Paste one URL per line\nhttps://linkedin.com/jobs/view/...\nhttps://www.indeed.com/viewjob?..."} className="theme-field w-full resize-y overflow-x-auto whitespace-pre rounded-lg border px-3.5 py-3 font-mono text-sm leading-6 outline-none" /></div>
+        <p className="text-xs leading-5 text-slate-400">Long URLs stay on one visual line. If Excel inserts a line break inside a URL, HRM reconnects it automatically before saving. Empty lines, invalid URLs and duplicates are skipped.</p>
       </form>
     </Modal>
   </div>;

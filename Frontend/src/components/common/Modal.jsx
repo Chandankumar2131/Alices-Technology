@@ -1,11 +1,16 @@
 import { createPortal } from "react-dom";
 
-export default function Modal({ open, onClose, title, children, footer }) {
+const widths = {
+  lg: "max-w-2xl",
+  xl: "max-w-4xl",
+};
+
+export default function Modal({ open, onClose, title, children, footer, size = "default" }) {
   if (!open) return null;
 
   return createPortal(
     <div className="theme-modal-overlay animate-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 backdrop-blur-md sm:p-4">
-      <div className="theme-modal-panel animate-modal max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-hidden rounded-lg border shadow-[0_28px_90px_rgba(0,0,0,0.48)] ring-1">
+      <div className={`theme-modal-panel animate-modal max-h-[calc(100dvh-1.5rem)] w-full ${widths[size] || "max-w-lg"} overflow-hidden rounded-lg border shadow-[0_28px_90px_rgba(0,0,0,0.48)] ring-1`}>
         <div className="theme-modal-header flex items-center justify-between gap-3 border-b px-4 py-3 sm:px-5 sm:py-4">
           <h3 className="min-w-0 text-base font-semibold text-slate-100">{title}</h3>
           <button
