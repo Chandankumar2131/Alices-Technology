@@ -5,12 +5,12 @@ import useAuth from "../../hooks/useAuth";
 import { fullName } from "../../utils/helpers";
 
 const linkBase =
-  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition";
+  "flex items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-sm font-medium transition";
 const linkClass = ({ isActive }) =>
   `${linkBase} ${
     isActive
-      ? "bg-cyan-300/12 text-cyan-100 ring-1 ring-cyan-300/25 shadow-[0_10px_24px_rgba(8,145,178,0.12)]"
-      : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-100"
+      ? "border-cyan-300/20 bg-cyan-300/12 text-cyan-100 shadow-[0_10px_24px_rgba(8,145,178,0.12)]"
+      : "text-slate-400 hover:border-white/5 hover:bg-white/[0.04] hover:text-slate-100"
   }`;
 
 const createAdminLinkClass = ({ isActive }) =>
