@@ -37,6 +37,24 @@ const validUrl = (value) => {
   }
 };
 
+// Excel can place tabs between copied cells and, in some cases, a real newline
+// inside a long URL. Start a new record at every http(s) value and reconnect a
+// non-whitespace continuation to the preceding URL.
+const parseBulkApplicationUrls = (input) => {
+  const urls = [];
+  const source = Array.isArray(input) ? input : [input];
+  source.forEach((value) => {
+    String(value || "").replace(/\r/g, "").split("\n").forEach((row) => {
+      row.split("\t").map((part) => part.trim()).filter(Boolean).forEach((part) => {
+        const urlStart = part.search(/https?:\/\//i);
+        if (urlStart >= 0) urls.push(part.slice(urlStart).trim());
+        else if (urls.length && !/\s/.test(part)) urls[urls.length - 1] += part;
+      });
+    });
+  });
+  return urls;
+};
+
 const backfillApplicationWorkDates = async () => {
   const records = await JobApplication.find({ $or: [{ workDate: { $exists: false } }, { workDate: null }, { workDate: "" }] }).select("_id appliedAt").lean();
   if (!records.length) return;
@@ -266,9 +284,7 @@ exports.createJobApplication = async (req, res) => {
   try {
     if (req.user.accountType !== "Employee") return res.status(403).json({ success: false, message: "Only employees can submit job applications" });
     const { candidateId } = req.body;
-    const submittedUrls = Array.isArray(req.body.urls)
-      ? req.body.urls
-      : String(req.body.urls || req.body.appliedUrl || "").split(/\r?\n/);
+    const submittedUrls = parseBulkApplicationUrls(req.body.urls || req.body.appliedUrl || "");
     if (!candidateId || !submittedUrls.length) return res.status(400).json({ success: false, message: "Candidate and at least one job URL are required" });
     if (submittedUrls.length > 200) return res.status(400).json({ success: false, message: "A maximum of 200 URLs can be saved at once" });
     const candidate = await Candidate.findOne({ _id: candidateId, assignedRecruiter: req.user.id });

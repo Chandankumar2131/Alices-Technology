@@ -174,7 +174,7 @@ export default function AppLayout() {
       />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto px-3 py-4 sm:px-5 md:p-6">
+        <main className="theme-main flex-1 overflow-y-auto px-3 py-4 sm:px-5 md:p-6">
           <div className="motion-page mx-auto w-full max-w-[1500px]">
             <Outlet />
           </div>

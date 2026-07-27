@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { login, clearAuthError, selectAuth } from "../features/auth/authSlice";
@@ -9,6 +9,7 @@ import notify from "../utils/toast";
 import logo from "../assets/1ch.png"; 
 
 export default function Login() {
+  const pageRef = useRef(null);
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
@@ -25,6 +26,26 @@ export default function Login() {
   useEffect(() => () => dispatch(clearAuthError()), [dispatch]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handlePointerMove = (event) => {
+    const page = pageRef.current;
+    if (!page) return;
+    const x = event.clientX / window.innerWidth;
+    const y = event.clientY / window.innerHeight;
+    page.style.setProperty("--pointer-x", `${x * 100}%`);
+    page.style.setProperty("--pointer-y", `${y * 100}%`);
+    page.style.setProperty("--drift-x", `${(x - 0.5) * 22}px`);
+    page.style.setProperty("--drift-y", `${(y - 0.5) * 18}px`);
+  };
+
+  const resetPointer = () => {
+    const page = pageRef.current;
+    if (!page) return;
+    page.style.setProperty("--pointer-x", "50%");
+    page.style.setProperty("--pointer-y", "50%");
+    page.style.setProperty("--drift-x", "0px");
+    page.style.setProperty("--drift-y", "0px");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,13 +65,39 @@ export default function Login() {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-animated-gradient bg-[linear-gradient(135deg,#020617_0%,#0f172a_45%,#111827_70%,#0b1020_100%)]">
-      {/* Animated background glow blobs */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+    <div
+      ref={pageRef}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={resetPointer}
+      className="login-scene relative min-h-screen w-full overflow-hidden bg-animated-gradient bg-[linear-gradient(135deg,#020617_0%,#0f172a_45%,#111827_70%,#0b1020_100%)]"
+    >
+      <div className="login-grid pointer-events-none absolute inset-0" />
+      <div className="login-spotlight pointer-events-none absolute inset-0" />
+
+      {/* Animated ambient background */}
+      <div className="login-ambient pointer-events-none absolute inset-0 overflow-hidden">
         <div className="bg-aurora-1 absolute -top-32 -left-24 h-[28rem] w-[28rem] rounded-full bg-cyan-500/15 blur-[120px]" />
         <div className="bg-aurora-2 absolute top-1/3 -right-24 h-[30rem] w-[30rem] rounded-full bg-indigo-500/15 blur-[130px]" />
         <div className="bg-aurora-1 absolute -bottom-32 left-1/3 h-[26rem] w-[26rem] rounded-full bg-sky-500/10 blur-[120px]" />
       </div>
+
+      <div className="login-stars pointer-events-none absolute inset-0" aria-hidden="true">
+        {Array.from({ length: 18 }, (_, index) => (
+          <span
+            key={index}
+            style={{
+              "--star": index,
+              "--star-x": `${(index * 47) % 97}%`,
+              "--star-y": `${(index * 71) % 91}%`,
+              "--star-size": `${2 + (index % 2)}px`,
+              "--star-speed": `${3.5 + (index % 5) * 0.7}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="login-orbit login-orbit-one pointer-events-none absolute" />
+      <div className="login-orbit login-orbit-two pointer-events-none absolute" />
 
       {/* Centered container holding both halves */}
       <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl items-center justify-center gap-8 px-3 py-6 sm:px-6 sm:py-10 lg:gap-16">
