@@ -51,12 +51,12 @@ export default function MyAttendance() {
   useEffect(() => {
     dispatch(fetchMyDashboard());
     dispatch(fetchTodayBreaks());
-    dispatch(fetchAttendanceSummary());
     dispatch(fetchMyCorrections());
   }, [dispatch]);
 
   useEffect(() => {
     dispatch(fetchAttendanceByMonth({ month, year }));
+    dispatch(fetchAttendanceSummary({ month, year }));
   }, [dispatch, month, year]);
 
   const refreshToday = useCallback(() => {
@@ -67,9 +67,9 @@ export default function MyAttendance() {
 
   const refreshAttendancePage = useCallback(() => {
     refreshToday();
-    dispatch(fetchAttendanceSummary());
+    dispatch(fetchAttendanceSummary({ month, year }));
     dispatch(fetchMyCorrections());
-  }, [dispatch, refreshToday]);
+  }, [dispatch, month, refreshToday, year]);
 
   useAttendanceRealtime(refreshAttendancePage, { employeeId: currentUserId });
 

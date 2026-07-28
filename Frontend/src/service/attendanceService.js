@@ -6,7 +6,8 @@ export const attendanceService = {
   getMyAttendance: () => api.get("/attendance/my-attendance").then(unwrap),
   getByMonth: (month, year) =>
     api.get("/attendance/month", { params: { month, year } }).then(unwrap),
-  getSummary: () => api.get("/attendance/summary").then(unwrap),
+  getSummary: (month, year) =>
+    api.get("/attendance/summary", { params: { month, year } }).then(unwrap),
   requestCorrection: (payload) => api.post("/attendance/corrections", payload).then(unwrap),
   getMyCorrections: () => api.get("/attendance/corrections/my").then(unwrap),
   // Admin

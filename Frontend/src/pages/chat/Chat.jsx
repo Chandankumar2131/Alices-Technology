@@ -79,7 +79,7 @@ function LinkifiedText({ text, mine }) {
           href={normalizeUrlHref(urlText)}
           target="_blank"
           rel="noopener noreferrer"
-          className={`font-semibold underline underline-offset-2 transition ${
+          className={`inline-block max-w-none whitespace-nowrap align-bottom font-semibold underline underline-offset-2 transition ${
             mine
               ? "text-slate-950 hover:text-slate-700"
               : "text-cyan-200 hover:text-cyan-100"
@@ -1221,7 +1221,7 @@ export default function Chat() {
                           </p>
                         )}
                         {message.text && (
-                          <p className="whitespace-pre-wrap break-words text-sm leading-6">
+                          <p className="max-w-full overflow-x-auto whitespace-pre-wrap break-words text-sm leading-6 [scrollbar-width:thin]">
                             <LinkifiedText text={message.text} mine={mine} />
                           </p>
                         )}

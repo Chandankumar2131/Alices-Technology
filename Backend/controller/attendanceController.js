@@ -518,8 +518,50 @@ exports.getAttendanceByMonth = async (req, res) => {
 exports.getAttendanceSummary = async (req, res) => {
   try {
     const employeeId = req.user.id;
+    const now = moment.tz(TZ);
+    const requestedMonth = Number(req.query.month) || now.month() + 1;
+    const requestedYear = Number(req.query.year) || now.year();
 
-    const attendance = await Attendance.find({ employee: employeeId });
+    if (
+      !Number.isInteger(requestedMonth) ||
+      requestedMonth < 1 ||
+      requestedMonth > 12 ||
+      !Number.isInteger(requestedYear) ||
+      requestedYear < 2000 ||
+      requestedYear > 2100
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid month and year are required",
+      });
+    }
+
+    const monthStart = moment
+      .tz(
+        `${requestedYear}-${String(requestedMonth).padStart(2, "0")}-01`,
+        "YYYY-MM-DD",
+        TZ
+      )
+      .startOf("month");
+    const monthEnd = monthStart.clone().endOf("month");
+    const countingEnd = moment.min(monthEnd, now.clone().startOf("day"));
+    const startDateKey = monthStart.format("YYYY-MM-DD");
+    const endDateKey = monthEnd.format("YYYY-MM-DD");
+
+    const [attendance, holidays] = await Promise.all([
+      Attendance.find({
+        employee: employeeId,
+        attendanceDate: { $gte: startDateKey, $lte: endDateKey },
+      }),
+      Holiday.find({
+        date: { $gte: startDateKey, $lte: endDateKey },
+      }),
+    ]);
+
+    const attendanceMap = new Map(
+      attendance.map((record) => [record.attendanceDate, record])
+    );
+    const holidayDates = new Set(holidays.map((holiday) => holiday.date));
 
     const summary = {
       presentDays: 0,
@@ -534,22 +576,42 @@ exports.getAttendanceSummary = async (req, res) => {
       overtimeHours: 0,
     };
 
-    for (const item of attendance) {
-      const record = await reconcileLeaveAttendance(item);
+    if (countingEnd.isSameOrAfter(monthStart, "day")) {
+      const current = monthStart.clone();
 
-      if (!record) continue;
+      while (current.isSameOrBefore(countingEnd, "day")) {
+        const dateKey = current.format("YYYY-MM-DD");
+        const isWeekend = [0, 6].includes(current.day());
+        const isHoliday = holidayDates.has(dateKey);
+        const storedRecord = attendanceMap.get(dateKey);
+        const record = storedRecord
+          ? await reconcileLeaveAttendance(storedRecord)
+          : null;
 
-      if (record.status === "Present") summary.presentDays++;
-      if (record.status === "Half Day") summary.halfDays++;
-      if (record.status === "Absent") summary.absentDays++;
-      if (record.status === "Leave") summary.leaveDays++;
-      if (record.status === "Holiday") summary.holidayDays++;
-      if (record.status === "Weekend") summary.weekendDays++;
-      if (record.lateArrival) summary.lateDays++;
+        if (record) {
+          if (record.status === "Present") summary.presentDays++;
+          if (record.status === "Half Day") summary.halfDays++;
+          if (record.status === "Absent") summary.absentDays++;
+          if (record.status === "Leave") summary.leaveDays++;
+          if (record.status === "Holiday") summary.holidayDays++;
+          if (record.status === "Weekend") summary.weekendDays++;
+          if (record.lateArrival) summary.lateDays++;
 
-      summary.totalHours += record.totalHours || 0;
-      summary.productiveHours += record.productiveHours || 0;
-      summary.overtimeHours += record.overtimeHours || 0;
+          summary.totalHours += record.totalHours || 0;
+          summary.productiveHours += record.productiveHours || 0;
+          summary.overtimeHours += record.overtimeHours || 0;
+        } else if (isHoliday) {
+          summary.holidayDays++;
+        } else if (isWeekend) {
+          summary.weekendDays++;
+        } else {
+          // The calendar displays missing past working days as Absent, so the
+          // summary must include those virtual records as well.
+          summary.absentDays++;
+        }
+
+        current.add(1, "day");
+      }
     }
 
     // Clean up totals to 2 decimals
@@ -559,6 +621,8 @@ exports.getAttendanceSummary = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      month: requestedMonth,
+      year: requestedYear,
       data: summary,
     });
   } catch (error) {

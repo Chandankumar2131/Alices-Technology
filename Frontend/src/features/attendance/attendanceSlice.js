@@ -14,8 +14,8 @@ export const fetchMyAttendance = createAsyncThunk("attendance/my", async (_, { r
 export const fetchAttendanceByMonth = createAsyncThunk("attendance/month", async ({ month, year }, { rejectWithValue }) => {
   try { return await attendanceService.getByMonth(month, year); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
-export const fetchAttendanceSummary = createAsyncThunk("attendance/summary", async (_, { rejectWithValue }) => {
-  try { return await attendanceService.getSummary(); } catch (e) { return rejectWithValue(getApiError(e)); }
+export const fetchAttendanceSummary = createAsyncThunk("attendance/summary", async ({ month, year } = {}, { rejectWithValue }) => {
+  try { return await attendanceService.getSummary(month, year); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
 export const requestAttendanceCorrection = createAsyncThunk("attendance/requestCorrection", async (payload, { rejectWithValue }) => {
   try { return await attendanceService.requestCorrection(payload); } catch (e) { return rejectWithValue(getApiError(e)); }
