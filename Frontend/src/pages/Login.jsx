@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { login, clearAuthError, selectAuth } from "../features/auth/authSlice";
+import { useNavigate, useParams } from "react-router-dom";
+import { login, logout, clearAuthError, selectAuth } from "../features/auth/authSlice";
 import useAuth from "../hooks/useAuth";
 import WelcomeCard from "../components/auth/WelcomeCard";
-import RotatingSubtitle from "../components/auth/RotatingSubtitle";
 import notify from "../utils/toast";
 import logo from "../assets/1ch.png"; 
 
 export default function Login() {
+  const { portal } = useParams();
+  const isCandidatePortal = portal === "candidate";
+  const isValidPortal = portal === "candidate" || portal === "workforce";
   const pageRef = useRef(null);
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
@@ -17,6 +19,10 @@ export default function Login() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { loading, error } = useSelector(selectAuth);
+
+  useEffect(() => {
+    if (!isValidPortal) navigate("/login", { replace: true });
+  }, [isValidPortal, navigate]);
 
   
   useEffect(() => {
@@ -55,8 +61,23 @@ export default function Login() {
     setErrors(errs);
     if (Object.keys(errs).length) return;
 
-    const res = await dispatch(login(form));
+    const res = await dispatch(login({ ...form, portal }));
     if (login.fulfilled.match(res)) {
+      const loggedInAsCandidate = res.payload.user?.accountType === "Candidate";
+      const portalMatchesRole = isCandidatePortal
+        ? loggedInAsCandidate
+        : !loggedInAsCandidate;
+
+      if (!portalMatchesRole) {
+        await dispatch(logout());
+        notify.error(
+          loggedInAsCandidate
+            ? "Candidate accounts must use the Candidate Portal"
+            : "Employee, admin, and super admin accounts must use the Employee & Admin Portal"
+        );
+        return;
+      }
+
       notify.success("Login successful");
       navigate("/dashboard", { replace: true });
     } else {
@@ -100,10 +121,11 @@ export default function Login() {
       <div className="login-orbit login-orbit-two pointer-events-none absolute" />
 
       {/* Centered container holding both halves */}
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl items-center justify-center gap-8 px-3 py-6 sm:px-6 sm:py-10 lg:gap-16">
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl items-center justify-center px-3 py-6 sm:px-6 sm:py-10">
+        <div className="flex w-full items-stretch justify-center gap-8 lg:gap-16">
         {/* LEFT: welcome panel (hidden on small screens) */}
         <div className="hidden flex-1 justify-end lg:flex">
-          <WelcomeCard />
+          <WelcomeCard portal={portal} />
         </div>
 
         {/* RIGHT: login card */}
@@ -112,15 +134,25 @@ export default function Login() {
             {/* top accent glow line (dimmer) */}
             <div className="pointer-events-none absolute -top-px left-1/2 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-cyan-300/30 to-transparent" />
 
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="mb-5 cursor-pointer text-sm text-slate-400 transition hover:text-cyan-300"
+            >
+              ← Change portal
+            </button>
+
             <div className="mb-8 text-center">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 shadow-lg shadow-cyan-500/30 animate-pop overflow-hidden ring-1 ring-white/10">
                 <img src={logo} alt="Company logo" width="56" height="56" className="h-full w-full object-contain p-2" />
               </div>
 
               <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-200 to-slate-400 bg-clip-text text-transparent sm:text-3xl">
-                Alice's Tech Solutions
+                {isCandidatePortal ? "Candidate Portal" : "Alice's Tech HRM"}
               </h1>
-              <RotatingSubtitle />
+              <p className="mt-2 text-sm text-slate-400">
+                {isCandidatePortal ? "Continue your application journey" : "Sign in to get started"}
+              </p>
             </div>
 
             {error && (
@@ -184,7 +216,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg bg-gradient-to-r from-cyan-500 to-indigo-500 px-6 py-3 text-lg font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition-all duration-300 hover:from-cyan-400 hover:to-indigo-400 hover:-translate-y-0.5 hover:shadow-cyan-400/30 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full cursor-pointer rounded-lg bg-gradient-to-r from-cyan-500 to-indigo-500 px-6 py-3 text-lg font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition-all duration-300 hover:from-cyan-400 hover:to-indigo-400 hover:-translate-y-0.5 hover:shadow-cyan-400/30 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -192,16 +224,21 @@ export default function Login() {
                     Logging in...
                   </span>
                 ) : (
-                  "Login"
+                  isCandidatePortal ? "Sign in to Candidate Portal" : "Sign in to HRM"
                 )}
               </button>
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-slate-500">Contact your administrator to request an account.</p>
+              <p className="text-sm text-slate-500">
+                {isCandidatePortal
+                  ? "Use the email linked to your application."
+                  : "Contact your administrator to request an account."}
+              </p>
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -27,6 +27,6 @@ const jobApplicationSchema = new mongoose.Schema(
 jobApplicationSchema.index({ candidate: 1, appliedAt: -1 });
 jobApplicationSchema.index({ submittedBy: 1, appliedAt: -1 });
 jobApplicationSchema.index({ workDate: 1, submittedBy: 1 });
-jobApplicationSchema.index({ candidate: 1, appliedUrl: 1 });
+jobApplicationSchema.index({ candidate: 1, workDate: 1, appliedUrl: 1 });
 
 module.exports = mongoose.model("JobApplication", jobApplicationSchema);

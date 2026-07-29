@@ -297,7 +297,13 @@ exports.createJobApplication = async (req, res) => {
     const invalidCount = cleaned.length - valid.length;
     const uniqueUrls = [...new Set(valid)];
     const duplicateInBatchCount = valid.length - uniqueUrls.length;
-    const existingUrls = await JobApplication.find({ candidate: candidate._id, appliedUrl: { $in: uniqueUrls } }).distinct("appliedUrl");
+    const appliedAt = new Date();
+    const workDate = getShiftDate(appliedAt);
+    const existingUrls = await JobApplication.find({
+      candidate: candidate._id,
+      workDate,
+      appliedUrl: { $in: uniqueUrls },
+    }).distinct("appliedUrl");
     const existingSet = new Set(existingUrls);
     const newUrls = uniqueUrls.filter((url) => !existingSet.has(url));
     const duplicateCount = duplicateInBatchCount + existingUrls.length;
@@ -306,8 +312,6 @@ exports.createJobApplication = async (req, res) => {
     }
 
     const batchId = crypto.randomUUID();
-    const appliedAt = new Date();
-    const workDate = getShiftDate(appliedAt);
     const applications = await JobApplication.insertMany(newUrls.map((appliedUrl) => ({
       candidate: candidate._id,
       submittedBy: req.user.id,

@@ -202,19 +202,26 @@ return res.status(201).json({
 // ==========================================
 exports.login = async (req, res) => {
   try {
-    const { email, password } =
+    const { email, password, portal } =
       req.body;
 
-    if (!email || !password) {
+    if (!email || !password || !portal) {
       return res.status(400).json({
         success: false,
         message:
-          "Email and password are required",
+          "Email, password, and portal are required",
+      });
+    }
+
+    if (!["workforce", "candidate"].includes(portal)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid login portal",
       });
     }
 
     const user = await User.findOne({
-      email,
+      email: email.trim().toLowerCase(),
     }).select("+password").populate("additionalDetails");
 
     if (!user) {
@@ -230,6 +237,19 @@ exports.login = async (req, res) => {
         success: false,
         message:
           "Your account has been deactivated",
+      });
+    }
+
+    const isCandidate = user.accountType === "Candidate";
+    const isCorrectPortal =
+      portal === "candidate" ? isCandidate : !isCandidate;
+
+    if (!isCorrectPortal) {
+      return res.status(403).json({
+        success: false,
+        message: isCandidate
+          ? "Candidate accounts can only sign in through the Candidate Portal"
+          : "Employee, admin, and super admin accounts can only sign in through the Employee & Admin Portal",
       });
     }
 

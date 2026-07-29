@@ -6,6 +6,7 @@ import Spinner from "../components/common/Spinner";
 
 // Phase 2 will create these pages. Lazy imports keep the bundle lean.
 const Login = lazy(() => import("../pages/Login"));
+const PortalSelection = lazy(() => import("../pages/PortalSelection"));
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const MyAttendance = lazy(() => import("../pages/attendance/MyAttendance"));
 const AttendanceCorrectionsAdmin = lazy(() => import("../pages/attendance/AttendanceCorrectionsAdmin"));
@@ -34,7 +35,8 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<Spinner full />}>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<PortalSelection />} />
+        <Route path="/login/:portal" element={<Login />} />
 
         {/* Authenticated area */}
         <Route element={<ProtectedRoute />}>
