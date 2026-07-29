@@ -97,7 +97,7 @@ const userSchema = new mongoose.Schema(
     resignation: {
       status: {
         type: String,
-        enum: ["None", "Submitted"],
+        enum: ["None", "Submitted", "Approved", "Rejected"],
         default: "None",
       },
       resignationDate: {
@@ -118,6 +118,9 @@ const userSchema = new mongoose.Schema(
         type: Boolean,
         default: false,
       },
+      adminRemarks: { type: String, trim: true, maxlength: 2000, default: "" },
+      reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      reviewedAt: { type: Date },
     },
   },
   {

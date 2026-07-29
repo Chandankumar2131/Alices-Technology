@@ -150,9 +150,10 @@ export default function Profile() {
         </form>
       </Card>
 
-      <Card title="Resignation">
-        {resignation?.status === "Submitted" ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {user?.accountType === "Employee" && <Card title="Resignation">
+        {resignation?.status && resignation.status !== "None" ? (
+          <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
               <p className="text-sm text-slate-400">Status</p>
               <p className="mt-2 font-semibold">{resignation.status}</p>
@@ -166,11 +167,24 @@ export default function Profile() {
               <p className="mt-2 font-semibold">{fmtDate(resignation.lastWorkingDay)}</p>
             </div>
             <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+              <p className="text-sm text-slate-400">Knowledge Transfer</p>
+              <p className="mt-2 font-semibold">{resignation.knowledgeTransferCompleted ? "Completed" : "Pending"}</p>
+            </div>
+            <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+              <p className="text-sm text-slate-400">Company Assets</p>
+              <p className="mt-2 font-semibold">{resignation.assetsReturned ? "Returned" : "Pending"}</p>
+            </div>
+            <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
               <p className="text-sm text-slate-400">Handover</p>
               <p className="mt-2 font-semibold">
                 {resignation.knowledgeTransferCompleted && resignation.assetsReturned ? "Completed" : "Pending"}
               </p>
             </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4"><p className="text-sm text-slate-400">Reason</p><p className="mt-2 whitespace-pre-wrap text-sm text-slate-200">{resignation.reason || "—"}</p></div>
+            <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4"><p className="text-sm text-slate-400">Admin Remarks</p><p className="mt-2 whitespace-pre-wrap text-sm text-slate-200">{resignation.adminRemarks || "No remarks provided"}</p></div>
+          </div>
           </div>
         ) : (
           <form onSubmit={submitResign} className="max-w-2xl space-y-4">
@@ -190,7 +204,7 @@ export default function Profile() {
             <Button type="submit" loading={busy === "resign"}>Submit Resignation</Button>
           </form>
         )}
-      </Card>
+      </Card>}
     </div>
   );
 }

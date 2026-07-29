@@ -632,6 +632,7 @@ exports.changePassword = async (req, res) => {
 // ==========================================//
 exports.submitResignation = async (req, res) => {
   try {
+    if (req.user.accountType !== "Employee") return res.status(403).json({ success: false, message: "Only employees can submit resignations" });
     const userId = req.user.id;
     const { reason } = req.body;
 
@@ -651,10 +652,10 @@ exports.submitResignation = async (req, res) => {
       });
     }
 
-    if (user.resignation?.status === "Submitted") {
+    if (user.resignation?.status && user.resignation.status !== "None") {
       return res.status(400).json({
         success: false,
-        message: "Resignation already submitted",
+        message: "A resignation request already exists",
       });
     }
 
@@ -669,9 +670,13 @@ exports.submitResignation = async (req, res) => {
       reason: reason.trim(),
       knowledgeTransferCompleted: false,
       assetsReturned: false,
+      adminRemarks: "",
+      reviewedBy: null,
+      reviewedAt: null,
     };
 
     await user.save();
+    req.app?.get("io")?.to("role:admin").emit("admin:notifications", { type: "resignation" });
 
     return res.status(200).json({
       success: true,

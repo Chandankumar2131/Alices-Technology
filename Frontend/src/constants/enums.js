@@ -47,6 +47,7 @@ export const MARITAL_STATUS = ["Single", "Married", "Divorced", "Widowed"];
 export const STATUS_COLORS = {
   // Leave / generic
   Pending: "bg-amber-100 text-amber-700",
+  Submitted: "bg-blue-100 text-blue-700",
   Approved: "bg-green-100 text-green-700",
   Rejected: "bg-red-100 text-red-700",
   "Pending Review": "bg-amber-100 text-amber-700",

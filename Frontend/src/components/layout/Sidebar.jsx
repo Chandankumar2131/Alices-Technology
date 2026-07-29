@@ -112,6 +112,10 @@ export default function Sidebar({
               <span className="min-w-0 flex-1">Attendance Corrections</span>
               {renderCount(adminNotifications.pendingAttendanceCorrections || 0)}
             </NavLink>
+            <NavLink to="/resignations" onClick={onMobileClose} className={linkClass}>
+              <span className="min-w-0 flex-1">Resignations</span>
+              {renderCount(adminNotifications.pendingResignations || 0)}
+            </NavLink>
             <NavLink to="/payroll/manage" onClick={onMobileClose} className={linkClass}>Payroll Admin</NavLink>
             <NavLink to="/salary/manage" onClick={onMobileClose} className={linkClass}>Salary Admin</NavLink>
             <NavLink to="/reports" onClick={onMobileClose} className={linkClass}>Reports</NavLink>

@@ -21,6 +21,7 @@ const EmployeeDayAttendance = lazy(() => import("../pages/employees/EmployeeDayA
 const CreateAdmin = lazy(() => import("../pages/admin/CreateAdmin"));
 const Holidays = lazy(() => import("../pages/admin/Holidays"));
 const Reports = lazy(() => import("../pages/reports/Reports"));
+const Resignations = lazy(() => import("../pages/admin/Resignations"));
 const Profile = lazy(() => import("../pages/Profile"));
 const Chat = lazy(() => import("../pages/chat/Chat"));
 const Interviews = lazy(() => import("../pages/interviews/Interviews"));
@@ -68,6 +69,7 @@ export default function AppRoutes() {
               <Route path="/payroll/manage" element={<PayrollAdmin />} />
               <Route path="/salary/manage" element={<SalaryAdmin />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/resignations" element={<Resignations />} />
               <Route path="/holidays" element={<Holidays />} />
               <Route path="/candidates" element={<Candidates />} />
             </Route>

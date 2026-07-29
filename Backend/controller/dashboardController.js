@@ -695,9 +695,10 @@ exports.getEmployeeTimeline = async (req, res) => {
 // ==========================================
 exports.getAdminNotificationCounts = async (_req, res) => {
   try {
-    const [pendingLeaves, pendingAttendanceCorrections] = await Promise.all([
+    const [pendingLeaves, pendingAttendanceCorrections, pendingResignations] = await Promise.all([
       Leave.countDocuments({ status: "Pending" }),
       AttendanceCorrection.countDocuments({ status: "Pending" }),
+      User.countDocuments({ accountType: "Employee", "resignation.status": "Submitted" }),
     ]);
 
     return res.status(200).json({
@@ -705,7 +706,8 @@ exports.getAdminNotificationCounts = async (_req, res) => {
       data: {
         pendingLeaves,
         pendingAttendanceCorrections,
-        total: pendingLeaves + pendingAttendanceCorrections,
+        pendingResignations,
+        total: pendingLeaves + pendingAttendanceCorrections + pendingResignations,
       },
     });
   } catch (error) {
