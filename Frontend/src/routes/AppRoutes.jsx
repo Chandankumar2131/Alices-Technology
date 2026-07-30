@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleRoute from "./RoleRoute";
+import DepartmentRoute from "./DepartmentRoute";
 import Spinner from "../components/common/Spinner";
 
 // Phase 2 will create these pages. Lazy imports keep the bundle lean.
@@ -29,6 +30,9 @@ const Interviews = lazy(() => import("../pages/interviews/Interviews"));
 const Candidates = lazy(() => import("../pages/candidates/Candidates"));
 const MyCandidates = lazy(() => import("../pages/candidates/MyCandidates"));
 const CandidateDashboard = lazy(() => import("../pages/candidates/CandidateDashboard"));
+const LeadGeneration = lazy(() => import("../pages/leads/LeadGeneration"));
+const Sales = lazy(() => import("../pages/leads/Sales"));
+const LeadManagement = lazy(() => import("../pages/admin/LeadManagement"));
 const AppLayout = lazy(() => import("../components/layout/AppLayout"));
 
 export default function AppRoutes() {
@@ -54,8 +58,14 @@ export default function AppRoutes() {
               <Route path="/interviews" element={<Interviews />} />
             </Route>
 
-            <Route element={<RoleRoute mode="employee" />}>
+            <Route element={<DepartmentRoute department="Marketing" />}>
               <Route path="/my-candidates" element={<MyCandidates />} />
+            </Route>
+            <Route element={<DepartmentRoute department="Lead Generation" />}>
+              <Route path="/lead-generation" element={<LeadGeneration />} />
+            </Route>
+            <Route element={<DepartmentRoute department="Sales" />}>
+              <Route path="/sales" element={<Sales />} />
             </Route>
             <Route element={<RoleRoute mode="candidate" />}>
               <Route path="/my-applications" element={<CandidateDashboard />} />
@@ -72,6 +82,7 @@ export default function AppRoutes() {
               <Route path="/salary/manage" element={<SalaryAdmin />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/resignations" element={<Resignations />} />
+              <Route path="/leads/manage" element={<LeadManagement />} />
               <Route path="/holidays" element={<Holidays />} />
               <Route path="/candidates" element={<Candidates />} />
             </Route>

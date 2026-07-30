@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { getPagination, paginatedResponse } = require("../utils/pagination");
 require("dotenv").config();
+const EMPLOYEE_DEPARTMENTS = ["IT", "Marketing", "Lead Generation", "Sales"];
 // ==========================================
 // CREATE ADMIN (SUPER ADMIN ONLY)
 // ==========================================
@@ -106,12 +107,17 @@ exports.createEmployee = async (req, res) => {
       !email ||
       !password ||
       !employeeId ||
-      !joiningDate
+      !joiningDate ||
+      !department
     ) {
       return res.status(400).json({
         success: false,
-        message: "First name, last name, email, password, employee ID and joining date are mandatory",
+        message: "First name, last name, email, password, employee ID, department and joining date are mandatory",
       });
+    }
+
+    if (!EMPLOYEE_DEPARTMENTS.includes(department)) {
+      return res.status(400).json({ success: false, message: "Select a valid employee department" });
     }
 
     const normalizedEmployeeId = String(employeeId).trim();
@@ -508,12 +514,7 @@ exports.resetEmployeePassword = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const {
-      firstName,
-      lastName,
-      department,
-      designation,
-    } = req.body;
+    const { firstName, lastName } = req.body;
 
     const user =
       await User.findByIdAndUpdate(
@@ -521,8 +522,6 @@ exports.updateProfile = async (req, res) => {
         {
           firstName,
           lastName,
-          department,
-          designation,
         },
         {
           new: true,

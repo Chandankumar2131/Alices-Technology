@@ -113,8 +113,8 @@ export default function Profile() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Input label="First Name" value={basics.firstName} onChange={(e) => setBasics({ ...basics, firstName: e.target.value })} />
             <Input label="Last Name" value={basics.lastName} onChange={(e) => setBasics({ ...basics, lastName: e.target.value })} />
-            <Input label="Department" value={basics.department} onChange={(e) => setBasics({ ...basics, department: e.target.value })} />
-            <Input label="Designation" value={basics.designation} onChange={(e) => setBasics({ ...basics, designation: e.target.value })} />
+            <Input label="Department" value={basics.department} disabled />
+            <Input label="Designation" value={basics.designation} disabled />
           </div>
           <Button type="submit" loading={busy === "basics"}>Save Basics</Button>
         </form>
