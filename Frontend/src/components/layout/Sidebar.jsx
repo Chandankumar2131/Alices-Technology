@@ -34,6 +34,9 @@ export default function Sidebar({
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const isEmployee = role === "Employee";
+  const isMarketing = isEmployee && user?.department === "Marketing";
+  const isLeadGeneration = isEmployee && user?.department === "Lead Generation";
+  const isSales = isEmployee && user?.department === "Sales";
 
   const handleLogout = () => {
     dispatch(logout());
@@ -80,7 +83,9 @@ export default function Sidebar({
             <NavLink to="/salary" onClick={onMobileClose} className={linkClass}>Salary</NavLink>
           </>
         )}
-        {isEmployee && <NavLink to="/my-candidates" onClick={onMobileClose} className={linkClass}>My Candidates</NavLink>}
+        {isMarketing && <NavLink to="/my-candidates" onClick={onMobileClose} className={linkClass}>My Candidates</NavLink>}
+        {isLeadGeneration && <NavLink to="/lead-generation" onClick={onMobileClose} className={linkClass}>Lead Generation</NavLink>}
+        {isSales && <NavLink to="/sales" onClick={onMobileClose} className={linkClass}>Sales</NavLink>}
         {!isCandidate && <NavLink to="/profile" onClick={onMobileClose} className={linkClass}>Profile</NavLink>}
         {!isCandidate && <NavLink to="/interviews" onClick={onMobileClose} className={linkClass}>Interviews</NavLink>}
         {!isCandidate && <NavLink
@@ -116,6 +121,7 @@ export default function Sidebar({
               <span className="min-w-0 flex-1">Resignations</span>
               {renderCount(adminNotifications.pendingResignations || 0)}
             </NavLink>
+            <NavLink to="/leads/manage" onClick={onMobileClose} className={linkClass}>Lead &amp; Sales Analysis</NavLink>
             <NavLink to="/payroll/manage" onClick={onMobileClose} className={linkClass}>Payroll Admin</NavLink>
             <NavLink to="/salary/manage" onClick={onMobileClose} className={linkClass}>Salary Admin</NavLink>
             <NavLink to="/reports" onClick={onMobileClose} className={linkClass}>Reports</NavLink>

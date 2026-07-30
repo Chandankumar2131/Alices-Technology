@@ -12,10 +12,12 @@ import useAuth from "../../hooks/useAuth";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
+import Select from "../../components/common/Select";
 import Table from "../../components/common/Table";
 import Modal from "../../components/common/Modal";
 import { fmtDate, fullName } from "../../utils/helpers";
 import notify from "../../utils/toast";
+import { EMPLOYEE_DEPARTMENTS } from "../../constants/enums";
 
 const empty = {
   firstName: "",
@@ -48,8 +50,8 @@ export default function Employees() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!form.firstName || !form.lastName || !form.email || !form.password || !form.employeeId || !form.joiningDate) {
-      notify.error("First name, last name, email, password, employee ID and joining date are required");
+    if (!form.firstName || !form.lastName || !form.email || !form.password || !form.employeeId || !form.department || !form.joiningDate) {
+      notify.error("First name, last name, email, password, employee ID, department and joining date are required");
       return;
     }
     setBusy(true);
@@ -222,7 +224,7 @@ export default function Employees() {
           <Input label="Password" type="password" name="password" value={form.password} onChange={handleChange} />
           <Input label="Employee ID" name="employeeId" value={form.employeeId} onChange={handleChange} />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Input label="Department" name="department" value={form.department} onChange={handleChange} />
+            <Select label="Department" name="department" value={form.department} onChange={handleChange} options={[{ value: "", label: "Select department" }, ...EMPLOYEE_DEPARTMENTS]} />
             <Input label="Designation" name="designation" value={form.designation} onChange={handleChange} />
           </div>
           <Input

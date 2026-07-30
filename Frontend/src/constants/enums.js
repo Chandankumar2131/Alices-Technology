@@ -42,6 +42,7 @@ export const JOB_APPLICATION_STATUSES = ["Applied", "Recruiter Response", "Inter
 export const GENDERS = ["Male", "Female", "Other"];
 export const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 export const MARITAL_STATUS = ["Single", "Married", "Divorced", "Widowed"];
+export const EMPLOYEE_DEPARTMENTS = ["IT", "Marketing", "Lead Generation", "Sales"];
 
 // Badge color maps (Tailwind classes)
 export const STATUS_COLORS = {
@@ -70,6 +71,11 @@ export const STATUS_COLORS = {
   Paused: "bg-gray-100 text-gray-600",
   Cancelled: "bg-red-100 text-red-700",
   Applied: "bg-blue-100 text-blue-700",
+  New: "bg-blue-100 text-blue-700",
+  Forwarded: "bg-violet-100 text-violet-700",
+  Contacted: "bg-cyan-100 text-cyan-700",
+  "Follow Up": "bg-amber-100 text-amber-700",
+  Converted: "bg-green-100 text-green-700",
   "Recruiter Response": "bg-violet-100 text-violet-700",
   "Interview Scheduled": "bg-amber-100 text-amber-700",
   Withdrawn: "bg-gray-100 text-gray-600",
