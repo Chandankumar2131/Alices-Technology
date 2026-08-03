@@ -568,28 +568,30 @@ exports.downloadPayslip = async (req, res) => {
 
     doc
       .fillColor(WHITE)
-      .fontSize(19)
+      .fontSize(17)
       .font("Helvetica-Bold")
-      .text("ALICE TECH SOLUTIONS", nameX, 30);
+      .text("ALICE TECH SOLUTIONS", nameX, 30, { width: 300 });
 
     doc
       .fillColor("#A8C4E0")
       .fontSize(8.5)
       .font("Helvetica")
-      .text("Siddhivinayak tower, Makarba, Ahmedabad, India  •  info@alicestechsolutions.com", nameX, 54);
+      .text("Siddhivinayak Tower, Makarba, Ahmedabad, India | info@alicestechsolutions.com", nameX, 54, {
+        width: 320,
+      });
 
     // Payslip title (right)
     doc
       .fillColor(WHITE)
       .fontSize(13)
       .font("Helvetica-Bold")
-      .text("PAYSLIP", MARGIN, 30, { width: CONTENT_W, align: "right" });
+      .text("PAYSLIP", PAGE_W - MARGIN - 120, 30, { width: 120, align: "right" });
     doc
       .fillColor("#A8C4E0")
       .fontSize(9)
       .font("Helvetica")
-      .text(`${monthLabel.toUpperCase()} ${payroll.year}`, MARGIN, 50, {
-        width: CONTENT_W,
+      .text(`${monthLabel.toUpperCase()} ${payroll.year}`, PAGE_W - MARGIN - 120, 50, {
+        width: 120,
         align: "right",
       });
 
@@ -607,9 +609,9 @@ exports.downloadPayslip = async (req, res) => {
 
     const infoFields = [
       ["Employee Name", `${employee.firstName} ${employee.lastName}`],
-      ["Employee ID", employee.employeeId || "—"],
-      ["Department", employee.department || "—"],
-      ["Designation", employee.designation || "—"],
+      ["Employee ID", employee.employeeId || "-"],
+      ["Department", employee.department || "-"],
+      ["Designation", employee.designation || "-"],
       ["Pay Period", `${monthLabel} ${payroll.year}`],
       ["Pay Date", payDate.toLocaleDateString("en-US", {
         day: "2-digit", month: "short", year: "numeric", timeZone: TZ,
@@ -738,16 +740,18 @@ exports.downloadPayslip = async (req, res) => {
       ["Leave", payroll.leaveDays],
       ["Holiday", payroll.holidayDays || 0],
       ["Absent", payroll.absentDays],
-      ["Overtime", `${payroll.overtimeHours || 0}h`],
     ];
     const sW = CONTENT_W / stats.length;
-    doc.roundedRect(MARGIN, ay - 8, CONTENT_W, 48, 8).strokeColor(LINE).lineWidth(1).stroke();
+    doc.roundedRect(MARGIN, ay - 8, CONTENT_W, 52, 8).fillAndStroke("#FAFCFF", LINE);
     stats.forEach(([label, value], i) => {
       const x = MARGIN + i * sW;
-      doc.fillColor(NAVY).fontSize(15).font("Helvetica-Bold")
-        .text(String(value), x, ay, { width: sW, align: "center" });
+      if (i > 0) {
+        doc.moveTo(x, ay - 1).lineTo(x, ay + 29).strokeColor(LINE).lineWidth(0.7).stroke();
+      }
+      doc.fillColor(NAVY).fontSize(16).font("Helvetica-Bold")
+        .text(String(value ?? 0), x, ay, { width: sW, align: "center" });
       doc.fillColor(SOFT).fontSize(7.5).font("Helvetica")
-        .text(label.toUpperCase(), x, ay + 19, { width: sW, align: "center" });
+        .text(label.toUpperCase(), x, ay + 21, { width: sW, align: "center" });
     });
 
     // ============================================================
@@ -760,7 +764,7 @@ exports.downloadPayslip = async (req, res) => {
       day: "2-digit", month: "long", year: "numeric", timeZone: TZ,
     });
     doc.fillColor(DGRAY).fontSize(8).font("Helvetica").text(
-      `Generated on ${generatedDate}   •   This is a system-generated payslip and does not require a signature.`,
+      `Generated on ${generatedDate} | This is a system-generated payslip and does not require a signature.`,
       MARGIN,
       PAGE_H - 28,
       { width: CONTENT_W, align: "center" }

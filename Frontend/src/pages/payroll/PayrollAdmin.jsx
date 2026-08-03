@@ -62,6 +62,7 @@ export default function PayrollAdmin() {
     { key: "presentDays", header: "Present" },
     { key: "halfDays", header: "Half Day", render: (r) => r.halfDays || 0 },
     { key: "holidayDays", header: "Holiday", render: (r) => r.holidayDays || 0 },
+    { key: "leaveDays", header: "Leave", render: (r) => r.leaveDays || 0 },
     { key: "absentDays", header: "Absent" },
     { key: "netSalary", header: "Net Salary", render: (r) => fmtMoney(r.netSalary) },
     { key: "paymentStatus", header: "Status", render: (r) => <Badge status={r.paymentStatus} /> },

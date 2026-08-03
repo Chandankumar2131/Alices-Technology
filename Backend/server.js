@@ -16,6 +16,7 @@ const assessmentRoutes = require("./routes/assessmentRoutes");
 const candidateRoutes = require("./routes/candidateRoutes");
 const employeeDocumentRoutes = require("./routes/employeeDocumentRoutes");
 const resignationRoutes = require("./routes/resignationRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 const leadRoutes = require("./routes/leadRoutes");
 const { startAutoCheckoutJob } = require("./utils/autoCheckout");
 const { initSocket } = require("./utils/socket");
@@ -78,6 +79,7 @@ app.use("/api/v1/assessments", assessmentRoutes);
 app.use("/api/v1/candidates", candidateRoutes);
 app.use("/api/v1/documents", employeeDocumentRoutes);
 app.use("/api/v1/resignations", resignationRoutes);
+app.use("/api/v1/ai", aiRoutes);
 app.use("/api/v1/leads", leadRoutes);
 // ================================
 // Default Route

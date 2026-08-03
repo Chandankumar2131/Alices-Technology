@@ -30,6 +30,7 @@ const Interviews = lazy(() => import("../pages/interviews/Interviews"));
 const Candidates = lazy(() => import("../pages/candidates/Candidates"));
 const MyCandidates = lazy(() => import("../pages/candidates/MyCandidates"));
 const CandidateDashboard = lazy(() => import("../pages/candidates/CandidateDashboard"));
+const AiAssistant = lazy(() => import("../pages/ai/AiAssistant"));
 const LeadGeneration = lazy(() => import("../pages/leads/LeadGeneration"));
 const Sales = lazy(() => import("../pages/leads/Sales"));
 const LeadManagement = lazy(() => import("../pages/admin/LeadManagement"));
@@ -56,6 +57,7 @@ export default function AppRoutes() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/interviews" element={<Interviews />} />
+              <Route path="/ai-assistant" element={<AiAssistant />} />
             </Route>
 
             <Route element={<DepartmentRoute department="Marketing" />}>

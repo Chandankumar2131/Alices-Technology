@@ -33,8 +33,20 @@ const writeLimiter = rateLimit({
   },
 });
 
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.AI_RATE_LIMIT || 20),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "AI request limit reached. Please try again later.",
+  },
+});
+
 module.exports = {
   standardLimiter,
   authLimiter,
   writeLimiter,
+  aiLimiter,
 };

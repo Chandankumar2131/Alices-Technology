@@ -364,6 +364,11 @@ FRONTEND_URL=http://localhost:5173
 
 ATTENDANCE_TZ=Asia/Kolkata
 
+# Server-side AI assistant (never expose this key through VITE_* variables)
+OPENAI_API_KEY=your_openai_project_api_key
+OPENAI_MODEL=gpt-5.6-sol
+AI_RATE_LIMIT=20
+
 CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
 CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret

@@ -20,9 +20,6 @@ const createAdminLinkClass = ({ isActive }) =>
       : "border-cyan-300/25 bg-cyan-300/10 text-cyan-100 shadow-[0_12px_28px_rgba(8,145,178,0.14)] hover:border-cyan-200/45 hover:bg-cyan-300/18 hover:text-white"
   }`;
 
-const sectionLabel =
-  "px-3 pt-5 pb-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400";
-
 export default function Sidebar({
   chatUnreadCount = 0,
   adminNotifications = {},
@@ -72,43 +69,35 @@ export default function Sidebar({
       </div>
 
       <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
-        <p className={sectionLabel}>Main</p>
         <NavLink to="/dashboard" onClick={onMobileClose} className={linkClass}>Dashboard</NavLink>
-        {isCandidate && <NavLink to="/my-applications" onClick={onMobileClose} className={linkClass}>My Applications</NavLink>}
-        {!isCandidate && <NavLink to="/attendance" onClick={onMobileClose} className={linkClass}>My Attendance</NavLink>}
-        {isEmployee && <NavLink to="/leaves" onClick={onMobileClose} className={linkClass}>Leaves</NavLink>}
-        {isEmployee && (
+        {isAdmin ? (
           <>
-            <NavLink to="/payroll" onClick={onMobileClose} className={linkClass}>Payroll</NavLink>
-            <NavLink to="/salary" onClick={onMobileClose} className={linkClass}>Salary</NavLink>
-          </>
-        )}
-        {isMarketing && <NavLink to="/my-candidates" onClick={onMobileClose} className={linkClass}>My Candidates</NavLink>}
-        {isLeadGeneration && <NavLink to="/lead-generation" onClick={onMobileClose} className={linkClass}>Lead Generation</NavLink>}
-        {isSales && <NavLink to="/sales" onClick={onMobileClose} className={linkClass}>Sales</NavLink>}
-        {!isCandidate && <NavLink to="/profile" onClick={onMobileClose} className={linkClass}>Profile</NavLink>}
-        {!isCandidate && <NavLink to="/interviews" onClick={onMobileClose} className={linkClass}>Interviews</NavLink>}
-        {!isCandidate && <NavLink
-          to="/chat"
-          onClick={() => {
-            onChatClick();
-            onMobileClose();
-          }}
-          className={linkClass}
-        >
-          <span className="min-w-0 flex-1">Chat</span>
-          {chatUnreadCount > 0 && (
-            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-cyan-300 px-1.5 text-[0.65rem] font-bold text-slate-950">
-              {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
-            </span>
-          )}
-        </NavLink>}
+            <NavLink to="/ai-assistant" onClick={onMobileClose} className={linkClass}>AI Assistant</NavLink>
+            <NavLink
+              to="/chat"
+              onClick={() => {
+                onChatClick();
+                onMobileClose();
+              }}
+              className={linkClass}
+            >
+              <span className="min-w-0 flex-1">Chat</span>
+              {chatUnreadCount > 0 && (
+                <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-cyan-300 px-1.5 text-[0.65rem] font-bold text-slate-950">
+                  {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+                </span>
+              )}
+            </NavLink>
+            <NavLink to="/profile" onClick={onMobileClose} className={linkClass}>Profile</NavLink>
+            <NavLink to="/attendance" onClick={onMobileClose} className={linkClass}>My Attendance</NavLink>
 
-        {isAdmin && (
-          <>
-            <p className={sectionLabel}>Admin</p>
-            <NavLink to="/employees" onClick={onMobileClose} className={linkClass}>Employees</NavLink>
+            <div className="my-3 border-t border-white/[0.07]" aria-hidden="true" />
             <NavLink to="/candidates" onClick={onMobileClose} className={linkClass}>Candidates</NavLink>
+            <NavLink to="/interviews" onClick={onMobileClose} className={linkClass}>Interviews</NavLink>
+
+            <div className="my-3 border-t border-white/[0.07]" aria-hidden="true" />
+            <NavLink to="/employees" onClick={onMobileClose} className={linkClass}>Employees</NavLink>
+            <NavLink to="/holidays" onClick={onMobileClose} className={linkClass}>Holidays</NavLink>
             <NavLink to="/leaves/manage" onClick={onMobileClose} className={linkClass}>
               <span className="min-w-0 flex-1">Leave Approvals</span>
               {renderCount(adminNotifications.pendingLeaves || 0)}
@@ -122,20 +111,42 @@ export default function Sidebar({
               {renderCount(adminNotifications.pendingResignations || 0)}
             </NavLink>
             <NavLink to="/leads/manage" onClick={onMobileClose} className={linkClass}>Lead &amp; Sales Analysis</NavLink>
+            <div className="my-3 border-t border-white/[0.07]" aria-hidden="true" />
             <NavLink to="/payroll/manage" onClick={onMobileClose} className={linkClass}>Payroll Admin</NavLink>
             <NavLink to="/salary/manage" onClick={onMobileClose} className={linkClass}>Salary Admin</NavLink>
+
+            <div className="my-3 border-t border-white/[0.07]" aria-hidden="true" />
             <NavLink to="/reports" onClick={onMobileClose} className={linkClass}>Reports</NavLink>
-            <NavLink to="/holidays" onClick={onMobileClose} className={linkClass}>Holidays</NavLink>
+          </>
+        ) : (
+          <>
+            {isCandidate && <NavLink to="/my-applications" onClick={onMobileClose} className={linkClass}>My Applications</NavLink>}
+            {!isCandidate && <NavLink to="/attendance" onClick={onMobileClose} className={linkClass}>My Attendance</NavLink>}
+            {isEmployee && <NavLink to="/leaves" onClick={onMobileClose} className={linkClass}>Leaves</NavLink>}
+            {isEmployee && <NavLink to="/payroll" onClick={onMobileClose} className={linkClass}>Payroll</NavLink>}
+            {isEmployee && <NavLink to="/salary" onClick={onMobileClose} className={linkClass}>Salary</NavLink>}
+            {isMarketing && <NavLink to="/my-candidates" onClick={onMobileClose} className={linkClass}>My Candidates</NavLink>}
+            {isLeadGeneration && <NavLink to="/lead-generation" onClick={onMobileClose} className={linkClass}>Lead Generation</NavLink>}
+            {isSales && <NavLink to="/sales" onClick={onMobileClose} className={linkClass}>Sales</NavLink>}
+            {!isCandidate && <NavLink to="/profile" onClick={onMobileClose} className={linkClass}>Profile</NavLink>}
+            {!isCandidate && <NavLink to="/interviews" onClick={onMobileClose} className={linkClass}>Interviews</NavLink>}
+            {!isCandidate && <NavLink to="/ai-assistant" onClick={onMobileClose} className={linkClass}>AI Assistant</NavLink>}
+            {!isCandidate && <NavLink to="/chat" onClick={() => { onChatClick(); onMobileClose(); }} className={linkClass}>
+              <span className="min-w-0 flex-1">Chat</span>
+              {chatUnreadCount > 0 && (
+                <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-cyan-300 px-1.5 text-[0.65rem] font-bold text-slate-950">
+                  {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+                </span>
+              )}
+            </NavLink>}
           </>
         )}
 
         {isSuperAdmin && (
           <>
-            <p className={sectionLabel}>Super Admin</p>
+            <div className="my-3 border-t border-white/[0.07]" aria-hidden="true" />
             <NavLink to="/admins/create" onClick={onMobileClose} className={createAdminLinkClass}>
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-lg leading-none ring-1 ring-white/20">
-                +
-              </span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-lg leading-none ring-1 ring-white/20">+</span>
               <span className="min-w-0">
                 <span className="block truncate">Create Admin</span>
                 <span className="block truncate text-xs font-medium opacity-70">Add privileged user</span>
