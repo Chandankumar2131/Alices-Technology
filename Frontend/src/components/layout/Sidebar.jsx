@@ -72,7 +72,8 @@ export default function Sidebar({
         <NavLink to="/dashboard" onClick={onMobileClose} className={linkClass}>Dashboard</NavLink>
         {isAdmin ? (
           <>
-            <NavLink to="/ai-assistant" onClick={onMobileClose} className={linkClass}>AI Assistant</NavLink>
+            <NavLink to="/attendance" onClick={onMobileClose} className={linkClass}>My Attendance</NavLink>
+            <NavLink to="/profile" onClick={onMobileClose} className={linkClass}>My Profile</NavLink>
             <NavLink
               to="/chat"
               onClick={() => {
@@ -88,35 +89,37 @@ export default function Sidebar({
                 </span>
               )}
             </NavLink>
-            <NavLink to="/profile" onClick={onMobileClose} className={linkClass}>Profile</NavLink>
-            <NavLink to="/attendance" onClick={onMobileClose} className={linkClass}>My Attendance</NavLink>
+            <NavLink to="/ai-assistant" onClick={onMobileClose} className={linkClass}>AI Assistant</NavLink>
 
             <div className="my-3 border-t border-white/[0.07]" aria-hidden="true" />
-            <NavLink to="/candidates" onClick={onMobileClose} className={linkClass}>Candidates</NavLink>
-            <NavLink to="/interviews" onClick={onMobileClose} className={linkClass}>Interviews</NavLink>
-
-            <div className="my-3 border-t border-white/[0.07]" aria-hidden="true" />
-            <NavLink to="/employees" onClick={onMobileClose} className={linkClass}>Employees</NavLink>
-            <NavLink to="/holidays" onClick={onMobileClose} className={linkClass}>Holidays</NavLink>
-            <NavLink to="/leaves/manage" onClick={onMobileClose} className={linkClass}>
-              <span className="min-w-0 flex-1">Leave Approvals</span>
-              {renderCount(adminNotifications.pendingLeaves || 0)}
-            </NavLink>
             <NavLink to="/attendance/corrections" onClick={onMobileClose} className={linkClass}>
               <span className="min-w-0 flex-1">Attendance Corrections</span>
               {renderCount(adminNotifications.pendingAttendanceCorrections || 0)}
+            </NavLink>
+            <NavLink to="/leaves/manage" onClick={onMobileClose} className={linkClass}>
+              <span className="min-w-0 flex-1">Leave Approvals</span>
+              {renderCount(adminNotifications.pendingLeaves || 0)}
             </NavLink>
             <NavLink to="/resignations" onClick={onMobileClose} className={linkClass}>
               <span className="min-w-0 flex-1">Resignations</span>
               {renderCount(adminNotifications.pendingResignations || 0)}
             </NavLink>
-            <NavLink to="/leads/manage" onClick={onMobileClose} className={linkClass}>Lead &amp; Sales Analysis</NavLink>
-            <div className="my-3 border-t border-white/[0.07]" aria-hidden="true" />
-            <NavLink to="/payroll/manage" onClick={onMobileClose} className={linkClass}>Payroll Admin</NavLink>
-            <NavLink to="/salary/manage" onClick={onMobileClose} className={linkClass}>Salary Admin</NavLink>
 
             <div className="my-3 border-t border-white/[0.07]" aria-hidden="true" />
-            <NavLink to="/reports" onClick={onMobileClose} className={linkClass}>Reports</NavLink>
+            <NavLink to="/employees" onClick={onMobileClose} className={linkClass}>Employee Details</NavLink>
+            <NavLink to="/holidays" onClick={onMobileClose} className={linkClass}>Holidays</NavLink>
+
+            <div className="my-3 border-t border-white/[0.07]" aria-hidden="true" />
+            <NavLink to="/salary/manage" onClick={onMobileClose} className={linkClass}>Generate Salary</NavLink>
+            <NavLink to="/payroll/manage" onClick={onMobileClose} className={linkClass}>Generate Payroll</NavLink>
+
+            <div className="my-3 border-t border-white/[0.07]" aria-hidden="true" />
+            <NavLink to="/candidates" onClick={onMobileClose} className={linkClass}>Candidate Reports</NavLink>
+            <NavLink to="/interviews" onClick={onMobileClose} className={linkClass}>Interview Reports</NavLink>
+
+            <div className="my-3 border-t border-white/[0.07]" aria-hidden="true" />
+            <NavLink to="/leads/manage" onClick={onMobileClose} className={linkClass}>Lead &amp; Sales Analysis</NavLink>
+            <NavLink to="/reports" onClick={onMobileClose} className={linkClass}>Workforce Analytics</NavLink>
           </>
         ) : (
           <>

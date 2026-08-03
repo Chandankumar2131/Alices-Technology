@@ -7,7 +7,10 @@ const notifyAdmins = (req) => req.app?.get("io")?.to("role:admin").emit("admin:n
 exports.getResignations = async (req, res) => {
   try {
     const status = String(req.query.status || "").trim();
-    const filter = { accountType: "Employee", "resignation.status": { $ne: "None" } };
+    const filter = {
+      accountType: "Employee",
+      "resignation.status": { $in: ["Submitted", "Approved", "Rejected"] },
+    };
     if (["Submitted", "Approved", "Rejected"].includes(status)) filter["resignation.status"] = status;
     const data = await User.find(filter).select(selectEmployee)
       .populate("resignation.reviewedBy", "firstName lastName email")
