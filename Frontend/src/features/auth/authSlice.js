@@ -94,6 +94,18 @@ export const submitResignation = createAsyncThunk(
   }
 );
 
+export const withdrawResignation = createAsyncThunk(
+  "auth/withdrawResignation",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const res = await authService.withdrawResignation(payload);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(getApiError(err));
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -150,6 +162,10 @@ const authSlice = createSlice({
         localStorage.setItem("user", JSON.stringify(state.user));
       })
       .addCase(submitResignation.fulfilled, (state, action) => {
+        state.user = action.payload;
+        localStorage.setItem("user", JSON.stringify(action.payload));
+      })
+      .addCase(withdrawResignation.fulfilled, (state, action) => {
         state.user = action.payload;
         localStorage.setItem("user", JSON.stringify(action.payload));
       })

@@ -107,7 +107,12 @@ const userSchema = new mongoose.Schema(
         effectiveDate: { type: Date },
         reason: { type: String, trim: true, maxlength: 500 },
         remarks: { type: String, trim: true, maxlength: 2000 },
-        performedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        performedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        actorType: {
+          type: String,
+          enum: ["Admin", "System"],
+          default: "Admin",
+        },
         performedAt: { type: Date, default: Date.now },
       },
     ],
@@ -123,7 +128,7 @@ const userSchema = new mongoose.Schema(
     resignation: {
       status: {
         type: String,
-        enum: ["None", "Submitted", "Approved", "Rejected"],
+        enum: ["None", "Submitted", "Approved", "Rejected", "Withdrawal Requested", "Withdrawn"],
         default: "None",
       },
       resignationDate: {
@@ -147,6 +152,15 @@ const userSchema = new mongoose.Schema(
       adminRemarks: { type: String, trim: true, maxlength: 2000, default: "" },
       reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       reviewedAt: { type: Date },
+      withdrawalReason: { type: String, trim: true, maxlength: 2000, default: "" },
+      withdrawalRequestedAt: { type: Date },
+      withdrawalReviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      withdrawalReviewedAt: { type: Date },
+      withdrawalAdminRemarks: { type: String, trim: true, maxlength: 2000, default: "" },
+      withdrawalDecision: {
+        type: String,
+        enum: ["Pending", "Approved", "Rejected"],
+      },
     },
   },
   {

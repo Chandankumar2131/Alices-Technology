@@ -23,4 +23,6 @@ export const authService = {
     api.post("/auth/change-password", payload).then(unwrap),
   submitResignation: (payload) =>
     api.post("/auth/resignation", payload).then(unwrap),
+  withdrawResignation: (payload) =>
+    api.post("/auth/resignation/withdraw", payload).then(unwrap),
 };

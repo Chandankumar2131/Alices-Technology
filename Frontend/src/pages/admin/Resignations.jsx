@@ -11,9 +11,26 @@ import { resignationService } from "../../service/resignationService";
 import { fmtDate } from "../../utils/helpers";
 import notify from "../../utils/toast";
 
-const FILTERS = [{ value: "", label: "All requests" }, "Submitted", "Approved", "Rejected"];
-const RESIGNATION_STATUSES = new Set(["Submitted", "Approved", "Rejected"]);
+const FILTERS = [{ value: "", label: "All requests" }, "Submitted", "Approved", "Rejected", "Withdrawal Requested", "Withdrawn"];
+const RESIGNATION_STATUSES = new Set(["Submitted", "Approved", "Rejected", "Withdrawal Requested", "Withdrawn"]);
 const errorText = (error) => error?.response?.data?.message || error?.message || "Something went wrong";
+const indiaDateKey = (value = new Date()) => {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(value));
+  const get = (type) => parts.find((part) => part.type === type)?.value;
+  return `${get("year")}-${get("month")}-${get("day")}`;
+};
+const isOverdueHandover = (employee) => {
+  const resignation = employee.resignation || {};
+  return employee.isActive &&
+    resignation.status === "Approved" &&
+    indiaDateKey(resignation.lastWorkingDay) < indiaDateKey() &&
+    (!resignation.knowledgeTransferCompleted || !resignation.assetsReturned);
+};
 
 export default function Resignations() {
   const [rows, setRows] = useState([]);
@@ -47,17 +64,27 @@ export default function Resignations() {
     submitted: rows.filter((row) => row.resignation?.status === "Submitted").length,
     approved: rows.filter((row) => row.resignation?.status === "Approved").length,
     rejected: rows.filter((row) => row.resignation?.status === "Rejected").length,
+    overdue: rows.filter(isOverdueHandover).length,
+    withdrawalRequested: rows.filter((row) => row.resignation?.status === "Withdrawal Requested").length,
   }), [rows]);
 
   const confirmReview = async () => {
     if (!review) return;
     setBusy("review");
     try {
-      await resignationService.review(review.employee._id, {
-        status: review.status,
-        adminRemarks: remarks,
-      });
-      notify.success(`Resignation ${review.status.toLowerCase()}`);
+      if (review.kind === "withdrawal") {
+        await resignationService.reviewWithdrawal(review.employee._id, {
+          decision: review.status,
+          adminRemarks: remarks,
+        });
+        notify.success(`Withdrawal ${review.status.toLowerCase()}`);
+      } else {
+        await resignationService.review(review.employee._id, {
+          status: review.status,
+          adminRemarks: remarks,
+        });
+        notify.success(`Resignation ${review.status.toLowerCase()}`);
+      }
       setReview(null);
       setRemarks("");
       await load();
@@ -82,7 +109,7 @@ export default function Resignations() {
   };
 
   const openReview = (employee, nextStatus) => {
-    setReview({ employee, status: nextStatus });
+    setReview({ employee, status: nextStatus, kind: "resignation" });
     setRemarks("");
   };
 
@@ -109,7 +136,17 @@ export default function Resignations() {
     },
     { key: "submitted", header: "Submitted", render: (row) => fmtDate(row.resignation?.resignationDate) },
     { key: "lastWorkingDay", header: "Last Working Day", render: (row) => fmtDate(row.resignation?.lastWorkingDay) },
-    { key: "status", header: "Status", render: (row) => <Badge status={row.resignation?.status} /> },
+    {
+      key: "status",
+      header: "Status",
+      render: (row) => (
+        <div className="flex flex-col items-start gap-1.5">
+          <Badge status={row.resignation?.status} />
+          {!row.isActive && <span className="text-xs font-semibold text-slate-400">Offboarded</span>}
+          {isOverdueHandover(row) && <span className="text-xs font-semibold text-rose-300">Handover overdue</span>}
+        </div>
+      ),
+    },
     {
       key: "handover",
       header: "Handover",
@@ -120,6 +157,11 @@ export default function Resignations() {
         }
         return (
           <div className="flex min-w-40 flex-col gap-2">
+            {isOverdueHandover(row) && (
+              <p className="rounded-md border border-rose-400/25 bg-rose-400/10 px-2 py-1.5 text-xs leading-4 text-rose-200">
+                Complete both items to allow automatic offboarding.
+              </p>
+            )}
             <Button
               variant={resignation.knowledgeTransferCompleted ? "success" : "outline"}
               className="min-h-8 px-2 py-1 text-xs"
@@ -150,6 +192,34 @@ export default function Resignations() {
           <Button variant="success" className="min-h-8 px-2 py-1 text-xs" onClick={() => openReview(row, "Approved")}>Approve</Button>
           <Button variant="danger" className="min-h-8 px-2 py-1 text-xs" onClick={() => openReview(row, "Rejected")}>Reject</Button>
         </div>
+      ) : row.resignation?.status === "Withdrawal Requested" ? (
+        <div className="flex flex-col gap-2">
+          <p className="max-w-52 whitespace-normal text-xs leading-5 text-slate-400">
+            {row.resignation?.withdrawalReason || "No withdrawal reason provided"}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="success"
+              className="min-h-8 px-2 py-1 text-xs"
+              onClick={() => {
+                setReview({ employee: row, status: "Approved", kind: "withdrawal" });
+                setRemarks("");
+              }}
+            >
+              Approve Withdrawal
+            </Button>
+            <Button
+              variant="danger"
+              className="min-h-8 px-2 py-1 text-xs"
+              onClick={() => {
+                setReview({ employee: row, status: "Rejected", kind: "withdrawal" });
+                setRemarks("");
+              }}
+            >
+              Reject
+            </Button>
+          </div>
+        </div>
       ) : (
         <span className="block max-w-52 whitespace-normal text-xs leading-5 text-slate-400">
           {row.resignation?.adminRemarks || "Reviewed"}
@@ -168,10 +238,12 @@ export default function Resignations() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard label="Awaiting Review" value={stats.submitted} icon="⌛" accent="text-amber-300" />
         <StatCard label="Approved" value={stats.approved} icon="✓" accent="text-emerald-300" />
         <StatCard label="Rejected" value={stats.rejected} icon="×" accent="text-rose-300" />
+        <StatCard label="Handover Overdue" value={stats.overdue} icon="!" accent="text-rose-300" />
+        <StatCard label="Withdrawal Review" value={stats.withdrawalRequested} icon="↩" accent="text-violet-300" />
       </div>
 
       <Card
@@ -215,6 +287,12 @@ export default function Resignations() {
                 <p className="mt-2 whitespace-pre-wrap rounded-xl border border-white/10 bg-slate-950/35 p-4 text-sm leading-6 text-slate-200">{details.resignation.adminRemarks}</p>
               </div>
             )}
+            {details.resignation?.withdrawalReason && (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-400">Withdrawal reason</p>
+                <p className="mt-2 whitespace-pre-wrap rounded-xl border border-white/10 bg-slate-950/35 p-4 text-sm leading-6 text-slate-200">{details.resignation.withdrawalReason}</p>
+              </div>
+            )}
           </div>
         )}
       </Modal>
@@ -222,7 +300,7 @@ export default function Resignations() {
       <Modal
         open={!!review}
         onClose={() => setReview(null)}
-        title={`${review?.status || "Review"} Resignation`}
+        title={review?.kind === "withdrawal" ? `${review?.status || "Review"} Withdrawal` : `${review?.status || "Review"} Resignation`}
         footer={(
           <>
             <Button variant="secondary" onClick={() => setReview(null)}>Cancel</Button>
@@ -232,7 +310,7 @@ export default function Resignations() {
       >
         <div>
           <p className="mb-4 text-sm leading-6 text-slate-400">
-            Reviewing the resignation for <span className="font-semibold text-slate-100">{review?.employee?.firstName} {review?.employee?.lastName}</span>. Handover remains pending after approval until knowledge transfer and assets are confirmed separately.
+            {review?.kind === "withdrawal" ? "Reviewing the resignation withdrawal request" : "Reviewing the resignation"} for <span className="font-semibold text-slate-100">{review?.employee?.firstName} {review?.employee?.lastName}</span>.
           </p>
           <label htmlFor="resignation-remarks" className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-300">Admin Remarks</label>
           <textarea id="resignation-remarks" rows={4} maxLength={2000} value={remarks} onChange={(event) => setRemarks(event.target.value)} className="theme-field w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none" />

@@ -6,12 +6,14 @@ import {
   updateProfileDetails,
   changePassword,
   submitResignation,
+  withdrawResignation,
 } from "../features/auth/authSlice";
 import useAuth from "../hooks/useAuth";
 import Card from "../components/common/Card";
 import Button from "../components/common/Button";
 import Input from "../components/common/Input";
 import Select from "../components/common/Select";
+import Modal from "../components/common/Modal";
 import { GENDERS, BLOOD_GROUPS, MARITAL_STATUS } from "../constants/enums";
 import notify from "../utils/toast";
 import EmployeeDocuments from "../components/documents/EmployeeDocuments";
@@ -30,6 +32,8 @@ export default function Profile() {
   });
   const [pwd, setPwd] = useState({ currentPassword: "", newPassword: "" });
   const [resignationReason, setResignationReason] = useState("");
+  const [withdrawalOpen, setWithdrawalOpen] = useState(false);
+  const [withdrawalReason, setWithdrawalReason] = useState("");
   const [busy, setBusy] = useState("");
 
   useEffect(() => { dispatch(fetchProfile()); }, [dispatch]);
@@ -105,6 +109,23 @@ export default function Profile() {
 
   const resignation = user?.resignation;
   const fmtDate = (value) => value ? new Date(value).toLocaleDateString("en-IN") : "-";
+
+  const submitWithdrawal = async () => {
+    if (!withdrawalReason.trim()) {
+      notify.error("Withdrawal reason is required");
+      return;
+    }
+    setBusy("withdraw");
+    const res = await dispatch(withdrawResignation({ reason: withdrawalReason }));
+    setBusy("");
+    if (withdrawResignation.fulfilled.match(res)) {
+      notify.success(resignation?.status === "Submitted"
+        ? "Resignation withdrawn"
+        : "Withdrawal request sent for approval");
+      setWithdrawalOpen(false);
+      setWithdrawalReason("");
+    } else notify.error(res.payload);
+  };
 
   return (
     <div className="space-y-6">
@@ -185,6 +206,34 @@ export default function Profile() {
             <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4"><p className="text-sm text-slate-400">Reason</p><p className="mt-2 whitespace-pre-wrap text-sm text-slate-200">{resignation.reason || "—"}</p></div>
             <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4"><p className="text-sm text-slate-400">Admin Remarks</p><p className="mt-2 whitespace-pre-wrap text-sm text-slate-200">{resignation.adminRemarks || "No remarks provided"}</p></div>
           </div>
+          {["Submitted", "Approved"].includes(resignation.status) && (
+            <div className="border-t border-slate-700 pt-4">
+              <Button
+                variant="primary"
+                className="ring-2 ring-cyan-300/35 shadow-lg shadow-cyan-400/20"
+                onClick={() => {
+                  setWithdrawalReason("");
+                  setWithdrawalOpen(true);
+                }}
+              >
+                Withdraw Resignation
+              </Button>
+              <p className="mt-2 text-xs text-slate-500">
+                {resignation.status === "Approved"
+                  ? "An approved resignation requires Admin approval before it can be withdrawn."
+                  : "A resignation awaiting review can be withdrawn immediately."}
+              </p>
+            </div>
+          )}
+          {resignation.withdrawalReason && (
+            <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+              <p className="text-sm text-slate-400">Withdrawal Reason</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-slate-200">{resignation.withdrawalReason}</p>
+              {resignation.withdrawalAdminRemarks && (
+                <p className="mt-2 text-xs text-slate-400">Admin: {resignation.withdrawalAdminRemarks}</p>
+              )}
+            </div>
+          )}
           </div>
         ) : (
           <form onSubmit={submitResign} className="max-w-2xl space-y-4">
@@ -205,6 +254,35 @@ export default function Profile() {
           </form>
         )}
       </Card>}
+
+      <Modal
+        open={withdrawalOpen}
+        onClose={() => setWithdrawalOpen(false)}
+        title="Withdraw Resignation"
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setWithdrawalOpen(false)}>Cancel</Button>
+            <Button loading={busy === "withdraw"} onClick={submitWithdrawal}>
+              Submit Withdrawal
+            </Button>
+          </>
+        )}
+      >
+        <div className="space-y-3">
+          <p className="text-sm leading-6 text-slate-400">
+            Explain why you want to continue your employment. This request and its decision will remain in your HR record.
+          </p>
+          <label htmlFor="withdrawal-reason" className="mb-1 block text-sm font-medium text-slate-300">Reason</label>
+          <textarea
+            id="withdrawal-reason"
+            rows={4}
+            maxLength={2000}
+            value={withdrawalReason}
+            onChange={(event) => setWithdrawalReason(event.target.value)}
+            className="theme-field w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none"
+          />
+        </div>
+      </Modal>
     </div>
   );
 }

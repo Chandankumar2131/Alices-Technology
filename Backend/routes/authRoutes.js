@@ -17,6 +17,7 @@ const {
   changePassword,
   resetEmployeePassword,
   submitResignation,
+  withdrawResignation,
 } = require("../controller/authController");
 
 // Middleware
@@ -56,5 +57,6 @@ router.put("/profile/update", auth, updateProfile);
 router.put("/profile/details", auth, updateProfileDetails);
 router.post("/change-password", auth, changePassword);
 router.post("/resignation", auth, submitResignation);
+router.post("/resignation/withdraw", auth, withdrawResignation);
 
 module.exports = router;

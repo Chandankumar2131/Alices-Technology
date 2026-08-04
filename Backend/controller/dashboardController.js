@@ -787,10 +787,24 @@ exports.getEmployeeTimeline = async (req, res) => {
 // ==========================================
 exports.getAdminNotificationCounts = async (_req, res) => {
   try {
-    const [pendingLeaves, pendingAttendanceCorrections, pendingResignations] = await Promise.all([
+    const startOfToday = moment().tz(TZ).startOf("day").toDate();
+    const [pendingLeaves, pendingAttendanceCorrections, pendingResignations, overdueOffboarding] = await Promise.all([
       Leave.countDocuments({ status: "Pending" }),
       AttendanceCorrection.countDocuments({ status: "Pending" }),
-      User.countDocuments({ accountType: "Employee", "resignation.status": "Submitted" }),
+      User.countDocuments({
+        accountType: "Employee",
+        "resignation.status": { $in: ["Submitted", "Withdrawal Requested"] },
+      }),
+      User.countDocuments({
+        accountType: "Employee",
+        isActive: true,
+        "resignation.status": "Approved",
+        "resignation.lastWorkingDay": { $lt: startOfToday },
+        $or: [
+          { "resignation.knowledgeTransferCompleted": { $ne: true } },
+          { "resignation.assetsReturned": { $ne: true } },
+        ],
+      }),
     ]);
 
     return res.status(200).json({
@@ -799,7 +813,8 @@ exports.getAdminNotificationCounts = async (_req, res) => {
         pendingLeaves,
         pendingAttendanceCorrections,
         pendingResignations,
-        total: pendingLeaves + pendingAttendanceCorrections + pendingResignations,
+        overdueOffboarding,
+        total: pendingLeaves + pendingAttendanceCorrections + pendingResignations + overdueOffboarding,
       },
     });
   } catch (error) {

@@ -1,4 +1,5 @@
 import Spinner from "../../components/common/Spinner";
+import { Link } from "react-router-dom";
 import { APP_TIME_ZONE, fmtTime } from "../../utils/helpers";
 
 const STATUS_BG = {
@@ -87,11 +88,21 @@ export default function AttendanceCalendar({ calendar = [], loading, month, year
             const bg = STATUS_BG[visibleStatus] || "border-slate-800 bg-slate-950/30";
             const text = STATUS_TEXT[visibleStatus] || "text-slate-400";
             const dateText = DATE_TEXT[visibleStatus] || "text-slate-400";
+            const CalendarCell = isFuture ? "div" : Link;
 
             return (
-              <div
+              <CalendarCell
                 key={dateKey}
-                className={`min-h-16 rounded-lg border p-2 text-center text-xs shadow-sm ${bg}`}
+                {...(!isFuture ? {
+                  to: `/attendance/${dateKey}`,
+                  "aria-label": `View attendance details for ${dateKey}`,
+                  title: "View attendance details",
+                } : {})}
+                className={`min-h-16 rounded-lg border p-2 text-center text-xs shadow-sm ${bg} ${
+                  isFuture
+                    ? "cursor-default"
+                    : "cursor-pointer transition duration-200 hover:-translate-y-0.5 hover:ring-2 hover:ring-cyan-300/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+                }`}
               >
                 <div className="mb-1 flex items-center justify-center">
                   <span className={`font-bold ${dateText}`}>{getDayNumber(dateKey)}</span>
@@ -107,7 +118,7 @@ export default function AttendanceCalendar({ calendar = [], loading, month, year
                   </p>
                 )}
 
-              </div>
+              </CalendarCell>
             );
           })}
         </div>

@@ -19,6 +19,7 @@ const resignationRoutes = require("./routes/resignationRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const leadRoutes = require("./routes/leadRoutes");
 const { startAutoCheckoutJob } = require("./utils/autoCheckout");
+const { startAutoOffboardingJob } = require("./utils/autoOffboarding");
 const { initSocket } = require("./utils/socket");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
@@ -117,6 +118,7 @@ const io = initSocket(server, allowedOrigins);
 app.set("io", io);
 
 startAutoCheckoutJob();
+startAutoOffboardingJob(io);
 
 server.listen(PORT, () => {
   console.log(

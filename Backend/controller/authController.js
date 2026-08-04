@@ -3,6 +3,8 @@ const User = require("../model/User");
 const Profile = require("../model/Profile");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const moment = require("moment-timezone");
+const { TZ } = require("../utils/attendanceShift");
 const { getPagination, paginatedResponse } = require("../utils/pagination");
 require("dotenv").config();
 const EMPLOYEE_DEPARTMENTS = ["IT", "Marketing", "Lead Generation", "Sales"];
@@ -792,5 +794,87 @@ exports.submitResignation = async (req, res) => {
       success: false,
       message: error.message,
     });
+  }
+};
+
+// ==========================================
+// WITHDRAW RESIGNATION
+// ==========================================
+exports.withdrawResignation = async (req, res) => {
+  try {
+    if (req.user.accountType !== "Employee") {
+      return res.status(403).json({ success: false, message: "Only employees can withdraw resignations" });
+    }
+
+    const reason = String(req.body.reason || "").trim();
+    if (!reason) {
+      return res.status(400).json({ success: false, message: "Withdrawal reason is required" });
+    }
+
+    const user = await User.findById(req.user.id).populate("additionalDetails");
+    if (!user || !user.isActive) {
+      return res.status(403).json({ success: false, message: "Active employee account required" });
+    }
+
+    if (!["Submitted", "Approved"].includes(user.resignation?.status)) {
+      return res.status(409).json({
+        success: false,
+        message: "This resignation is not eligible for withdrawal",
+      });
+    }
+
+    const lastWorkingDay = moment(user.resignation.lastWorkingDay).tz(TZ).endOf("day");
+    if (moment().tz(TZ).isAfter(lastWorkingDay)) {
+      return res.status(409).json({
+        success: false,
+        message: "A resignation cannot be withdrawn after the last working day",
+      });
+    }
+
+    const immediateWithdrawal = user.resignation.status === "Submitted";
+    const previousStatus = user.resignation.status;
+    const now = new Date();
+    const updatedUser = await User.findOneAndUpdate(
+      {
+        _id: user._id,
+        isActive: true,
+        "resignation.status": previousStatus,
+      },
+      {
+        $set: {
+          "resignation.status": immediateWithdrawal ? "Withdrawn" : "Withdrawal Requested",
+          "resignation.withdrawalReason": reason,
+          "resignation.withdrawalRequestedAt": now,
+          "resignation.withdrawalDecision": immediateWithdrawal ? "Approved" : "Pending",
+          "resignation.withdrawalReviewedBy": null,
+          "resignation.withdrawalReviewedAt": immediateWithdrawal ? now : null,
+          "resignation.withdrawalAdminRemarks": immediateWithdrawal
+            ? "Withdrawn before resignation approval"
+            : "",
+        },
+      },
+      { new: true }
+    ).populate("additionalDetails");
+
+    if (!updatedUser) {
+      return res.status(409).json({
+        success: false,
+        message: "The resignation changed while processing. Refresh and try again.",
+      });
+    }
+
+    req.app?.get("io")?.to("role:admin").emit("admin:notifications", {
+      type: "resignation-withdrawal",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: immediateWithdrawal
+        ? "Resignation withdrawn successfully"
+        : "Resignation withdrawal sent for admin approval",
+      data: updatedUser,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
