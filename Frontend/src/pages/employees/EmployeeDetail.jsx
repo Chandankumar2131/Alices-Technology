@@ -70,6 +70,11 @@ export default function EmployeeDetail() {
             <p className="text-xs text-slate-500">
               {emp.email} · {emp.employeeId}
             </p>
+            {!emp.isActive && (
+              <p className="mt-1 text-xs font-semibold text-rose-300">
+                Inactive · Last working day {fmtDate(emp.employmentEndDate || emp.updatedAt)}
+              </p>
+            )}
           </div>
           <div className="w-full sm:ml-auto sm:w-auto">
             <Button variant="outline" onClick={() => navigate(-1)}>

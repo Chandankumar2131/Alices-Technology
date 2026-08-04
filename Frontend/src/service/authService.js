@@ -8,8 +8,10 @@ export const authService = {
   createEmployee: (payload) =>
     api.post("/auth/create-employee", payload).then(unwrap),
   getAllEmployees: () => api.get("/auth/employees").then(unwrap),
-  deactivateEmployee: (id) =>
-    api.patch(`/auth/deactivate/${id}`).then(unwrap),
+  deactivateEmployee: (id, payload) =>
+    api.patch(`/auth/deactivate/${id}`, payload).then(unwrap),
+  reactivateEmployee: (id, payload = {}) =>
+    api.patch(`/auth/reactivate/${id}`, payload).then(unwrap),
   resetEmployeePassword: (id, temporaryPassword) =>
     api.post(`/auth/reset-employee-password/${id}`, { temporaryPassword }).then(unwrap),
   getProfile: () => api.get("/auth/profile").then(unwrap),

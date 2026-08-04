@@ -10,8 +10,11 @@ export const fetchEmployees = createAsyncThunk("employee/list", async (_, { reje
 export const createEmployee = createAsyncThunk("employee/create", async (payload, { rejectWithValue }) => {
   try { return await authService.createEmployee(payload); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
-export const deactivateEmployee = createAsyncThunk("employee/deactivate", async (id, { rejectWithValue }) => {
-  try { return await authService.deactivateEmployee(id); } catch (e) { return rejectWithValue(getApiError(e)); }
+export const deactivateEmployee = createAsyncThunk("employee/deactivate", async ({ id, ...payload }, { rejectWithValue }) => {
+  try { return await authService.deactivateEmployee(id, payload); } catch (e) { return rejectWithValue(getApiError(e)); }
+});
+export const reactivateEmployee = createAsyncThunk("employee/reactivate", async (id, { rejectWithValue }) => {
+  try { return await authService.reactivateEmployee(id); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
 export const resetEmployeePassword = createAsyncThunk("employee/resetPassword", async ({ id, temporaryPassword }, { rejectWithValue }) => {
   try { return await authService.resetEmployeePassword(id, temporaryPassword); } catch (e) { return rejectWithValue(getApiError(e)); }
@@ -52,6 +55,9 @@ const slice = createSlice({
      .addCase(fetchEmployees.rejected, (s, a) => { s.loading = false; s.error = a.payload; })
      .addCase(createEmployee.fulfilled, (s, a) => { s.list.unshift(a.payload.data); })
      .addCase(deactivateEmployee.fulfilled, (s, a) => {
+        const u = a.payload.data; s.list = s.list.map((e) => e._id === u._id ? { ...e, ...u } : e);
+     })
+     .addCase(reactivateEmployee.fulfilled, (s, a) => {
         const u = a.payload.data; s.list = s.list.map((e) => e._id === u._id ? { ...e, ...u } : e);
      })
      .addCase(resetEmployeePassword.fulfilled, (s, a) => {
