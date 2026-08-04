@@ -659,14 +659,22 @@ exports.getEmployeeTimeline = async (req, res) => {
       });
     }
 
-    const employee = await User.findById(employeeId).select("joiningDate");
+    const employee = await User.findById(employeeId).select(
+      "joiningDate employmentEndDate isActive updatedAt resignation.lastWorkingDay resignation.status"
+    );
     if (!employee) {
       return res.status(404).json({ success: false, message: "Employee not found" });
     }
 
     const today = moment.tz(getShiftDate(), "YYYY-MM-DD", TZ);
     const monthStart = month.clone().startOf("month");
-    const monthEnd = moment.min(month.clone().endOf("month"), today);
+    const recordedEndDate = employee.employmentEndDate ||
+      (employee.resignation?.status === "Approved" ? employee.resignation.lastWorkingDay : null);
+    const effectiveEndDate = recordedEndDate || (!employee.isActive ? employee.updatedAt : null);
+    const employmentEnd = effectiveEndDate
+      ? moment(effectiveEndDate).tz(TZ).endOf("day")
+      : today.clone();
+    const monthEnd = moment.min(month.clone().endOf("month"), today, employmentEnd);
     const joiningDate = employee.joiningDate
       ? moment(employee.joiningDate).tz(TZ).startOf("day")
       : monthStart.clone();

@@ -65,6 +65,12 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
 
+    sessionVersion: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+
     department: {
       type: String,
       trim: true,
@@ -85,6 +91,26 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+
+    employmentEndDate: {
+      type: Date,
+      default: null,
+    },
+
+    offboardingHistory: [
+      {
+        action: {
+          type: String,
+          enum: ["Offboarded", "Reactivated"],
+          required: true,
+        },
+        effectiveDate: { type: Date },
+        reason: { type: String, trim: true, maxlength: 500 },
+        remarks: { type: String, trim: true, maxlength: 2000 },
+        performedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        performedAt: { type: Date, default: Date.now },
+      },
+    ],
 
     lastLogin: {
       type: Date,
@@ -130,6 +156,7 @@ const userSchema = new mongoose.Schema(
         delete ret.password;
         delete ret.token;
         delete ret.resetPasswordExpires;
+        delete ret.sessionVersion;
         return ret;
       },
     },
@@ -138,6 +165,7 @@ const userSchema = new mongoose.Schema(
         delete ret.password;
         delete ret.token;
         delete ret.resetPasswordExpires;
+        delete ret.sessionVersion;
         return ret;
       },
     },

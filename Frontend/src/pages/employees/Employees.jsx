@@ -5,6 +5,7 @@ import {
   fetchEmployees,
   createEmployee,
   deactivateEmployee,
+  reactivateEmployee,
   resetEmployeePassword,
   selectEmployee,
 } from "../../features/employee/employeeSlice";
@@ -39,6 +40,13 @@ export default function Employees() {
   const [form, setForm] = useState(empty);
   const [busy, setBusy] = useState(false);
   const [toDeactivate, setToDeactivate] = useState(null);
+  const [toReactivate, setToReactivate] = useState(null);
+  const [employeeFilter, setEmployeeFilter] = useState("active");
+  const [offboarding, setOffboarding] = useState({
+    lastWorkingDate: new Date().toISOString().slice(0, 10),
+    reason: "",
+    remarks: "",
+  });
   const [toResetPassword, setToResetPassword] = useState(null);
   const [temporaryPassword, setTemporaryPassword] = useState("");
 
@@ -65,12 +73,33 @@ export default function Employees() {
   };
 
   const confirmDeactivate = async () => {
+    if (!offboarding.lastWorkingDate || !offboarding.reason.trim()) {
+      notify.error("Last working date and offboarding reason are required");
+      return;
+    }
     setBusy(true);
-    const res = await dispatch(deactivateEmployee(toDeactivate._id));
+    const res = await dispatch(
+      deactivateEmployee({ id: toDeactivate._id, ...offboarding })
+    );
     setBusy(false);
     if (deactivateEmployee.fulfilled.match(res)) {
-      notify.success("Employee deactivated");
+      notify.success("Employee offboarded and their sessions were ended");
       setToDeactivate(null);
+      setOffboarding({
+        lastWorkingDate: new Date().toISOString().slice(0, 10),
+        reason: "",
+        remarks: "",
+      });
+    } else notify.error(res.payload);
+  };
+
+  const confirmReactivate = async () => {
+    setBusy(true);
+    const res = await dispatch(reactivateEmployee(toReactivate._id));
+    setBusy(false);
+    if (reactivateEmployee.fulfilled.match(res)) {
+      notify.success("Employee account reactivated");
+      setToReactivate(null);
     } else notify.error(res.payload);
   };
 
@@ -98,6 +127,10 @@ export default function Employees() {
 
   const activeCount = list.filter((employee) => employee.isActive).length;
   const inactiveCount = list.length - activeCount;
+  const filteredEmployees = list.filter((employee) => {
+    if (employeeFilter === "all") return true;
+    return employeeFilter === "active" ? employee.isActive : !employee.isActive;
+  });
 
   const columns = [
     {
@@ -134,6 +167,11 @@ export default function Employees() {
     },
     { key: "joiningDate", header: "Joined", render: (r) => fmtDate(r.joiningDate) },
     {
+      key: "employmentEndDate",
+      header: "Last Working",
+      render: (r) => (r.isActive ? "—" : fmtDate(r.employmentEndDate || r.updatedAt)),
+    },
+    {
       key: "isActive",
       header: "Status",
       render: (r) =>
@@ -163,9 +201,25 @@ export default function Employees() {
             <Button
               variant="danger"
               className="!px-2 !py-1"
-              onClick={() => setToDeactivate(r)}
+              onClick={() => {
+                setToDeactivate(r);
+                setOffboarding({
+                  lastWorkingDate: new Date().toISOString().slice(0, 10),
+                  reason: "",
+                  remarks: "",
+                });
+              }}
             >
-              Deactivate
+              Offboard
+            </Button>
+          )}
+          {!r.isActive && (
+            <Button
+              variant="success"
+              className="!px-2 !py-1"
+              onClick={() => setToReactivate(r)}
+            >
+              Reactivate
             </Button>
           )}
           {isSuperAdmin && r.isActive && (
@@ -194,10 +248,27 @@ export default function Employees() {
       </div>
 
       <Card
-        title="Employees"
+        title={employeeFilter === "inactive" ? "Archived Employees" : "Employees"}
         action={<Button onClick={() => setOpen(true)}>+ Add Employee</Button>}
       >
-        <Table columns={columns} data={list} loading={loading} emptyText="No employees yet" />
+        <div className="mb-5 max-w-xs">
+          <Select
+            label="Employee status"
+            value={employeeFilter}
+            onChange={(event) => setEmployeeFilter(event.target.value)}
+            options={[
+              { value: "active", label: "Active employees" },
+              { value: "inactive", label: "Archived / inactive" },
+              { value: "all", label: "All employees" },
+            ]}
+          />
+        </div>
+        <Table
+          columns={columns}
+          data={filteredEmployees}
+          loading={loading}
+          emptyText={employeeFilter === "inactive" ? "No archived employees" : "No employees found"}
+        />
       </Card>
 
       <Modal
@@ -240,21 +311,72 @@ export default function Employees() {
       <Modal
         open={!!toDeactivate}
         onClose={() => setToDeactivate(null)}
-        title="Deactivate Employee"
+        title="Offboard Employee"
         footer={
           <>
             <Button variant="secondary" onClick={() => setToDeactivate(null)}>
               Cancel
             </Button>
             <Button variant="danger" loading={busy} onClick={confirmDeactivate}>
-              Deactivate
+              Complete Offboarding
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-300">
+            Offboard <strong className="text-slate-100">{fullName(toDeactivate)}</strong>?
+            Their login and existing sessions will be disabled, while HR history is preserved.
+          </p>
+          <Input
+            label="Last Working Date"
+            type="date"
+            value={offboarding.lastWorkingDate}
+            min={toDeactivate?.joiningDate?.slice(0, 10)}
+            onChange={(event) =>
+              setOffboarding({ ...offboarding, lastWorkingDate: event.target.value })
+            }
+          />
+          <Input
+            label="Reason"
+            value={offboarding.reason}
+            onChange={(event) => setOffboarding({ ...offboarding, reason: event.target.value })}
+            placeholder="Example: Resignation, contract completed"
+          />
+          <div>
+            <label htmlFor="offboarding-remarks" className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-300">
+              Remarks (optional)
+            </label>
+            <textarea
+              id="offboarding-remarks"
+              rows={3}
+              value={offboarding.remarks}
+              onChange={(event) => setOffboarding({ ...offboarding, remarks: event.target.value })}
+              className="theme-field w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none focus:ring-2"
+              placeholder="Add handover or administrative notes"
+            />
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={!!toReactivate}
+        onClose={() => setToReactivate(null)}
+        title="Reactivate Employee"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setToReactivate(null)}>
+              Cancel
+            </Button>
+            <Button variant="success" loading={busy} onClick={confirmReactivate}>
+              Reactivate
             </Button>
           </>
         }
       >
         <p className="text-sm text-slate-300">
-          Deactivate <strong className="text-slate-100">{fullName(toDeactivate)}</strong>? They
-          won't be able to log in.
+          Reactivate <strong className="text-slate-100">{fullName(toReactivate)}</strong>?
+          They will be allowed to sign in again with their existing password.
         </p>
       </Modal>
 

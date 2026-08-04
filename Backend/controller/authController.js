@@ -228,7 +228,7 @@ exports.login = async (req, res) => {
 
     const user = await User.findOne({
       email: email.trim().toLowerCase(),
-    }).select("+password").populate("additionalDetails");
+    }).select("+password +sessionVersion").populate("additionalDetails");
 
     if (!user) {
       return res.status(404).json({
@@ -278,6 +278,7 @@ exports.login = async (req, res) => {
       id: user._id,
       email: user.email,
       accountType: user.accountType,
+      sessionVersion: user.sessionVersion || 0,
     };
 
     // Generate Token
@@ -386,19 +387,24 @@ exports.getAllEmployees =
 exports.deactivateEmployee =
   async (req, res) => {
     try {
-
       const { id } = req.params;
+      const { lastWorkingDate, reason, remarks = "" } = req.body;
 
-      const employee =
-        await User.findByIdAndUpdate(
-          id,
-          {
-            isActive: false,
-          },
-          {
-            new: true,
-          }
-        ).select("-password -token -resetPasswordExpires");
+      if (!lastWorkingDate || !reason?.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: "Last working date and offboarding reason are required",
+        });
+      }
+
+      const effectiveDate = new Date(`${lastWorkingDate}T12:00:00.000Z`);
+      if (Number.isNaN(effectiveDate.getTime())) {
+        return res.status(400).json({ success: false, message: "Invalid last working date" });
+      }
+
+      const employee = await User.findOne({ _id: id, accountType: "Employee" }).select(
+        "+sessionVersion"
+      );
 
       if (!employee) {
         return res.status(404).json({
@@ -407,6 +413,33 @@ exports.deactivateEmployee =
             "Employee not found",
         });
       }
+
+      if (!employee.isActive) {
+        return res.status(409).json({ success: false, message: "Employee is already inactive" });
+      }
+
+      if (employee.joiningDate && effectiveDate < employee.joiningDate) {
+        return res.status(400).json({
+          success: false,
+          message: "Last working date cannot be before the joining date",
+        });
+      }
+
+      employee.isActive = false;
+      employee.employmentEndDate = effectiveDate;
+      employee.sessionVersion = (employee.sessionVersion || 0) + 1;
+      employee.token = undefined;
+      employee.offboardingHistory.push({
+        action: "Offboarded",
+        effectiveDate,
+        reason: reason.trim(),
+        remarks: remarks.trim(),
+        performedBy: req.user.id,
+      });
+      await employee.save();
+
+      const io = req.app.get("io");
+      if (io) io.in(`user:${employee._id}`).disconnectSockets(true);
 
       return res.status(200).json({
         success: true,
@@ -427,6 +460,47 @@ exports.deactivateEmployee =
   };
 
 // ==========================================
+// REACTIVATE EMPLOYEE
+// ==========================================
+exports.reactivateEmployee = async (req, res) => {
+  try {
+    const employee = await User.findOne({
+      _id: req.params.id,
+      accountType: "Employee",
+    }).select("+sessionVersion");
+
+    if (!employee) {
+      return res.status(404).json({ success: false, message: "Employee not found" });
+    }
+    if (employee.isActive) {
+      return res.status(409).json({ success: false, message: "Employee is already active" });
+    }
+
+    employee.isActive = true;
+    employee.employmentEndDate = null;
+    employee.sessionVersion = (employee.sessionVersion || 0) + 1;
+    employee.offboardingHistory.push({
+      action: "Reactivated",
+      remarks: String(req.body.remarks || "").trim(),
+      performedBy: req.user.id,
+    });
+    await employee.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Employee reactivated successfully",
+      data: employee,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to reactivate employee",
+      error: error.message,
+    });
+  }
+};
+
+// ==========================================
 // RESET EMPLOYEE PASSWORD (SUPER ADMIN ONLY)
 // ==========================================
 exports.resetEmployeePassword = async (req, res) => {
@@ -441,7 +515,7 @@ exports.resetEmployeePassword = async (req, res) => {
       });
     }
 
-    const employee = await User.findById(id).select("+password");
+    const employee = await User.findById(id).select("+password +sessionVersion");
 
     if (!employee) {
       return res.status(404).json({
@@ -457,9 +531,20 @@ exports.resetEmployeePassword = async (req, res) => {
       });
     }
 
+    if (!employee.isActive) {
+      return res.status(409).json({
+        success: false,
+        message: "Reactivate the employee before resetting their password",
+      });
+    }
+
     employee.password = await bcrypt.hash(temporaryPassword, 10);
     employee.token = undefined;
+    employee.sessionVersion = (employee.sessionVersion || 0) + 1;
     await employee.save();
+
+    const io = req.app.get("io");
+    if (io) io.in(`user:${employee._id}`).disconnectSockets(true);
 
     const employeeResponse = employee.toObject();
 

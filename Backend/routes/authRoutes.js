@@ -9,6 +9,7 @@ const {
   createEmployee, 
   getAllEmployees,
   deactivateEmployee,
+  reactivateEmployee,
   createAdmin,
   getProfile,
   updateProfile,
@@ -39,6 +40,7 @@ router.get("/employees",auth,isAdmin,getAllEmployees);
 
 // Deactivate Employee
 router.patch("/deactivate/:id",auth,isAdmin,deactivateEmployee);
+router.patch("/reactivate/:id", auth, isAdmin, reactivateEmployee);
 
 // Reset Employee Password
 router.post("/reset-employee-password/:id", auth, isSuperAdmin, resetEmployeePassword);

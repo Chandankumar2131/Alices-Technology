@@ -21,10 +21,16 @@ const initSocket = (server, allowedOrigins) => {
       }
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id).select("_id accountType isActive");
+      const user = await User.findById(decoded.id).select(
+        "_id accountType isActive +sessionVersion"
+      );
 
       if (!user || !user.isActive) {
         return next(new Error("Invalid user"));
+      }
+
+      if ((decoded.sessionVersion || 0) !== (user.sessionVersion || 0)) {
+        return next(new Error("Session expired"));
       }
 
       if (user.accountType === "Candidate") {

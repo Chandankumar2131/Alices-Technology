@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const User = require("../model/User");
 require("dotenv").config();
 
 exports.auth = async (req, res, next) => {
@@ -23,8 +24,26 @@ exports.auth = async (req, res, next) => {
         process.env.JWT_SECRET
       );
 
+      const currentUser = await User.findById(decoded.id).select(
+        "accountType isActive +sessionVersion"
+      );
+
+      if (!currentUser || !currentUser.isActive) {
+        return res.status(401).json({
+          success: false,
+          message: "Your account is inactive. Please contact an administrator.",
+        });
+      }
+
+      if ((decoded.sessionVersion || 0) !== (currentUser.sessionVersion || 0)) {
+        return res.status(401).json({
+          success: false,
+          message: "Your session has expired. Please login again.",
+        });
+      }
+
       // Attach User To Request
-      req.user = decoded;
+      req.user = { ...decoded, accountType: currentUser.accountType };
 
       if (decoded.accountType === "Candidate") {
         const candidateApi = req.baseUrl === "/api/v1/candidates";
