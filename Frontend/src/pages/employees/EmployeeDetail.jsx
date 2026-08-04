@@ -18,6 +18,7 @@ import Table from "../../components/common/Table";
 import Modal from "../../components/common/Modal";
 import Spinner from "../../components/common/Spinner";
 import EmptyState from "../../components/ui/EmptyState";
+import Input from "../../components/common/Input";
 import { fmtDate, fmtTime, fmtMoney, fmtHours, fullName, monthName } from "../../utils/helpers";
 import notify from "../../utils/toast";
 import EmployeeDocuments from "../../components/documents/EmployeeDocuments";
@@ -30,7 +31,7 @@ export default function EmployeeDetail() {
   const dispatch = useDispatch();
   const [tab, setTab] = useState("Overview");
 
-  const { selected, dashboard, timeline, detailLoading } = useSelector(selectEmployee);
+  const { selected, dashboard, timeline, detailLoading, timelineLoading } = useSelector(selectEmployee);
   const { selected: payroll } = useSelector(selectPayroll);
   const { selected: salary } = useSelector(selectSalary);
 
@@ -41,7 +42,6 @@ export default function EmployeeDetail() {
   }, [dispatch, id]);
 
   useEffect(() => {
-    if (tab === "Attendance") dispatch(fetchEmployeeTimeline(id));
     if (tab === "Payroll") dispatch(fetchEmployeePayroll(id));
     if (tab === "Salary") dispatch(fetchEmployeeSalary(id));
   }, [dispatch, tab, id]);
@@ -96,7 +96,9 @@ export default function EmployeeDetail() {
       </div>
 
       {tab === "Overview" && <Overview selected={selected} dashboard={dashboard} profile={profile} />}
-      {tab === "Attendance" && <AttendanceTab timeline={timeline} employeeId={id} />}
+      {tab === "Attendance" && (
+        <AttendanceTab timeline={timeline} employeeId={id} loading={timelineLoading} />
+      )}
       {tab === "Leaves" && <LeavesTab dashboard={dashboard} />}
       {tab === "Payroll" && <PayrollTab payroll={payroll} />}
       {tab === "Salary" && <SalaryTab salary={salary} />}
@@ -172,11 +174,29 @@ function Overview({ selected, dashboard, profile }) {
   );
 }
 
-function AttendanceTab({ timeline, employeeId }) {
+function AttendanceTab({ timeline, employeeId, loading }) {
   const dispatch = useDispatch();
+  const currentMonth = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+  }).format(new Date());
+  const [month, setMonth] = useState(currentMonth);
   const [overrideTarget, setOverrideTarget] = useState(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchEmployeeTimeline({ id: employeeId, month }));
+  }, [dispatch, employeeId, month]);
+
+  const summary = timeline.reduce(
+    (totals, item) => {
+      totals[item.status] = (totals[item.status] || 0) + 1;
+      return totals;
+    },
+    {}
+  );
 
   const confirmOverride = async () => {
     if (!overrideTarget) return;
@@ -194,7 +214,7 @@ function AttendanceTab({ timeline, employeeId }) {
       notify.success("Half day marked present");
       setOverrideTarget(null);
       setReason("");
-      dispatch(fetchEmployeeTimeline(employeeId));
+      dispatch(fetchEmployeeTimeline({ id: employeeId, month }));
     } else {
       notify.error(res.payload);
     }
@@ -209,7 +229,7 @@ function AttendanceTab({ timeline, employeeId }) {
           to={`/employees/${employeeId}/attendance/${r.attendanceDate}`}
           className="cursor-pointer font-semibold text-cyan-300 transition hover:text-cyan-200"
         >
-          {fmtDate(r.date)}
+          {fmtDate(r.attendanceDate)}
         </Link>
       ),
     },
@@ -223,7 +243,7 @@ function AttendanceTab({ timeline, employeeId }) {
       key: "actions",
       header: "Actions",
       render: (r) =>
-        r.status === "Half Day" ? (
+        r.status === "Half Day" && !r.isSynthetic ? (
           <Button
             variant="success"
             className="!px-2 !py-1"
@@ -242,7 +262,32 @@ function AttendanceTab({ timeline, employeeId }) {
   return (
     <>
       <Card title="Attendance History">
-        <Table columns={columns} data={timeline} emptyText="No attendance records" />
+        <div className="mb-5 flex flex-col gap-4 border-b border-slate-800 pb-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="w-full max-w-xs">
+            <Input
+              type="month"
+              label="Attendance month"
+              value={month}
+              max={currentMonth}
+              onChange={(event) => setMonth(event.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {[
+              ["Present", summary.Present || 0],
+              ["Absent", summary.Absent || 0],
+              ["Half Day", summary["Half Day"] || 0],
+              ["Leave", summary.Leave || 0],
+              ["Weekend / Holiday", (summary.Weekend || 0) + (summary.Holiday || 0)],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2">
+                <p className="text-lg font-bold text-slate-100">{value}</p>
+                <p className="text-[11px] text-slate-500">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <Table columns={columns} data={timeline} loading={loading} emptyText="No attendance days in this month" />
       </Card>
 
       <Modal

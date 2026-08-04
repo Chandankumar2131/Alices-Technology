@@ -29,7 +29,7 @@ export default function LeadGeneration() {
   const columns = [...detailColumns, { key: "action", header: "Action", render: (row) => <Button variant="outline" className="min-h-8 px-2 py-1 text-xs" onClick={() => { setForwarding(row); setSalesEmployeeId(row.assignedSales?._id || ""); }}>{row.assignedSales ? "Reassign" : "Forward to Sales"}</Button> }];
   return <div className="space-y-6">
     <div><h1 className="text-2xl font-bold text-slate-50">Lead Generation</h1><p className="mt-1 text-sm text-slate-400">Create candidate leads and forward them to the Sales team.</p></div>
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3"><StatCard label="Leads Generated" value={rows.length} /><StatCard label="Forwarded" value={rows.filter((row) => row.assignedSales).length} /><StatCard label="Converted" value={rows.filter((row) => row.status === "Converted").length} /></div>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3"><StatCard label="Leads Generated" value={rows.length} /><StatCard label="Forwarded" value={rows.filter((row) => row.assignedSales).length} /><StatCard label="Closed" value={rows.filter((row) => row.status === "Closed").length} /></div>
     <Card
       title="My Lead Records"
       action={<Button onClick={() => setOpen(true)}>+ Add Lead</Button>}

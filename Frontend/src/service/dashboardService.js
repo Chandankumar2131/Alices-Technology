@@ -14,8 +14,8 @@ export const dashboardService = {
   getLateEmployees: () => api.get("/dashboard/late-employees").then(unwrap),
   getEmployeeDashboard: (employeeId) =>
     api.get(`/dashboard/employee/${employeeId}`).then(unwrap),
-  getEmployeeTimeline: (employeeId) =>
-    api.get(`/dashboard/employee/${employeeId}/timeline`).then(unwrap),
+  getEmployeeTimeline: (employeeId, month) =>
+    api.get(`/dashboard/employee/${employeeId}/timeline`, { params: { month } }).then(unwrap),
   getEmployeeDayDetail: (employeeId, date) =>
     api.get(`/dashboard/employee/${employeeId}/day/${date}`).then(unwrap),
   getEmployeeDetail: (employeeId) =>

@@ -160,17 +160,12 @@ export default function Resignations() {
 
   return (
     <div className="motion-page space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">Employee offboarding</p>
-          <h1 className="mt-1.5 text-2xl font-bold text-slate-50 sm:text-3xl">Resignation Management</h1>
-          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-400">
-            Review submitted resignations and monitor knowledge transfer and asset-return milestones.
-          </p>
-        </div>
-        <div className="rounded-lg border border-cyan-300/15 bg-cyan-300/[0.06] px-3 py-2 text-xs text-cyan-100">
-          Only employees with a resignation request are shown
-        </div>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">Employee offboarding</p>
+        <h1 className="mt-1.5 text-2xl font-bold text-slate-50 sm:text-3xl">Resignation Management</h1>
+        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-400">
+          Review submitted resignations and monitor knowledge transfer and asset-return milestones.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

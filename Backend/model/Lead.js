@@ -1,13 +1,23 @@
 const mongoose = require("mongoose");
 
-const LEAD_STATUSES = ["New", "Forwarded", "Contacted", "Follow Up", "Converted", "Rejected"];
+const LEAD_STATUSES = [
+  "Follow-UP",
+  "Closed",
+  "Not Interested",
+  "Call Not pickup",
+  "Reschedule",
+  "Meeting Scheduled",
+  "call scheduled",
+];
+const LEGACY_STATUSES = ["New", "Forwarded", "Contacted", "Follow Up", "Converted", "Rejected"];
+const STORED_LEAD_STATUSES = [...new Set([...LEGACY_STATUSES, ...LEAD_STATUSES])];
 
 const leadSchema = new mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
   assignedSales: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
   leadComment: { type: String, trim: true, maxlength: 2000, default: "" },
   salesComment: { type: String, trim: true, maxlength: 2000, default: "" },
-  status: { type: String, enum: LEAD_STATUSES, default: "New", index: true },
+  status: { type: String, enum: STORED_LEAD_STATUSES, default: "New", index: true },
   generatedDate: { type: Date, default: Date.now, required: true, index: true },
   workDate: { type: String, required: true, match: /^\d{4}-\d{2}-\d{2}$/, index: true },
   forwardedAt: { type: Date },

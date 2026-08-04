@@ -1,7 +1,15 @@
 import Badge from "../../components/common/Badge";
 import { fmtDate, fullName } from "../../utils/helpers";
 
-export const LEAD_STATUSES = ["New", "Forwarded", "Contacted", "Follow Up", "Converted", "Rejected"];
+export const LEAD_STATUSES = [
+  "Follow-UP",
+  "Closed",
+  "Not Interested",
+  "Call Not pickup",
+  "Reschedule",
+  "Meeting Scheduled",
+  "call scheduled",
+];
 export const todayIndia = () => {
   const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" });
   const parts = Object.fromEntries(formatter.formatToParts(new Date()).map((part) => [part.type, part.value]));

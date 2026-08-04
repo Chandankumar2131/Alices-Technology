@@ -10,6 +10,11 @@ import notify from "../../utils/toast";
 
 const getId = (value) => String(value?._id || value?.id || value || "");
 
+const sortMessagesByTime = (items = []) =>
+  [...items].sort(
+    (a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+  );
+
 const formatTime = (date) =>
   new Intl.DateTimeFormat("en", {
     hour: "2-digit",
@@ -291,6 +296,7 @@ export default function Chat() {
     setEmojiPickerOpen(false);
     setGroupManagerOpen(false);
     setEditingMembers([]);
+    setMessages([]);
     setSelectedTarget(nextTarget);
   };
 
@@ -533,7 +539,7 @@ export default function Chat() {
           const res = await chatService.getConversationMessages(
             getId(selectedTarget.data)
           );
-          setMessages(res.data?.messages || []);
+          setMessages(sortMessagesByTime(res.data?.messages || []));
           await chatService.markGroupRead(getId(selectedTarget.data));
           setConversations((prev) =>
             prev.map((conversation) =>
@@ -547,7 +553,7 @@ export default function Chat() {
 
         const userId = getId(selectedTarget.data);
         const res = await chatService.getDirectMessages(userId);
-        setMessages(res.data?.messages || []);
+        setMessages(sortMessagesByTime(res.data?.messages || []));
         const readRes = await chatService.markRead(userId);
         setConversations((prev) =>
           prev.map((conversation) => {
@@ -579,10 +585,19 @@ export default function Chat() {
 
   useEffect(() => {
     const container = messagesContainerRef.current;
-    if (container) {
+    if (!container || loadingMessages) return undefined;
+
+    const scrollToLatest = () => {
       container.scrollTop = container.scrollHeight;
-    }
-  }, [messages]);
+    };
+
+    scrollToLatest();
+    const firstFrame = requestAnimationFrame(() => {
+      scrollToLatest();
+      requestAnimationFrame(scrollToLatest);
+    });
+    return () => cancelAnimationFrame(firstFrame);
+  }, [loadingMessages, messages, selectedTarget]);
 
   useEffect(() => {
     if (!emojiPickerOpen) return undefined;

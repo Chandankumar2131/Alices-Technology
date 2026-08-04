@@ -24,8 +24,9 @@ export const fetchEmployeeDetail = createAsyncThunk("employee/detail", async (id
 export const fetchEmployeeDashboard = createAsyncThunk("employee/dashboard", async (id, { rejectWithValue }) => {
   try { return await dashboardService.getEmployeeDashboard(id); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
-export const fetchEmployeeTimeline = createAsyncThunk("employee/timeline", async (id, { rejectWithValue }) => {
-  try { return await dashboardService.getEmployeeTimeline(id); } catch (e) { return rejectWithValue(getApiError(e)); }
+export const fetchEmployeeTimeline = createAsyncThunk("employee/timeline", async (payload, { rejectWithValue }) => {
+  const { id, month } = typeof payload === "object" ? payload : { id: payload };
+  try { return await dashboardService.getEmployeeTimeline(id, month); } catch (e) { return rejectWithValue(getApiError(e)); }
 });
 export const fetchEmployeeDayDetail = createAsyncThunk("employee/dayDetail", async ({ id, date }, { rejectWithValue }) => {
   try { return await dashboardService.getEmployeeDayDetail(id, date); } catch (e) { return rejectWithValue(getApiError(e)); }
@@ -41,6 +42,7 @@ const slice = createSlice({
     dayDetail: null,
     loading: false,
     detailLoading: false,
+    timelineLoading: false,
     error: null,
   },
   reducers: { clearSelectedEmployee: (s) => { s.selected = null; s.dashboard = null; s.timeline = []; s.dayDetail = null; } },
@@ -59,7 +61,9 @@ const slice = createSlice({
      .addCase(fetchEmployeeDetail.fulfilled, (s, a) => { s.detailLoading = false; s.selected = a.payload.data; })
      .addCase(fetchEmployeeDetail.rejected, (s, a) => { s.detailLoading = false; s.error = a.payload; })
      .addCase(fetchEmployeeDashboard.fulfilled, (s, a) => { s.dashboard = a.payload.data; })
-     .addCase(fetchEmployeeTimeline.fulfilled, (s, a) => { s.timeline = a.payload.data; })
+     .addCase(fetchEmployeeTimeline.pending, (s) => { s.timelineLoading = true; })
+     .addCase(fetchEmployeeTimeline.fulfilled, (s, a) => { s.timelineLoading = false; s.timeline = a.payload.data; })
+     .addCase(fetchEmployeeTimeline.rejected, (s, a) => { s.timelineLoading = false; s.error = a.payload; })
      .addCase(fetchEmployeeDayDetail.pending, (s) => { s.detailLoading = true; s.dayDetail = null; })
      .addCase(fetchEmployeeDayDetail.fulfilled, (s, a) => { s.detailLoading = false; s.dayDetail = a.payload.data; })
      .addCase(fetchEmployeeDayDetail.rejected, (s, a) => { s.detailLoading = false; s.error = a.payload; });

@@ -5,6 +5,7 @@ const Payroll = require("../model/Payroll");
 const BreakLog = require("../model/BreakLog");
 const AttendanceCorrection = require("../model/AttendanceCorrection");
 const Candidate = require("../model/Candidate");
+const Holiday = require("../model/Holiday");
 const { syncLeaveBalance } = require("../utils/leaveBucket");
 const moment = require("moment-timezone");
 const { TZ, getShiftDate } = require("../utils/attendanceShift");
@@ -647,18 +648,98 @@ exports.getLateEmployees = async (req, res) => {
 // ==========================================
 exports.getEmployeeTimeline = async (req, res) => {
   try {
-
     const { employeeId } = req.params;
+    const requestedMonth = req.query.month || moment().tz(TZ).format("YYYY-MM");
+    const month = moment.tz(requestedMonth, "YYYY-MM", true, TZ);
 
-    const attendance = await Attendance.find({
-      employee: employeeId,
-    })
-      .populate("breakLogs")
-      .sort({
-        attendanceDate: -1,
+    if (!month.isValid()) {
+      return res.status(400).json({
+        success: false,
+        message: "Month must use YYYY-MM format",
       });
+    }
 
-    const timeline = attendance.map((record) => {
+    const employee = await User.findById(employeeId).select("joiningDate");
+    if (!employee) {
+      return res.status(404).json({ success: false, message: "Employee not found" });
+    }
+
+    const today = moment.tz(getShiftDate(), "YYYY-MM-DD", TZ);
+    const monthStart = month.clone().startOf("month");
+    const monthEnd = moment.min(month.clone().endOf("month"), today);
+    const joiningDate = employee.joiningDate
+      ? moment(employee.joiningDate).tz(TZ).startOf("day")
+      : monthStart.clone();
+    const rangeStart = moment.max(monthStart, joiningDate);
+
+    if (rangeStart.isAfter(monthEnd, "day")) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        data: [],
+        meta: { month: requestedMonth },
+      });
+    }
+
+    const startKey = rangeStart.format("YYYY-MM-DD");
+    const endKey = monthEnd.format("YYYY-MM-DD");
+    const rangeStartDate = rangeStart.clone().startOf("day").toDate();
+    const rangeEndDate = monthEnd.clone().endOf("day").toDate();
+
+    const [attendance, approvedLeaves, holidays] = await Promise.all([
+      Attendance.find({
+        employee: employeeId,
+        attendanceDate: { $gte: startKey, $lte: endKey },
+      }).populate("breakLogs"),
+      Leave.find({
+        employee: employeeId,
+        status: "Approved",
+        startDate: { $lte: rangeEndDate },
+        endDate: { $gte: rangeStartDate },
+      }).select("startDate endDate leaveType"),
+      Holiday.find({ date: { $gte: startKey, $lte: endKey } }).select("date name"),
+    ]);
+
+    const attendanceByDate = new Map(attendance.map((record) => [record.attendanceDate, record]));
+    const holidayByDate = new Map(holidays.map((holiday) => [holiday.date, holiday]));
+    const timeline = [];
+
+    for (const day = rangeStart.clone(); day.isSameOrBefore(monthEnd, "day"); day.add(1, "day")) {
+      const dateKey = day.format("YYYY-MM-DD");
+      const record = attendanceByDate.get(dateKey);
+
+      if (!record) {
+        const approvedLeave = approvedLeaves.find((leave) =>
+          day.isBetween(
+            moment(leave.startDate).tz(TZ).startOf("day"),
+            moment(leave.endDate).tz(TZ).endOf("day"),
+            "day",
+            "[]"
+          )
+        );
+        const holiday = holidayByDate.get(dateKey);
+        const isWeekend = [0, 6].includes(day.day());
+        const status = approvedLeave ? "Leave" : holiday ? "Holiday" : isWeekend ? "Weekend" : "Absent";
+
+        timeline.push({
+          _id: `calendar-${dateKey}`,
+          attendanceDate: dateKey,
+          date: dateKey,
+          dayName: day.format("dddd"),
+          status,
+          checkIn: null,
+          checkOut: null,
+          totalHours: 0,
+          productiveHours: 0,
+          lateArrival: false,
+          earlyLogout: false,
+          attendanceSource: "Calendar",
+          remarks: approvedLeave?.leaveType || holiday?.name || "",
+          isSynthetic: true,
+        });
+        continue;
+      }
+
       const totalBreakMinutes = (record.breakLogs || []).reduce((sum, b) => {
         if (b.duration) return sum + b.duration;
         if (b.status === "Active" && b.breakStart) {
@@ -668,17 +749,20 @@ exports.getEmployeeTimeline = async (req, res) => {
       }, 0);
       const liveHours = getLiveAttendanceHours(record, totalBreakMinutes);
 
-      return {
+      timeline.push({
         ...record.toObject(),
         totalHours: liveHours.totalHours,
         productiveHours: liveHours.productiveHours,
-      };
-    });
+      });
+    }
+
+    timeline.sort((a, b) => b.attendanceDate.localeCompare(a.attendanceDate));
 
     return res.status(200).json({
       success: true,
       count: timeline.length,
       data: timeline,
+      meta: { month: requestedMonth, from: startKey, to: endKey },
     });
 
   } catch (error) {
@@ -725,8 +809,12 @@ exports.getEmployeeDayDetail = async (req, res) => {
   try {
     const { employeeId, date } = req.params;
 
+    if (!moment.tz(date, "YYYY-MM-DD", true, TZ).isValid()) {
+      return res.status(400).json({ success: false, message: "Date must use YYYY-MM-DD format" });
+    }
+
     const employee = await User.findById(employeeId)
-      .select("firstName lastName email employeeId department designation image");
+      .select("firstName lastName email employeeId department designation image joiningDate");
 
     if (!employee) {
       return res.status(404).json({
@@ -735,21 +823,49 @@ exports.getEmployeeDayDetail = async (req, res) => {
       });
     }
 
-    const attendance = await Attendance.findOne({
+    let attendance = await Attendance.findOne({
       employee: employeeId,
       attendanceDate: date,
     });
 
     if (!attendance) {
-      return res.status(404).json({
-        success: false,
-        message: "Attendance record not found for this date",
-      });
+      const day = moment.tz(date, "YYYY-MM-DD", TZ);
+      const [approvedLeave, holiday] = await Promise.all([
+        Leave.findOne({
+          employee: employeeId,
+          status: "Approved",
+          startDate: { $lte: day.clone().endOf("day").toDate() },
+          endDate: { $gte: day.clone().startOf("day").toDate() },
+        }).select("leaveType"),
+        Holiday.findOne({ date }).select("name"),
+      ]);
+      const status = approvedLeave
+        ? "Leave"
+        : holiday
+        ? "Holiday"
+        : [0, 6].includes(day.day())
+        ? "Weekend"
+        : "Absent";
+
+      attendance = {
+        attendanceDate: date,
+        date,
+        status,
+        checkIn: null,
+        checkOut: null,
+        totalHours: 0,
+        productiveHours: 0,
+        lateArrival: false,
+        earlyLogout: false,
+        attendanceSource: "Calendar",
+        remarks: approvedLeave?.leaveType || holiday?.name || "",
+        isSynthetic: true,
+      };
     }
 
-    const breaks = await BreakLog.find({
-      attendance: attendance._id,
-    }).sort({ breakStart: 1 });
+    const breaks = attendance._id
+      ? await BreakLog.find({ attendance: attendance._id }).sort({ breakStart: 1 })
+      : [];
 
     const totalBreakMinutes = breaks.reduce((sum, item) => {
       if (item.duration) return sum + item.duration;
@@ -760,13 +876,14 @@ exports.getEmployeeDayDetail = async (req, res) => {
     }, 0);
 
     const liveHours = getLiveAttendanceHours(attendance, totalBreakMinutes);
+    const attendanceData = attendance.toObject ? attendance.toObject() : attendance;
 
     return res.status(200).json({
       success: true,
       data: {
         employee,
         attendance: {
-          ...attendance.toObject(),
+          ...attendanceData,
           totalHours: liveHours.totalHours,
           productiveHours: liveHours.productiveHours,
         },
