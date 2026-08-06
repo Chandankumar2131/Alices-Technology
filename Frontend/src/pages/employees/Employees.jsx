@@ -7,6 +7,7 @@ import {
   deactivateEmployee,
   reactivateEmployee,
   resetEmployeePassword,
+  updateEmployeeEmail,
   selectEmployee,
 } from "../../features/employee/employeeSlice";
 import useAuth from "../../hooks/useAuth";
@@ -49,6 +50,8 @@ export default function Employees() {
   });
   const [toResetPassword, setToResetPassword] = useState(null);
   const [temporaryPassword, setTemporaryPassword] = useState("");
+  const [emailUser, setEmailUser] = useState(null);
+  const [newEmail, setNewEmail] = useState("");
 
   useEffect(() => {
     dispatch(fetchEmployees());
@@ -125,6 +128,18 @@ export default function Employees() {
     } else notify.error(res.payload);
   };
 
+  const confirmEmailChange = async () => {
+    if (!newEmail.trim()) return notify.error("Enter a valid email address");
+    setBusy(true);
+    const res = await dispatch(updateEmployeeEmail({ id: emailUser._id, email: newEmail }));
+    setBusy(false);
+    if (updateEmployeeEmail.fulfilled.match(res)) {
+      notify.success("Login email updated");
+      setEmailUser(null);
+      setNewEmail("");
+    } else notify.error(res.payload);
+  };
+
   const activeCount = list.filter((employee) => employee.isActive).length;
   const inactiveCount = list.length - activeCount;
   const filteredEmployees = list.filter((employee) => {
@@ -196,6 +211,13 @@ export default function Employees() {
             onClick={() => navigate(`/employees/${r._id}`)}
           >
             View
+          </Button>
+          <Button
+            variant="outline"
+            className="!px-2 !py-1"
+            onClick={() => { setEmailUser(r); setNewEmail(r.email || ""); }}
+          >
+            Change Email
           </Button>
           {r.isActive && (
             <Button
@@ -356,6 +378,18 @@ export default function Employees() {
               placeholder="Add handover or administrative notes"
             />
           </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={!!emailUser}
+        onClose={() => setEmailUser(null)}
+        title={`Change Login Email · ${fullName(emailUser)}`}
+        footer={<><Button variant="secondary" onClick={() => setEmailUser(null)}>Cancel</Button><Button loading={busy} onClick={confirmEmailChange}>Save Email</Button></>}
+      >
+        <div className="space-y-3">
+          <Input label="New Login Email" type="email" value={newEmail} onChange={(event) => setNewEmail(event.target.value)} />
+          <p className="text-xs text-slate-400">The employee will be signed out and must use this email for their next login.</p>
         </div>
       </Modal>
 

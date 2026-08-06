@@ -893,26 +893,28 @@ export default function Chat() {
 
   return (
     <div className="theme-chat grid h-[calc(100vh-8rem)] min-h-[34rem] gap-4 lg:grid-cols-[22rem_1fr]">
-      <aside className="flex min-h-0 flex-col rounded-lg border border-white/10 bg-slate-950/55 p-3 shadow-xl shadow-black/10">
-        <div className="flex items-start justify-between gap-3 px-2 pb-3">
+      <aside className="theme-chat-panel flex min-h-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/55 shadow-xl shadow-black/10">
+        <div className="flex items-start justify-between gap-3 border-b border-white/10 px-5 py-4">
           <div>
-            <h1 className="text-xl font-bold text-slate-50">Chat</h1>
-            <p className="mt-1 text-sm text-slate-400">Direct messages and groups.</p>
-            <p
-              className={`mt-1 text-xs font-semibold ${
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-300">Workspace</p>
+            <h1 className="mt-1 text-xl font-bold text-slate-50">Messages</h1>
+            <p className="mt-1 text-sm text-slate-400">Connect with your team securely.</p>
+            <div
+              className={`mt-2 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
                 socketStatus === "connected"
-                  ? "text-lime-300"
+                  ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-200"
                   : socketStatus === "error"
-                    ? "text-rose-300"
-                    : "text-amber-300"
+                    ? "border-rose-300/20 bg-rose-300/10 text-rose-200"
+                    : "border-amber-300/20 bg-amber-300/10 text-amber-200"
               }`}
             >
+              <span className="h-1.5 w-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]" />
               {socketStatus === "connected"
-                ? "Realtime connected"
+                ? "Connected"
                 : socketStatus === "error"
-                  ? "Realtime connection failed"
-                  : "Realtime connecting"}
-            </p>
+                  ? "Connection unavailable"
+                  : "Connecting"}
+            </div>
           </div>
           {canCreateGroup && (
             <button
@@ -970,11 +972,13 @@ export default function Chat() {
           </form>
         )}
 
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-4">
           <div>
-            <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-              Groups
-            </p>
+            <div className="mb-2 flex items-center gap-3 px-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Groups</p>
+              <span className="h-px flex-1 bg-white/10" />
+              <span className="text-[10px] font-semibold text-slate-500">{groups.length}</span>
+            </div>
             <div className="space-y-1">
               {groups.length === 0 ? (
                 <p className="px-2 text-sm text-slate-500">No groups yet.</p>
@@ -989,13 +993,13 @@ export default function Chat() {
                       onClick={() =>
                         selectChatTarget({ type: "group", data: conversation })
                       }
-                      className={`flex w-full items-center gap-3 rounded-lg border px-3 py-3 text-left transition ${
+                      className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
                         active
-                          ? "border-cyan-300/35 bg-cyan-300/12"
-                          : "border-transparent hover:border-white/10 hover:bg-white/[0.04]"
+                          ? "border-cyan-300/30 bg-cyan-300/10 shadow-lg shadow-cyan-950/10"
+                          : "border-transparent hover:border-white/10 hover:bg-white/[0.045]"
                       }`}
                     >
-                      <span className="theme-chat-group-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-cyan-300/10 text-sm font-bold text-cyan-100">
+                      <span className="theme-chat-group-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-cyan-300/10 text-sm font-bold text-cyan-100 transition group-hover:border-cyan-300/25">
                         #
                       </span>
                       <span className="min-w-0 flex-1">
@@ -1021,9 +1025,11 @@ export default function Chat() {
           </div>
 
           <div>
-            <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-              People
-            </p>
+            <div className="mb-2 flex items-center gap-3 px-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">People</p>
+              <span className="h-px flex-1 bg-white/10" />
+              <span className="text-[10px] font-semibold text-slate-500">{orderedUsers.length}</span>
+            </div>
             <div className="space-y-1">
               {orderedUsers.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-white/10 p-4 text-sm text-slate-400">
@@ -1041,10 +1047,10 @@ export default function Chat() {
                       type="button"
                       key={getId(user)}
                       onClick={() => selectChatTarget({ type: "direct", data: user })}
-                      className={`flex w-full items-center gap-3 rounded-lg border px-3 py-3 text-left transition ${
+                      className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
                         active
-                          ? "border-cyan-300/35 bg-cyan-300/12"
-                          : "border-transparent hover:border-white/10 hover:bg-white/[0.04]"
+                          ? "border-cyan-300/30 bg-cyan-300/10 shadow-lg shadow-cyan-950/10"
+                          : "border-transparent hover:border-white/10 hover:bg-white/[0.045]"
                       }`}
                     >
                       <img
@@ -1052,7 +1058,7 @@ export default function Chat() {
                         alt=""
                         width="40"
                         height="40"
-                        className="h-10 w-10 rounded-lg border border-white/10 object-cover"
+                        className="h-10 w-10 rounded-xl border border-white/10 object-cover ring-1 ring-white/5 transition group-hover:border-cyan-300/25"
                       />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-semibold text-slate-100">
@@ -1078,10 +1084,10 @@ export default function Chat() {
         </div>
       </aside>
 
-      <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-slate-950/45 shadow-xl shadow-black/10">
+      <section className="theme-chat-panel flex min-h-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/45 shadow-xl shadow-black/10">
         {selectedTarget ? (
           <>
-            <header className="flex items-center gap-3 border-b border-white/10 p-4">
+            <header className="flex items-center gap-3 border-b border-white/10 bg-slate-950/35 px-5 py-4 backdrop-blur-xl">
               {selectedTarget.type === "group" ? (
                 <span className="theme-chat-group-icon flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-cyan-300/10 text-lg font-bold text-cyan-100">
                   #
@@ -1092,7 +1098,7 @@ export default function Chat() {
                   alt=""
                   width="44"
                   height="44"
-                  className="h-11 w-11 rounded-lg border border-white/10 object-cover"
+                  className="h-11 w-11 rounded-xl border border-cyan-300/20 object-cover ring-2 ring-cyan-300/5"
                 />
               )}
               <div className="min-w-0 flex-1">
@@ -1206,13 +1212,17 @@ export default function Chat() {
 
             <div
               ref={messagesContainerRef}
-              className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4"
+              className="theme-chat-messages min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-5"
             >
               {loadingMessages ? (
                 <Spinner />
               ) : messages.length === 0 ? (
-                <div className="flex h-full items-center justify-center text-sm text-slate-400">
-                  Start the conversation.
+                <div className="flex h-full items-center justify-center text-center text-sm text-slate-400">
+                  <div>
+                    <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-300/10 text-2xl text-cyan-200">✦</span>
+                    <p className="mt-4 font-semibold text-slate-200">Start the conversation</p>
+                    <p className="mt-1 text-xs text-slate-400">Send a message or share an attachment.</p>
+                  </div>
                 </div>
               ) : (
                 messages.map((message) => {
@@ -1224,10 +1234,10 @@ export default function Chat() {
                       className={`flex ${mine ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-[min(34rem,82%)] rounded-lg px-4 py-2.5 ${
+                        className={`max-w-[min(34rem,82%)] rounded-2xl px-4 py-2.5 shadow-md ${
                           mine
-                            ? "bg-cyan-300 text-slate-950"
-                            : "border border-white/10 bg-white/[0.05] text-slate-100"
+                            ? "rounded-br-md border border-cyan-200/20 bg-gradient-to-br from-cyan-200 to-cyan-400 text-slate-950 shadow-cyan-950/15"
+                            : "rounded-bl-md border border-white/10 bg-slate-800/70 text-slate-100 shadow-black/10"
                         }`}
                       >
                         {!mine && selectedTarget.type === "group" && (
@@ -1311,7 +1321,7 @@ export default function Chat() {
 
             <form
               onSubmit={handleSubmit}
-              className="relative flex shrink-0 gap-3 border-t border-white/10 bg-slate-950/80 p-3"
+              className="relative flex shrink-0 gap-2 border-t border-white/10 bg-slate-950/75 p-3 backdrop-blur-xl sm:gap-3 sm:p-4"
             >
               {pendingAttachment && (
                 <div className="theme-card absolute bottom-full right-3 mb-2 flex max-w-[min(24rem,calc(100%-1.5rem))] items-center gap-3 rounded-xl border border-cyan-300/20 bg-slate-950/95 p-3 shadow-2xl shadow-cyan-950/40 backdrop-blur">
@@ -1395,26 +1405,31 @@ export default function Chat() {
                 }}
                 rows={1}
                 maxLength={2000}
-                placeholder="Type a message"
-                className="theme-field min-h-10 flex-1 resize-none rounded-lg border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/45"
+                placeholder="Write a message..."
+                className="theme-field min-h-11 flex-1 resize-none rounded-xl border border-white/10 bg-slate-950/70 px-4 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/45"
               />
               <Button
                 type="submit"
                 loading={sending}
                 disabled={uploadingAttachment || (!draft.trim() && !pendingAttachment)}
-                className="min-h-10 self-end"
+                className="min-h-11 self-end rounded-xl px-5"
               >
-                Send
+                Send <span aria-hidden="true">→</span>
               </Button>
             </form>
           </>
         ) : (
-          <div className="flex flex-1 items-center justify-center px-6 text-center">
-            <div>
-              <p className="text-base font-semibold text-slate-200">Select a conversation</p>
-              <p className="mt-1 text-sm text-slate-400">
-                Choose a person or group from the contact list to open messages.
+          <div className="theme-chat-empty flex flex-1 items-center justify-center px-6 text-center">
+            <div className="max-w-sm">
+              <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-cyan-300/20 bg-cyan-300/[0.08] text-3xl text-cyan-200 shadow-2xl shadow-cyan-950/20">✦</span>
+              <p className="mt-6 text-lg font-bold text-slate-100">Your conversations</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">
+                Select a colleague or group to start a secure workspace conversation.
               </p>
+              <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.07] px-3 py-1.5 text-xs font-medium text-emerald-200">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                Realtime messaging ready
+              </div>
             </div>
           </div>
         )}

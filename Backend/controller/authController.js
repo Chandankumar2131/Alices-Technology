@@ -8,6 +8,40 @@ const { TZ } = require("../utils/attendanceShift");
 const { getPagination, paginatedResponse } = require("../utils/pagination");
 require("dotenv").config();
 const EMPLOYEE_DEPARTMENTS = ["IT", "Marketing", "Lead Generation", "Sales"];
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+exports.updateUserEmail = async (req, res) => {
+  try {
+    const normalizedEmail = String(req.body.email || "").trim().toLowerCase();
+    if (!normalizedEmail || !EMAIL_PATTERN.test(normalizedEmail)) {
+      return res.status(400).json({ success: false, message: "Enter a valid email address" });
+    }
+
+    const user = await User.findById(req.params.id).select("+sessionVersion");
+    if (!user) return res.status(404).json({ success: false, message: "User account not found" });
+
+    const duplicate = await User.exists({ email: normalizedEmail, _id: { $ne: user._id } });
+    if (duplicate) return res.status(409).json({ success: false, message: "This email is already used by another account" });
+    if (user.email === normalizedEmail) {
+      return res.status(200).json({ success: true, message: "Email is already up to date", data: user });
+    }
+
+    user.email = normalizedEmail;
+    user.token = undefined;
+    user.resetPasswordExpires = undefined;
+    user.sessionVersion = (user.sessionVersion || 0) + 1;
+    await user.save();
+    const io = req.app.get("io");
+    if (io) io.in(`user:${user._id}`).disconnectSockets(true);
+
+    return res.status(200).json({ success: true, message: "Login email updated successfully. Existing sessions have been ended.", data: user });
+  } catch (error) {
+    if (error?.code === 11000) return res.status(409).json({ success: false, message: "This email is already used by another account" });
+    if (error.name === "CastError") return res.status(400).json({ success: false, message: "Invalid user ID" });
+    if (error.name === "ValidationError") return res.status(400).json({ success: false, message: Object.values(error.errors)[0]?.message });
+    return res.status(500).json({ success: false, message: "Failed to update login email" });
+  }
+};
 // ==========================================
 // CREATE ADMIN (SUPER ADMIN ONLY)
 // ==========================================

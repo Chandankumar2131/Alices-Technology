@@ -18,6 +18,7 @@ const {
   resetEmployeePassword,
   submitResignation,
   withdrawResignation,
+  updateUserEmail,
 } = require("../controller/authController");
 
 // Middleware
@@ -35,6 +36,7 @@ router.post("/logout", logout);
 // ==========================================
 // Create Employee
 router.post("/create-employee", auth, isAdmin, createEmployee);
+router.patch("/users/:id/email", auth, isAdmin, updateUserEmail);
 
 // Get All Employees
 router.get("/employees",auth,isAdmin,getAllEmployees);

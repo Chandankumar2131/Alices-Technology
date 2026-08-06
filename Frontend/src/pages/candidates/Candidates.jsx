@@ -42,6 +42,8 @@ export default function Candidates() {
   const [analyticsCandidate, setAnalyticsCandidate] = useState("");
   const [form, setForm] = useState(empty);
   const [search, setSearch] = useState("");
+  const [emailCandidate, setEmailCandidate] = useState(null);
+  const [newEmail, setNewEmail] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -150,13 +152,24 @@ export default function Candidates() {
     finally { setUploadingResumeId(""); }
   };
 
+  const updateEmail = async () => {
+    if (!newEmail.trim()) return notify.error("Enter a valid email address");
+    setBusy(true);
+    try {
+      await authService.updateUserEmail(emailCandidate.user._id, newEmail);
+      notify.success("Candidate login email updated");
+      setEmailCandidate(null); setNewEmail(""); await load();
+    } catch (error) { notify.error(errorText(error)); }
+    finally { setBusy(false); }
+  };
+
   const columns = [
     { key: "candidate", header: "Candidate", render: (row) => <><p className="font-semibold text-slate-100">{fullName(row.user)}</p><p className="text-xs text-slate-500">{row.candidateId} · {row.user?.email}</p></> },
     { key: "role", header: "Target role", render: (row) => <><p>{row.primaryJobRole}</p><p className="text-xs text-slate-500">{row.experience || "Experience not specified"}</p></> },
     { key: "subscription", header: "Subscription", render: (row) => <><Badge status={row.subscriptionStatus} /><p className="mt-1 text-xs text-slate-500">Until {fmtDate(row.subscriptionEndDate)}</p></> },
     { key: "resume", header: "Latest Resume", render: (row) => row.resumeFile?.url ? <a href={row.resumeFile.url} target="_blank" rel="noreferrer" className="font-semibold text-cyan-500 hover:underline">{row.resumeFile.fileName || "View PDF"}</a> : <span className="text-slate-500">Not uploaded</span> },
     { key: "recruiter", header: "Recruiter", render: (row) => row.assignedRecruiter ? fullName(row.assignedRecruiter) : <span className="text-amber-500">Unassigned</span> },
-    { key: "actions", header: "Actions", render: (row) => <div className="flex flex-wrap gap-2"><Button variant="outline" className="min-h-8 px-3 py-1 text-xs" onClick={() => { setAssigning(row); setRecruiterId(row.assignedRecruiter?._id || ""); }}>Assign</Button><input id={`resume-${row._id}`} type="file" accept="application/pdf" className="hidden" onChange={(event) => uploadResume(row, event.target.files?.[0])} /><Button variant="secondary" loading={uploadingResumeId === row._id} className="min-h-8 px-3 py-1 text-xs" onClick={() => document.getElementById(`resume-${row._id}`)?.click()}>Upload Resume</Button>{isSuperAdmin && <Button variant="secondary" className="min-h-8 px-3 py-1 text-xs" onClick={() => { setResetCandidate(row); setTemporaryPassword(""); }}>Reset Login</Button>}</div> },
+    { key: "actions", header: "Actions", render: (row) => <div className="flex flex-wrap gap-2"><Button variant="outline" className="min-h-8 px-3 py-1 text-xs" onClick={() => { setEmailCandidate(row); setNewEmail(row.user?.email || ""); }}>Change Email</Button><Button variant="outline" className="min-h-8 px-3 py-1 text-xs" onClick={() => { setAssigning(row); setRecruiterId(row.assignedRecruiter?._id || ""); }}>Assign</Button><input id={`resume-${row._id}`} type="file" accept="application/pdf" className="hidden" onChange={(event) => uploadResume(row, event.target.files?.[0])} /><Button variant="secondary" loading={uploadingResumeId === row._id} className="min-h-8 px-3 py-1 text-xs" onClick={() => document.getElementById(`resume-${row._id}`)?.click()}>Upload Resume</Button>{isSuperAdmin && <Button variant="secondary" className="min-h-8 px-3 py-1 text-xs" onClick={() => { setResetCandidate(row); setTemporaryPassword(""); }}>Reset Login</Button>}</div> },
   ];
 
   const dailyColumns = [
@@ -203,6 +216,9 @@ export default function Candidates() {
 
     <Modal open={!!resetCandidate} onClose={() => setResetCandidate(null)} title={`Reset Login · ${fullName(resetCandidate?.user)}`} footer={<><Button variant="secondary" onClick={() => setResetCandidate(null)}>Cancel</Button><Button onClick={resetPassword} loading={busy}>Set Password</Button></>}>
       <Input label="Temporary Password" type="password" value={temporaryPassword} onChange={(event) => setTemporaryPassword(event.target.value)} placeholder="Minimum 6 characters" />
+    </Modal>
+    <Modal open={!!emailCandidate} onClose={() => setEmailCandidate(null)} title={`Change Login Email · ${fullName(emailCandidate?.user)}`} footer={<><Button variant="secondary" onClick={() => setEmailCandidate(null)}>Cancel</Button><Button onClick={updateEmail} loading={busy}>Save Email</Button></>}>
+      <div className="space-y-3"><Input label="New Login Email" type="email" value={newEmail} onChange={(event) => setNewEmail(event.target.value)} /><p className="text-xs text-slate-400">The candidate will be signed out and must use this email for their next login.</p></div>
     </Modal>
   </div>;
 }

@@ -8,6 +8,8 @@ export const authService = {
   createEmployee: (payload) =>
     api.post("/auth/create-employee", payload).then(unwrap),
   getAllEmployees: () => api.get("/auth/employees").then(unwrap),
+  updateUserEmail: (id, email) =>
+    api.patch(`/auth/users/${id}/email`, { email }).then(unwrap),
   deactivateEmployee: (id, payload) =>
     api.patch(`/auth/deactivate/${id}`, payload).then(unwrap),
   reactivateEmployee: (id, payload = {}) =>

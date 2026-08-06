@@ -124,7 +124,7 @@ export default function AiAssistant() {
 
   return (
     <div className="motion-page mx-auto w-full max-w-6xl space-y-5">
-      <section className="relative overflow-hidden rounded-2xl border border-cyan-300/20 bg-gradient-to-br from-cyan-400/10 via-slate-900/90 to-violet-500/10 p-5 shadow-2xl shadow-black/20 sm:p-7">
+      <section className="theme-accent-border relative overflow-hidden rounded-2xl border border-cyan-300/20 bg-gradient-to-br from-cyan-400/10 via-slate-900/90 to-violet-500/10 p-5 shadow-2xl shadow-black/20 sm:p-7">
         <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cyan-300/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
