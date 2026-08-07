@@ -31,6 +31,10 @@ const mergeSeenMessages = (items, messageIds, readAt) => {
 const targetId = (target) => `${target?.type || ""}:${getId(target?.data)}`;
 
 const formatUnreadCount = (count = 0) => (count > 9 ? "9+" : String(count));
+const chatIdentity = (user) =>
+  ["Admin", "SuperAdmin"].includes(user?.accountType)
+    ? user.accountType === "SuperAdmin" ? "Super Admin" : "Admin"
+    : user?.designation || "Employee";
 const ATTACH_ICON = "\u{1F4CE}";
 const IMAGE_ICON = "\u{1F5BC}\u{FE0F}";
 const PDF_ICON = "\u{1F4C4}";
@@ -885,7 +889,7 @@ export default function Chat() {
   const selectedSubtitle =
     selectedTarget?.type === "group"
       ? `${selectedTarget.data.participants?.length || 0} members`
-      : selectedTarget?.data?.accountType;
+      : chatIdentity(selectedTarget?.data);
 
   if (loadingUsers) {
     return <Spinner full />;
@@ -1067,7 +1071,7 @@ export default function Chat() {
                         <span className="block truncate text-xs text-slate-400">
                           {lastMessage?.text ||
                             attachmentPreviewText(lastMessage) ||
-                            user.accountType}
+                            chatIdentity(user)}
                         </span>
                       </span>
                       {unreadCount > 0 && (
@@ -1173,7 +1177,7 @@ export default function Chat() {
                             {fullName(user)}
                           </span>
                           <span className="block truncate text-xs text-slate-400">
-                            {user.accountType}
+                            {chatIdentity(user)}
                           </span>
                         </span>
                       </label>
