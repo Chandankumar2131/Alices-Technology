@@ -4,6 +4,7 @@ import {
   fetchProfile,
   updateProfile,
   updateProfileDetails,
+  updateProfilePicture,
   changePassword,
   submitResignation,
   withdrawResignation,
@@ -17,6 +18,17 @@ import Modal from "../components/common/Modal";
 import { GENDERS, BLOOD_GROUPS, MARITAL_STATUS } from "../constants/enums";
 import notify from "../utils/toast";
 import EmployeeDocuments from "../components/documents/EmployeeDocuments";
+
+const PROFILE_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const PROFILE_IMAGE_MAX_BYTES = 3 * 1024 * 1024;
+
+const readImageAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Unable to read image"));
+    reader.readAsDataURL(file);
+  });
 
 /* eslint-disable react-hooks/set-state-in-effect */
 
@@ -127,8 +139,85 @@ export default function Profile() {
     } else notify.error(res.payload);
   };
 
+  const uploadProfilePicture = async (file) => {
+    if (!file) return;
+    if (!PROFILE_IMAGE_TYPES.has(file.type) || file.size > PROFILE_IMAGE_MAX_BYTES) {
+      notify.error("Upload a JPG, PNG, or WebP image up to 3 MB");
+      return;
+    }
+
+    try {
+      setBusy("picture");
+      const dataUrl = await readImageAsDataUrl(file);
+      const res = await dispatch(updateProfilePicture({
+        dataUrl,
+        mimeType: file.type,
+        size: file.size,
+      }));
+      if (updateProfilePicture.fulfilled.match(res)) notify.success("Profile picture updated");
+      else notify.error(res.payload);
+    } catch {
+      notify.error("Unable to upload profile picture");
+    } finally {
+      setBusy("");
+    }
+  };
+
   return (
     <div className="space-y-6">
+      <Card className="overflow-hidden">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+          <div className="relative shrink-0">
+            {user?.image ? (
+              <img
+                src={user.image}
+                alt={`${user.firstName || "User"} profile`}
+                width="104"
+                height="104"
+                className="h-24 w-24 rounded-2xl border border-cyan-300/25 object-cover shadow-xl shadow-black/20 ring-4 ring-cyan-300/[0.06] sm:h-28 sm:w-28"
+              />
+            ) : (
+              <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-cyan-300/25 bg-cyan-300/10 text-3xl font-bold text-cyan-200 sm:h-28 sm:w-28">
+                {(user?.firstName || "U").slice(0, 1).toUpperCase()}
+              </div>
+            )}
+            <span className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-4 border-slate-900 bg-emerald-400 text-xs text-slate-950">✓</span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-cyan-300">Profile picture</p>
+            <h1 className="mt-1 truncate text-xl font-bold text-slate-50">
+              {user?.firstName} {user?.lastName}
+            </h1>
+            <p className="mt-1 text-sm text-slate-400">
+              {user?.designation || user?.accountType}{user?.department ? ` · ${user.department}` : ""}
+            </p>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-400">
+              Use a clear square photo. It will appear in your sidebar, employee profile, and team conversations.
+            </p>
+          </div>
+          <div className="shrink-0">
+            <input
+              id="profile-picture-upload"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(event) => {
+                uploadProfilePicture(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+            />
+            <Button
+              loading={busy === "picture"}
+              disabled={Boolean(busy && busy !== "picture")}
+              onClick={() => document.getElementById("profile-picture-upload")?.click()}
+            >
+              Change Photo
+            </Button>
+            <p className="mt-2 text-center text-xs text-slate-500">JPG, PNG or WebP · Max 3 MB</p>
+          </div>
+        </div>
+      </Card>
+
       <Card title="Basic Information">
         <form onSubmit={saveBasics} className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

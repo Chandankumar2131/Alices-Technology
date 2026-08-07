@@ -4,11 +4,19 @@ const Profile = require("../model/Profile");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const moment = require("moment-timezone");
+const cloudinary = require("../config/cloudinary");
 const { TZ } = require("../utils/attendanceShift");
 const { getPagination, paginatedResponse } = require("../utils/pagination");
 require("dotenv").config();
 const EMPLOYEE_DEPARTMENTS = ["IT", "Marketing", "Lead Generation", "Sales"];
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PROFILE_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const PROFILE_IMAGE_MAX_BYTES = 3 * 1024 * 1024;
+
+const isProfileImageDataUrl = (value, mimeType) =>
+  typeof value === "string" &&
+  value.startsWith(`data:${mimeType};base64,`) &&
+  /^[A-Za-z0-9+/=\r\n]+$/.test(value.slice(value.indexOf(",") + 1));
 
 exports.updateUserEmail = async (req, res) => {
   try {
@@ -827,6 +835,72 @@ exports.submitResignation = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+// ==========================================//
+// UPDATE PROFILE PICTURE //
+// ==========================================//
+exports.updateProfilePicture = async (req, res) => {
+  try {
+    const { dataUrl, mimeType, size } = req.body;
+    const fileSize = Number(size || 0);
+    const encodedImage = typeof dataUrl === "string" ? dataUrl.slice(dataUrl.indexOf(",") + 1) : "";
+    const decodedSize = encodedImage ? Buffer.byteLength(encodedImage.replace(/\s/g, ""), "base64") : 0;
+
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return res.status(500).json({ success: false, message: "Profile image service is not configured" });
+    }
+
+    if (
+      !PROFILE_IMAGE_TYPES.has(mimeType) ||
+      !fileSize ||
+      fileSize > PROFILE_IMAGE_MAX_BYTES ||
+      !decodedSize ||
+      decodedSize > PROFILE_IMAGE_MAX_BYTES ||
+      !isProfileImageDataUrl(dataUrl, mimeType)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Upload a JPG, PNG, or WebP image up to 3 MB",
+      });
+    }
+
+    const user = await User.findById(req.user.id).select("+profileImagePublicId");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const previousPublicId = user.profileImagePublicId;
+    const upload = await cloudinary.uploader.upload(dataUrl, {
+      folder: "hrm/profile-pictures",
+      public_id: `user-${user._id}-${Date.now()}`,
+      resource_type: "image",
+      transformation: [
+        { width: 600, height: 600, crop: "fill", gravity: "auto" },
+        { quality: "auto:good", fetch_format: "auto" },
+      ],
+    });
+
+    user.image = upload.secure_url;
+    user.profileImagePublicId = upload.public_id;
+    await user.save();
+
+    if (previousPublicId && previousPublicId !== upload.public_id) {
+      cloudinary.uploader.destroy(previousPublicId, { resource_type: "image" }).catch(() => {});
+    }
+
+    const updatedUser = await User.findById(user._id).populate("additionalDetails");
+    return res.status(200).json({
+      success: true,
+      message: "Profile picture updated",
+      data: updatedUser,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update profile picture",
     });
   }
 };

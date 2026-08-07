@@ -124,6 +124,7 @@ export default function Sidebar({
         ) : (
           <>
             {isCandidate && <NavLink to="/my-applications" onClick={onMobileClose} className={linkClass}>My Applications</NavLink>}
+            {isCandidate && <NavLink to="/profile" onClick={onMobileClose} className={linkClass}>Profile</NavLink>}
             {!isCandidate && <NavLink to="/attendance" onClick={onMobileClose} className={linkClass}>My Attendance</NavLink>}
             {isEmployee && <NavLink to="/leaves" onClick={onMobileClose} className={linkClass}>Leaves</NavLink>}
             {isEmployee && <NavLink to="/payroll" onClick={onMobileClose} className={linkClass}>Payroll</NavLink>}

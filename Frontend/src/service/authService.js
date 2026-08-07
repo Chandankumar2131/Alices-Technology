@@ -21,6 +21,8 @@ export const authService = {
     api.put("/auth/profile/update", payload).then(unwrap),
   updateProfileDetails: (payload) =>
     api.put("/auth/profile/details", payload).then(unwrap),
+  updateProfilePicture: (payload) =>
+    api.put("/auth/profile/picture", payload).then(unwrap),
   changePassword: (payload) =>
     api.post("/auth/change-password", payload).then(unwrap),
   submitResignation: (payload) =>
