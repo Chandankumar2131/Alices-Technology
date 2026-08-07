@@ -47,6 +47,7 @@ export default function AppRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
             <Route element={<RoleRoute mode="workforce" />}>
               <Route path="/attendance" element={<MyAttendance />} />
               <Route path="/attendance/:date" element={<EmployeeDayAttendance />} />
@@ -54,7 +55,6 @@ export default function AppRoutes() {
               <Route path="/leave-bucket" element={<Navigate to="/leaves" replace />} />
               <Route path="/payroll" element={<MyPayroll />} />
               <Route path="/salary" element={<MySalary />} />
-              <Route path="/profile" element={<Profile />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/interviews" element={<Interviews />} />
               <Route path="/ai-assistant" element={<AiAssistant />} />

@@ -51,6 +51,12 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
+    profileImagePublicId: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
     token: {
       type: String,
       select: false,

@@ -14,6 +14,7 @@ const {
   getProfile,
   updateProfile,
   updateProfileDetails,
+  updateProfilePicture,
   changePassword,
   resetEmployeePassword,
   submitResignation,
@@ -57,6 +58,7 @@ router.post("/create-admin", auth, isSuperAdmin, createAdmin);
 router.get("/profile", auth, getProfile);
 router.put("/profile/update", auth, updateProfile);
 router.put("/profile/details", auth, updateProfileDetails);
+router.put("/profile/picture", auth, updateProfilePicture);
 router.post("/change-password", auth, changePassword);
 router.post("/resignation", auth, submitResignation);
 router.post("/resignation/withdraw", auth, withdrawResignation);
