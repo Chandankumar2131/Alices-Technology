@@ -8,7 +8,13 @@ const Candidate = require("../model/Candidate");
 const Holiday = require("../model/Holiday");
 const { syncLeaveBalance } = require("../utils/leaveBucket");
 const moment = require("moment-timezone");
-const { TZ, getShiftDate } = require("../utils/attendanceShift");
+const {
+  TZ,
+  CHECK_IN_START,
+  CHECK_IN_END,
+  getShiftDate,
+  getShiftBoundary,
+} = require("../utils/attendanceShift");
 
 const getLiveAttendanceHours = (attendance, totalBreakMinutes) => {
   if (!attendance?.checkIn) {
@@ -36,6 +42,18 @@ const getLiveAttendanceHours = (attendance, totalBreakMinutes) => {
 
 const getLiveProductiveHours = (attendance, totalBreakMinutes) => {
   return getLiveAttendanceHours(attendance, totalBreakMinutes).productiveHours;
+};
+
+const getLateArrivalMinutes = (attendance) => {
+  if (!attendance?.checkIn || !attendance.lateArrival) return 0;
+
+  const checkIn = moment(attendance.checkIn).tz(TZ);
+  const scheduledStart = getShiftBoundary(attendance.attendanceDate, CHECK_IN_START);
+  const lateThreshold = getShiftBoundary(attendance.attendanceDate, CHECK_IN_END);
+
+  if (!checkIn.isAfter(lateThreshold)) return 0;
+
+  return Math.max(checkIn.diff(scheduledStart, "minutes"), 0);
 };
 
 const hasApprovedLeaveForDate = async (employeeId, dateKey) => {
@@ -442,6 +460,7 @@ exports.getEmployeeDashboard = async (req, res) => {
       data: {
         employee,
         attendance,
+        lateArrivalMinutes: getLateArrivalMinutes(attendance),
         activeBreak,
         todayBreaks,
         totalBreakMinutes,
