@@ -75,6 +75,7 @@ export default function EmployeeDashboard() {
   const payroll = s.latestPayroll;
   const workState = getWorkState({ attendance: todayAtt, activeBreak: s.activeBreak });
   const presentThisMonth = s.monthlyAttendance?.present ?? 0;
+  const lateArrivalMinutes = s.lateArrivalMinutes ?? 0;
 
   const columns = [
     {
@@ -99,10 +100,21 @@ export default function EmployeeDashboard() {
     <div className="space-y-6">
       <Card className={`border ${workState.tone}`}>
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Current Status</p>
-            <h2 className="mt-2 text-3xl font-bold text-slate-50">{workState.label}</h2>
-            <p className="mt-2 text-sm text-slate-300">{workState.detail}</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="sm:shrink-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Current Status</p>
+              <h2 className="mt-2 text-3xl font-bold text-slate-50">{workState.label}</h2>
+              <p className="mt-2 text-sm text-slate-300">{workState.detail}</p>
+            </div>
+
+            {lateArrivalMinutes > 0 && (
+              <div className="max-w-xl rounded-lg border border-amber-300/40 border-l-4 border-l-amber-400 bg-amber-400/10 px-4 py-3 shadow-sm shadow-amber-950/20">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-300">Late arrival</p>
+                <p className="mt-1 text-sm font-semibold leading-5 text-amber-50">
+                  You checked in {lateArrivalMinutes} min late. Please be on time to avoid salary deductions.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[34rem]">
