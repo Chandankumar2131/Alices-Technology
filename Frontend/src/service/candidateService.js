@@ -6,6 +6,7 @@ export const candidateService = {
   create: (payload) => api.post("/candidates", payload).then(unwrap),
   update: (id, payload) => api.patch(`/candidates/${id}`, payload).then(unwrap),
   assign: (id, recruiterId) => api.patch(`/candidates/${id}/assign`, { recruiterId }).then(unwrap),
+  remove: (id) => api.delete(`/candidates/${id}`).then(unwrap),
   resetPassword: (id, temporaryPassword) => api.post(`/candidates/${id}/reset-password`, { temporaryPassword }).then(unwrap),
   getApplications: (params = {}) => api.get("/candidates/applications", { params }).then(unwrap),
   getAllApplications: async (params = {}) => {

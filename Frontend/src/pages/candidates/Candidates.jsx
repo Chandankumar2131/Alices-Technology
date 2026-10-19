@@ -31,6 +31,7 @@ export default function Candidates() {
   const [assigning, setAssigning] = useState(null);
   const [recruiterId, setRecruiterId] = useState("");
   const [resetCandidate, setResetCandidate] = useState(null);
+  const [removingCandidate, setRemovingCandidate] = useState(null);
   const [temporaryPassword, setTemporaryPassword] = useState("");
   const [uploadingResumeId, setUploadingResumeId] = useState("");
   const [createResume, setCreateResume] = useState(null);
@@ -152,6 +153,18 @@ export default function Candidates() {
     finally { setUploadingResumeId(""); }
   };
 
+  const removeCandidate = async () => {
+    if (!removingCandidate) return;
+    setBusy(true);
+    try {
+      await candidateService.remove(removingCandidate._id);
+      notify.success("Candidate removed");
+      setRemovingCandidate(null);
+      await Promise.all([load(), loadAnalytics()]);
+    } catch (error) { notify.error(errorText(error)); }
+    finally { setBusy(false); }
+  };
+
   const updateEmail = async () => {
     if (!newEmail.trim()) return notify.error("Enter a valid email address");
     setBusy(true);
@@ -169,7 +182,7 @@ export default function Candidates() {
     { key: "subscription", header: "Subscription", render: (row) => <><Badge status={row.subscriptionStatus} /><p className="mt-1 text-xs text-slate-500">Until {fmtDate(row.subscriptionEndDate)}</p></> },
     { key: "resume", header: "Latest Resume", render: (row) => row.resumeFile?.url ? <a href={row.resumeFile.url} target="_blank" rel="noreferrer" className="font-semibold text-cyan-500 hover:underline">{row.resumeFile.fileName || "View PDF"}</a> : <span className="text-slate-500">Not uploaded</span> },
     { key: "recruiter", header: "Recruiter", render: (row) => row.assignedRecruiter ? fullName(row.assignedRecruiter) : <span className="text-amber-500">Unassigned</span> },
-    { key: "actions", header: "Actions", render: (row) => <div className="flex flex-wrap gap-2"><Button variant="outline" className="min-h-8 px-3 py-1 text-xs" onClick={() => { setEmailCandidate(row); setNewEmail(row.user?.email || ""); }}>Change Email</Button><Button variant="outline" className="min-h-8 px-3 py-1 text-xs" onClick={() => { setAssigning(row); setRecruiterId(row.assignedRecruiter?._id || ""); }}>Assign</Button><input id={`resume-${row._id}`} type="file" accept="application/pdf" className="hidden" onChange={(event) => uploadResume(row, event.target.files?.[0])} /><Button variant="secondary" loading={uploadingResumeId === row._id} className="min-h-8 px-3 py-1 text-xs" onClick={() => document.getElementById(`resume-${row._id}`)?.click()}>Upload Resume</Button>{isSuperAdmin && <Button variant="secondary" className="min-h-8 px-3 py-1 text-xs" onClick={() => { setResetCandidate(row); setTemporaryPassword(""); }}>Reset Login</Button>}</div> },
+    { key: "actions", header: "Actions", render: (row) => <div className="flex flex-wrap gap-2"><Button variant="outline" className="min-h-8 px-3 py-1 text-xs" onClick={() => { setEmailCandidate(row); setNewEmail(row.user?.email || ""); }}>Change Email</Button><Button variant="outline" className="min-h-8 px-3 py-1 text-xs" onClick={() => { setAssigning(row); setRecruiterId(row.assignedRecruiter?._id || ""); }}>Assign</Button><input id={`resume-${row._id}`} type="file" accept="application/pdf" className="hidden" onChange={(event) => uploadResume(row, event.target.files?.[0])} /><Button variant="secondary" loading={uploadingResumeId === row._id} className="min-h-8 px-3 py-1 text-xs" onClick={() => document.getElementById(`resume-${row._id}`)?.click()}>Upload Resume</Button>{isSuperAdmin && <><Button variant="secondary" className="min-h-8 px-3 py-1 text-xs" onClick={() => { setResetCandidate(row); setTemporaryPassword(""); }}>Reset Login</Button><Button variant="danger" className="min-h-8 px-3 py-1 text-xs" onClick={() => setRemovingCandidate(row)}>Remove</Button></>}</div> },
   ];
 
   const dailyColumns = [
@@ -219,6 +232,9 @@ export default function Candidates() {
     </Modal>
     <Modal open={!!emailCandidate} onClose={() => setEmailCandidate(null)} title={`Change Login Email · ${fullName(emailCandidate?.user)}`} footer={<><Button variant="secondary" onClick={() => setEmailCandidate(null)}>Cancel</Button><Button onClick={updateEmail} loading={busy}>Save Email</Button></>}>
       <div className="space-y-3"><Input label="New Login Email" type="email" value={newEmail} onChange={(event) => setNewEmail(event.target.value)} /><p className="text-xs text-slate-400">The candidate will be signed out and must use this email for their next login.</p></div>
+    </Modal>
+    <Modal open={!!removingCandidate} onClose={() => setRemovingCandidate(null)} title="Remove Candidate" footer={<><Button variant="secondary" onClick={() => setRemovingCandidate(null)}>Cancel</Button><Button variant="danger" onClick={removeCandidate} loading={busy}>Remove Candidate</Button></>}>
+      <p className="text-sm text-slate-300">Remove <strong className="text-slate-100">{fullName(removingCandidate?.user)}</strong> and their candidate login? Their applications and assignment history will be deleted. Interview records will be kept without the candidate link. This cannot be undone.</p>
     </Modal>
   </div>;
 }

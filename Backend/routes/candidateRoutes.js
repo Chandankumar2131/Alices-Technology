@@ -9,6 +9,7 @@ const {
   getMyCandidateProfile,
   updateCandidate,
   assignCandidate,
+  deleteCandidate,
   resetCandidatePassword,
   createJobApplication,
   getJobApplications,
@@ -27,6 +28,7 @@ router.get("/", auth, getCandidates);
 router.post("/", auth, isSuperAdmin, createCandidate);
 router.patch("/:id", auth, isAdmin, updateCandidate);
 router.patch("/:id/assign", auth, isAdmin, assignCandidate);
+router.delete("/:id", auth, isSuperAdmin, deleteCandidate);
 router.post("/:id/reset-password", auth, isSuperAdmin, resetCandidatePassword);
 router.post("/:id/resume", auth, isAdmin, uploadCandidateResume);
 
