@@ -225,6 +225,36 @@ exports.assignCandidate = async (req, res) => {
   }
 };
 
+exports.deleteCandidate = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ success: false, message: "Invalid candidate ID" });
+    const candidate = await Candidate.findById(req.params.id);
+    if (!candidate) return res.status(404).json({ success: false, message: "Candidate not found" });
+
+    const user = await User.findOne({ _id: candidate.user, accountType: "Candidate" });
+    if (!user) return res.status(404).json({ success: false, message: "Candidate login not found" });
+
+    // Remove candidate-specific records while retaining interviews as historical records.
+    await Promise.all([
+      JobApplication.deleteMany({ candidate: candidate._id }),
+      CandidateAssignment.deleteMany({ candidate: candidate._id }),
+      require("../model/Assessment").deleteMany({ candidate: candidate._id }),
+      Interview.updateMany({ candidate: candidate._id }, { $set: { candidate: null } }),
+    ]);
+
+    const profileId = user.additionalDetails;
+    await Candidate.deleteOne({ _id: candidate._id });
+    await User.deleteOne({ _id: user._id });
+    if (profileId) await Profile.deleteOne({ _id: profileId });
+    if (candidate.resumeFile?.publicId) cloudinary.uploader.destroy(candidate.resumeFile.publicId, { resource_type: "raw" }).catch(() => {});
+    if (user.profileImagePublicId) cloudinary.uploader.destroy(user.profileImagePublicId, { resource_type: "image" }).catch(() => {});
+
+    return res.status(200).json({ success: true, message: "Candidate removed successfully" });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to remove candidate", error: error.message });
+  }
+};
+
 exports.resetCandidatePassword = async (req, res) => {
   try {
     const { temporaryPassword } = req.body;
